@@ -14,18 +14,10 @@ apiRouter.use(
   }),
 );
 
-/**
- * GET /api/health
- * Health check endpoint.
- */
 apiRouter.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', app: 'Parametric' });
 });
 
-/**
- * GET /api/warframes
- * Get all warframes from the database.
- */
 apiRouter.get('/warframes', (_req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -37,10 +29,6 @@ apiRouter.get('/warframes', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * Paths that are not real weapons (pet parts, K-Drive parts, etc.)
- * misclassified as weapons by the official Warframe API.
- */
 const WEAPON_JUNK_PREFIXES = [
   '/Lotus/Types/Friendly/Pets/CreaturePets/',
   '/Lotus/Types/Friendly/Pets/MoaPets/MoaPetParts/',
@@ -49,10 +37,6 @@ const WEAPON_JUNK_PREFIXES = [
   '/Lotus/Types/Vehicles/Hoverboard/',
 ];
 
-/**
- * GET /api/weapons
- * Get all weapons, optionally filtered by type.
- */
 apiRouter.get('/weapons', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -70,7 +54,6 @@ apiRouter.get('/weapons', (req: Request, res: Response) => {
       rows = db.prepare('SELECT * FROM weapons ORDER BY name').all();
     }
 
-    // Filter out misclassified non-weapon items
     const filtered = (rows as Array<{ unique_name: string }>).filter(
       (r) => !WEAPON_JUNK_PREFIXES.some((p) => r.unique_name.startsWith(p)),
     );
@@ -82,10 +65,6 @@ apiRouter.get('/weapons', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/companions
- * Get all companions.
- */
 apiRouter.get('/companions', (_req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -97,23 +76,9 @@ apiRouter.get('/companions', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * Unique name path segments that identify tutorial / legacy / duplicate mod variants.
- * - Beginner (fusion limit 3) and Intermediate (limit 5): tutorial variants
- * - Nemesis: Kuva/Tenet duplicates (e.g. duplicate "Adaptation")
- * - SubMod: secondary effect cards for Archon/Galvanized mods
- * NOTE: Expert is NOT filtered here because it contains legitimate Primed / Galvanized mods.
- * Expert duplicates sharing a name with a non-Expert mod are handled via deduplication below.
- */
 const MOD_JUNK_SEGMENTS = ['/Beginner/', '/Intermediate/', '/Nemesis/'];
 const MOD_JUNK_SUFFIXES = ['SubMod'];
 
-/**
- * GET /api/mods
- * Get mods, optionally filtered.
- * Supports comma-separated `types` param (e.g. types=WARFRAME,AURA)
- * or single `type` param for backwards compat.
- */
 apiRouter.get('/mods', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -132,7 +97,6 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
       WHERE 1=1`;
     const params: unknown[] = [];
 
-    // Support multiple types via comma-separated `types` param
     if (typesRaw) {
       const typeList = typesRaw
         .split(',')
@@ -167,7 +131,6 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
       type: string;
     }>;
 
-    // Step 1: Filter out tutorial/legacy/duplicate mod variants
     const cleaned = rows.filter((r) => {
       if (MOD_JUNK_SEGMENTS.some((seg) => r.unique_name.includes(seg)))
         return false;
@@ -176,9 +139,6 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
       return true;
     });
 
-    // Step 2: Deduplicate by name+type — when an Expert variant has the same
-    // name as a non-Expert mod, keep only the non-Expert (canonical) version.
-    // If only the Expert version exists for a name (e.g. "Primed Flow"), keep it.
     const byKey = new Map<string, (typeof cleaned)[number]>();
     for (const mod of cleaned) {
       const key = `${mod.name}|||${mod.type}`;
@@ -186,13 +146,11 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
       if (!existing) {
         byKey.set(key, mod);
       } else {
-        // Prefer the non-Expert version
         const existingIsExpert = existing.unique_name.includes('/Expert/');
         const currentIsExpert = mod.unique_name.includes('/Expert/');
         if (existingIsExpert && !currentIsExpert) {
           byKey.set(key, mod);
         }
-        // Otherwise keep existing (non-Expert already there, or both Expert)
       }
     }
 
@@ -203,10 +161,6 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/mods/:uniqueName
- * Get a specific mod with all its level stats.
- */
 apiRouter.get('/mods/:uniqueName', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -232,10 +186,6 @@ apiRouter.get('/mods/:uniqueName', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/arcanes
- * Get all arcanes.
- */
 apiRouter.get('/arcanes', (_req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -251,10 +201,6 @@ apiRouter.get('/arcanes', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/abilities
- * Get all abilities, optionally filtered by warframe.
- */
 apiRouter.get('/abilities', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -294,10 +240,6 @@ apiRouter.get('/abilities', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/helminth-abilities
- * Get all helminth-extractable abilities.
- */
 apiRouter.get('/helminth-abilities', (_req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -313,10 +255,6 @@ apiRouter.get('/helminth-abilities', (_req: Request, res: Response) => {
   }
 });
 
-// ==============================
-// Riven Stats
-// ==============================
-
 apiRouter.get('/riven-stats', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -325,8 +263,6 @@ apiRouter.get('/riven-stats', (req: Request, res: Response) => {
         ? req.query.weapon_type
         : undefined;
 
-    // Find riven mods (they have rarity = 'LEGENDARY' and name contains 'Riven')
-    // or have upgrade_entries populated
     let sql =
       "SELECT unique_name, name, compat_name, upgrade_entries FROM mods WHERE upgrade_entries IS NOT NULL AND upgrade_entries != ''";
     const params: string[] = [];
@@ -344,10 +280,6 @@ apiRouter.get('/riven-stats', (req: Request, res: Response) => {
     res.status(500).json({ error: msg });
   }
 });
-
-// ==============================
-// Archon Shards
-// ==============================
 
 apiRouter.get('/archon-shards', (_req: Request, res: Response) => {
   try {
@@ -469,10 +401,6 @@ apiRouter.delete('/archon-shards/buffs/:id', (req: Request, res: Response) => {
   }
 });
 
-// ==============================
-// Loadouts
-// ==============================
-
 apiRouter.get('/loadouts', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -584,10 +512,6 @@ apiRouter.delete(
   },
 );
 
-/**
- * GET /api/builds
- * Get saved builds for the current user.
- */
 apiRouter.get('/builds', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -608,10 +532,6 @@ apiRouter.get('/builds', (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/builds
- * Save a new build.
- */
 apiRouter.post('/builds', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -643,10 +563,6 @@ apiRouter.post('/builds', (req: Request, res: Response) => {
   }
 });
 
-/**
- * PUT /api/builds/:id
- * Update an existing build.
- */
 apiRouter.put('/builds/:id', (req: Request, res: Response) => {
   try {
     const db = getDb();
@@ -670,10 +586,6 @@ apiRouter.put('/builds/:id', (req: Request, res: Response) => {
   }
 });
 
-/**
- * DELETE /api/builds/:id
- * Delete a build.
- */
 apiRouter.delete('/builds/:id', (req: Request, res: Response) => {
   try {
     const db = getDb();

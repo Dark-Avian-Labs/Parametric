@@ -7,9 +7,6 @@ interface ApiState<T> {
   refetch: () => void;
 }
 
-/**
- * Generic hook for fetching data from the API.
- */
 export function useApi<T>(url: string | null): ApiState<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);

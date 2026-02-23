@@ -63,7 +63,6 @@ const SHARD_TYPES: ShardType[] = [
 ];
 
 const SHARD_BUFFS: ShardBuff[] = [
-  // Crimson
   {
     shard_type_id: 'crimson',
     description: 'Melee Critical Damage',
@@ -105,7 +104,6 @@ const SHARD_BUFFS: ShardBuff[] = [
     sort_order: 5,
   },
 
-  // Amber
   {
     shard_type_id: 'amber',
     description: 'Energy on Spawn',
@@ -147,7 +145,6 @@ const SHARD_BUFFS: ShardBuff[] = [
     sort_order: 5,
   },
 
-  // Azure
   {
     shard_type_id: 'azure',
     description: 'Health',
@@ -189,7 +186,6 @@ const SHARD_BUFFS: ShardBuff[] = [
     sort_order: 5,
   },
 
-  // Violet
   {
     shard_type_id: 'violet',
     description: 'Health/Energy Orb Conversion',
@@ -223,7 +219,6 @@ const SHARD_BUFFS: ShardBuff[] = [
     sort_order: 4,
   },
 
-  // Topaz
   {
     shard_type_id: 'topaz',
     description: 'Ability DMG on Radiation Status',
@@ -257,7 +252,6 @@ const SHARD_BUFFS: ShardBuff[] = [
     sort_order: 4,
   },
 
-  // Emerald
   {
     shard_type_id: 'emerald',
     description: 'Toxin Status Damage',

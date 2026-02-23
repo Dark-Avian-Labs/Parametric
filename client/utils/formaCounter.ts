@@ -1,18 +1,3 @@
-/**
- * Forma counter algorithm.
- *
- * Compares default polarities (from equipment data) vs. user-configured
- * polarities, accounting for free moves.
- *
- * Key rules:
- * - Moving a polarity from one slot to another is FREE (only multiset counts matter)
- * - Removing/freeing a polarity costs 1 regular Forma
- * - Adding a new polarity costs 1 Forma of the appropriate type
- * - Universal and Umbra Forma are tracked separately
- * - Universal on aura/stance/posture slots requires Stance Forma (forma-stance)
- * - Universal on general/exilus slots requires Omni Forma (forma-omni)
- */
-
 import { isCapacitySlot } from './drain';
 import {
   AP_ANY,
@@ -56,7 +41,6 @@ export function calculateFormaCount(
   const defaultCounts = countMultiset(defaultPolarities);
   const desiredCounts = countMultiset(desiredPolarities);
 
-  // Calculate reused per type: min(default, desired)
   let totalReused = 0;
   const allKeys = new Set([...defaultCounts.keys(), ...desiredCounts.keys()]);
 
@@ -66,14 +50,11 @@ export function calculateFormaCount(
     totalReused += Math.min(def, des);
   }
 
-  // Total defaults with polarities
   let totalDefaults = 0;
   for (const v of defaultCounts.values()) totalDefaults += v;
 
-  // Unmatched defaults = polarities that were "freed" and not reused
   const unmatchedDefaults = totalDefaults - totalReused;
 
-  // Unmatched additions per category
   let unmatchedRegular = 0;
   for (const pol of REGULAR_POLARITIES) {
     const def = defaultCounts.get(pol) || 0;
@@ -98,7 +79,6 @@ export function calculateFormaCount(
     }
   }
 
-  // Count AP_ANY desired per slot-type category
   let desiredUniversalCapacity = 0;
   for (const s of desired) {
     if (s.polarity === AP_ANY && isCapacitySlot(s.type)) {
@@ -106,15 +86,12 @@ export function calculateFormaCount(
     }
   }
 
-  // New universals on capacity (aura/stance/posture) slots = stance forma
   const newStance = Math.max(
     0,
     desiredUniversalCapacity - defaultUniversalCapacity,
   );
-  // Remaining new universals go to omni forma
   const newUniversal = Math.max(0, totalNewUniversal - newStance);
 
-  // Excess clears: defaults that were freed but not replaced by any new polarity
   const excessClears = Math.max(
     0,
     unmatchedDefaults - unmatchedRegular - totalNewUniversal - unmatchedUmbra,

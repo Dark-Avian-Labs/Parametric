@@ -31,8 +31,6 @@ export function AbilityBar({
   );
   const helminthAbilities = helminthData?.items || [];
 
-  // Extract ability unique_names from warframe JSON so we can query by them
-  // (Prime/Umbra variants aren't linked in the abilities table by warframe_unique_name)
   const abilityUniqueNames = useMemo(() => {
     try {
       if (warframe.abilities) {
@@ -58,7 +56,6 @@ export function AbilityBar({
     `/api/abilities?warframe=${encodeURIComponent(warframe.unique_name)}${abilityNamesParam}`,
   );
 
-  // Parse warframe abilities
   const ownAbilities = useMemo<ParsedAbility[]>(() => {
     try {
       if (warframe.abilities) {
@@ -85,7 +82,6 @@ export function AbilityBar({
     }));
   }, [warframe.abilities]);
 
-  // Match to DB abilities for image paths
   const dbAbilities = warframeAbilities?.items || [];
 
   const getDbAbility = (ability: ParsedAbility): Ability | undefined => {

@@ -15,7 +15,6 @@ corpusRouter.use(
   }),
 );
 
-// Valid table names for category browsing
 const VALID_CATEGORIES: Record<string, string> = {
   warframes: 'corpus_warframes',
   weapons: 'corpus_weapons',
@@ -44,10 +43,6 @@ const VALID_CATEGORIES: Record<string, string> = {
   railjack_nodes: 'corpus_railjack_nodes',
 };
 
-/**
- * GET /api/corpus/stats
- * Get row counts for all corpus tables.
- */
 corpusRouter.get('/stats', (_req: Request, res: Response) => {
   try {
     const db = getCorpusDb();
@@ -69,10 +64,6 @@ corpusRouter.get('/stats', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/corpus/search?q=...&limit=50&offset=0
- * Full-text search across all corpus categories by name or unique_name.
- */
 corpusRouter.get('/search', (req: Request, res: Response) => {
   try {
     const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
@@ -134,11 +125,6 @@ corpusRouter.get('/search', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/corpus/search-json?q=...
- * Search inside raw_json content across all categories.
- * Useful for finding where specific values or keys appear.
- */
 corpusRouter.get('/search-json', (req: Request, res: Response) => {
   try {
     const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
@@ -185,11 +171,6 @@ corpusRouter.get('/search-json', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/corpus/lookup?category=...&id=...
- * Get the full raw JSON for a single entry by unique_name.
- * Uses query params because unique_names contain slashes.
- */
 corpusRouter.get('/lookup', (req: Request, res: Response) => {
   try {
     const category =
@@ -230,10 +211,6 @@ corpusRouter.get('/lookup', (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/corpus/xref?id=...
- * Cross-reference: find all entries across all categories that reference a given unique_name.
- */
 corpusRouter.get('/xref', (req: Request, res: Response) => {
   try {
     const uniqueName = typeof req.query.id === 'string' ? req.query.id : '';
@@ -249,7 +226,6 @@ corpusRouter.get('/xref', (req: Request, res: Response) => {
       name: string | null;
     }> = [];
 
-    // Tables that use 'id' instead of 'unique_name' as primary key
     const ID_BASED_TABLES = new Set([
       'corpus_nightwave',
       'corpus_railjack_nodes',
@@ -282,10 +258,6 @@ corpusRouter.get('/xref', (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/corpus/import
- * Trigger corpus import from downloaded export files.
- */
 corpusRouter.post('/import', (_req: Request, res: Response) => {
   try {
     const results = importAllToCorpus();
@@ -297,12 +269,6 @@ corpusRouter.post('/import', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/corpus/:category
- * Browse/filter a specific category.
- * Supports ?q=... for name filtering, ?limit=50&offset=0 for pagination.
- * MUST be last route (catch-all for dynamic category names).
- */
 corpusRouter.get('/:category', (req: Request, res: Response) => {
   try {
     const category = req.params.category as string;

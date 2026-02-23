@@ -1,8 +1,5 @@
 import { getDb } from './connection.js';
 
-/**
- * Create all application tables in parametric.db.
- */
 export function createAppSchema(): void {
   const db = getDb();
 
@@ -220,7 +217,6 @@ export function createAppSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_abilities_warframe ON abilities(warframe_unique_name);
   `);
 
-  // Migrations: add columns that may not exist in older databases
   const migrations = [
     {
       table: 'abilities',

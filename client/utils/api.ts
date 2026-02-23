@@ -1,8 +1,5 @@
 let cachedToken = '';
 
-/**
- * Fetch the CSRF token from the server and cache it for subsequent calls.
- */
 async function getCsrfToken(): Promise<string> {
   if (cachedToken) return cachedToken;
   try {
@@ -13,22 +10,15 @@ async function getCsrfToken(): Promise<string> {
       return cachedToken;
     }
   } catch {
-    // ignore - will return empty string
+    // ignore
   }
   return '';
 }
 
-/**
- * Reset the cached CSRF token (e.g., after logout or session expiry).
- */
 export function clearCsrfToken(): void {
   cachedToken = '';
 }
 
-/**
- * Wrapper around `fetch` that automatically injects the CSRF token
- * into state-changing requests (POST, PUT, PATCH, DELETE).
- */
 export async function apiFetch(
   url: string,
   init?: RequestInit,

@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 interface GlassTooltipProps {
   children: ReactNode;
   content: ReactNode;
-  /** Width class, e.g. 'w-48', 'w-56' */
   width?: string;
   disabled?: boolean;
 }

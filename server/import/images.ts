@@ -17,13 +17,8 @@ interface ManifestImageEntry {
   textureLocation: string;
 }
 
-/** How many images to download in parallel */
 const CONCURRENCY = 15;
 
-/**
- * Collect unique_names from all DB tables that have an image_path column.
- * These are the only items we want images for.
- */
 export function collectDbUniqueNames(): Set<string> {
   const db = getDb();
   const names = new Set<string>();
@@ -48,9 +43,6 @@ export function collectDbUniqueNames(): Set<string> {
   return names;
 }
 
-/**
- * Build the manifest lookup: uniqueName → textureLocation.
- */
 function loadManifest(): Map<string, ManifestImageEntry> {
   let manifestPath = path.join(EXPORTS_DIR, 'ExportManifest.json');
   if (!fs.existsSync(manifestPath)) {
@@ -70,45 +62,30 @@ function loadManifest(): Map<string, ManifestImageEntry> {
   return map;
 }
 
-/**
- * For a given manifest entry, compute the local file path and the hash.
- */
 function getImagePaths(entry: ManifestImageEntry): {
-  /** Full local file path, e.g. data/images/Lotus/Upgrades/Mods/.../Foo.png */
   localPath: string;
-  /** Directory to create */
   localDir: string;
-  /** The hash part after the ! in textureLocation */
   hash: string;
-  /** Path to the .hash sidecar file */
   hashPath: string;
-  /** The image_path to store in the DB (relative, for serving via /images/...) */
   dbImagePath: string;
-  /** Extension (e.g. .png) */
   ext: string;
 } {
   const { textureLocation, uniqueName } = entry;
 
-  // Extract hash from texture location (after the !)
   const bangIndex = textureLocation.indexOf('!');
   const hash = bangIndex !== -1 ? textureLocation.substring(bangIndex + 1) : '';
 
-  // Build local path from uniqueName
   const safeName = uniqueName.replace(/^\//, '').replace(/[<>:"|?*]/g, '_');
   const ext = path.extname(textureLocation.split('!')[0]) || '.png';
   const localPath = path.join(IMAGES_DIR, safeName + ext);
   const localDir = path.dirname(localPath);
   const hashPath = `${localPath}.hash`;
 
-  // The path we store in the DB — relative from the images root, with leading /
   const dbImagePath = `/${safeName.replace(/\\/g, '/')}${ext}`;
 
   return { localPath, localDir, hash, hashPath, dbImagePath, ext };
 }
 
-/**
- * Download a single image. Returns the dbImagePath on success, null on skip/fail.
- */
 async function downloadSingleImage(
   entry: ManifestImageEntry,
 ): Promise<
@@ -118,7 +95,6 @@ async function downloadSingleImage(
   const { localPath, localDir, hash, hashPath, dbImagePath } =
     getImagePaths(entry);
 
-  // Check cache: if file + hash match, skip
   if (hash && fs.existsSync(localPath) && fs.existsSync(hashPath)) {
     const existingHash = fs.readFileSync(hashPath, 'utf-8').trim();
     if (existingHash === hash) {
@@ -126,7 +102,6 @@ async function downloadSingleImage(
     }
   }
 
-  // Download
   const url = `${IMAGE_BASE_URL}${textureLocation}`;
   try {
     const response = await fetch(url);
@@ -136,7 +111,6 @@ async function downloadSingleImage(
 
     const buffer = Buffer.from(await response.arrayBuffer());
 
-    // Ensure directory exists
     if (!fs.existsSync(localDir)) {
       fs.mkdirSync(localDir, { recursive: true });
     }
@@ -153,17 +127,11 @@ async function downloadSingleImage(
   }
 }
 
-/**
- * Download images for items in the database, with concurrent downloads
- * and hash-based caching. Updates the DB image_path column afterwards.
- */
 export async function downloadImages(
   onProgress?: (completed: number, total: number, latest: string) => void,
 ): Promise<ImageDownloadResult> {
-  // 1. Get the unique names we need from the DB
   const dbNames = collectDbUniqueNames();
 
-  // 2. Load the manifest and filter to only our items
   const manifest = loadManifest();
   const toDownload: ManifestImageEntry[] = [];
   for (const name of dbNames) {
@@ -181,8 +149,6 @@ export async function downloadImages(
     errors: [],
   };
 
-  // 3. Download in batches with concurrency
-  // Map: uniqueName → dbImagePath (for DB update)
   const imagePathMap = new Map<string, string>();
   let completed = 0;
 
@@ -217,15 +183,11 @@ export async function downloadImages(
     );
   }
 
-  // 4. Bulk-update image_path in all DB tables
   updateDbImagePaths(imagePathMap);
 
   return result;
 }
 
-/**
- * Update the image_path column in all relevant DB tables.
- */
 function updateDbImagePaths(pathMap: Map<string, string>): void {
   const db = getDb();
   const tables = [

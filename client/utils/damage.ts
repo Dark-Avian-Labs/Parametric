@@ -8,9 +8,6 @@ import {
   type Weapon,
 } from '../types/warframe';
 
-/**
- * Parse a weapon's damagePerShot JSON string into the 20-element float array.
- */
 export function parseDamageArray(weapon: Weapon): number[] {
   if (!weapon.damage_per_shot) return new Array(20).fill(0);
   try {
@@ -22,15 +19,10 @@ export function parseDamageArray(weapon: Weapon): number[] {
   }
 }
 
-/**
- * Get the innate secondary elements on a weapon.
- * These are damage types at indices 7-12 (Blast, Radiation, Gas, Magnetic, Viral, Corrosive).
- */
 export function getInnateSecondaryElements(
   baseDamage: number[],
 ): DamageEntry[] {
   const result: DamageEntry[] = [];
-  // Secondary elements are at indices 7-12
   const secondaryIndices = [7, 8, 9, 10, 11, 12];
   for (const idx of secondaryIndices) {
     if (baseDamage[idx] > 0) {
@@ -43,10 +35,6 @@ export function getInnateSecondaryElements(
   return result;
 }
 
-/**
- * Extract element mods from the mod slots.
- * Returns which primary elements are being added and in which slot.
- */
 export function extractElementMods(slots: ModSlot[]): Array<{
   slotIndex: number;
   element: (typeof PRIMARY_ELEMENTS)[number];
@@ -61,9 +49,6 @@ export function extractElementMods(slots: ModSlot[]): Array<{
   for (const slot of slots) {
     if (!slot.mod || slot.type !== 'general') continue;
 
-    // Check if this mod adds an elemental damage type
-    // We'd need to look at the mod's levelStats to determine this
-    // For now, check the mod description for element keywords
     const modDesc = slot.mod.description;
     if (!modDesc) continue;
 
@@ -73,7 +58,6 @@ export function extractElementMods(slots: ModSlot[]): Array<{
         const lower = desc.toLowerCase();
         for (const element of PRIMARY_ELEMENTS) {
           if (lower.includes(`${element.toLowerCase()} damage`)) {
-            // Extract the percentage value
             const match = desc.match(/\+?([\d.]+)%/);
             const value = match ? parseFloat(match[1]) : 0;
             result.push({
@@ -85,18 +69,13 @@ export function extractElementMods(slots: ModSlot[]): Array<{
         }
       }
     } catch {
-      // Not valid JSON description
+      // ignore
     }
   }
 
   return result;
 }
 
-/**
- * Calculate the complete damage output for a weapon build.
- * Applies base damage, physical IPS, and multishot multipliers from mods
- * so the element breakdown reflects actual modded values.
- */
 export function calculateBuildDamage(
   weapon: Weapon,
   slots: ModSlot[],
@@ -111,8 +90,6 @@ export function calculateBuildDamage(
 
   const effects = aggregateAllMods(slots);
 
-  // Build per-type multipliers: base damage bonus applies to all,
-  // physical bonuses (IPS) stack on top for their respective types.
   const damageMultipliers: Partial<Record<DamageType, number>> = {};
   for (const dt of DAMAGE_TYPES) {
     let mult = effects.baseDamage;
@@ -149,17 +126,11 @@ export function calculateBuildDamage(
   };
 }
 
-/**
- * Format a damage value for display.
- */
 export function formatDamage(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
   return value.toFixed(1);
 }
 
-/**
- * Format a percentage value.
- */
 export function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }

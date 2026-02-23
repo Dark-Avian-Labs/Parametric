@@ -60,14 +60,16 @@ export function BuildOverview() {
 
   if (loading) {
     return (
-      <div className="glass-panel flex h-64 items-center justify-center">
-        <p className="text-muted">Loading builds...</p>
+      <div className="mx-auto max-w-[2000px]">
+        <div className="glass-panel flex h-64 items-center justify-center">
+          <p className="text-muted">Loading builds...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-6">
+    <div className="mx-auto flex max-w-[2000px] gap-6">
       {/* Left: categorized build list */}
       <div className="min-w-0 flex-1 space-y-4">
         {/* Loadouts section */}

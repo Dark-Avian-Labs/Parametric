@@ -62,7 +62,6 @@ function getAbilityName(warframe: Warframe | null, index: number): string {
 
 type Equipment = Warframe | Weapon | Companion;
 
-/** Map equipment type to API url for fetching a single item by unique_name */
 function getEquipmentListUrl(type: EquipmentType): string {
   switch (type) {
     case 'warframe':
@@ -137,7 +136,6 @@ export function ModBuilder() {
   const [activeArcaneSlot, setActiveArcaneSlot] = useState<number | null>(null);
   const [activeShardSlot, setActiveShardSlot] = useState<number | null>(null);
 
-  // Reset all state when the route changes (e.g. switching from one build to another)
   const routeKey = `${buildId ?? ''}|${routeEqType ?? ''}|${equipmentId ?? ''}`;
   const prevRouteKey = useRef(routeKey);
   useEffect(() => {
@@ -163,20 +161,16 @@ export function ModBuilder() {
     if (routeEqType) setEquipmentType(routeEqType as EquipmentType);
   }, [routeKey, buildId, routeEqType]);
 
-  // Fetch equipment list to find the item
   const apiUrl = getEquipmentListUrl(equipmentType);
   const { data: equipmentData } = useApi<{ items: Equipment[] }>(apiUrl);
 
-  // Fetch archon shards data
   const { data: shardData } = useApi<{ shards: ShardType[] }>(
     '/api/archon-shards',
   );
   const shardTypes = shardData?.shards || [];
 
-  // Build comparison
   const { addSnapshot, snapshots: compareSnapshots } = useCompare();
 
-  // Load build from storage or resolve new build params
   useEffect(() => {
     if (loaded) return;
 
@@ -199,7 +193,6 @@ export function ModBuilder() {
     }
   }, [buildId, routeEqType, equipmentId, getBuild, loaded]);
 
-  // Once equipment list loads, find and select the right item
   useEffect(() => {
     if (!equipmentData?.items?.length) return;
 
@@ -224,7 +217,6 @@ export function ModBuilder() {
     }
   }, [equipmentData, buildId, equipmentId, getBuild, loaded]);
 
-  // Restore slots from stored build after equipment is selected
   useEffect(() => {
     if (!loaded || !buildId) return;
     const stored = getBuild(buildId);
@@ -233,22 +225,18 @@ export function ModBuilder() {
     }
   }, [loaded, buildId, getBuild]);
 
-  // Collect all currently equipped mods for lockout checking
   const equippedMods = useMemo(
     () => slots.filter((s) => s.mod).map((s) => s.mod!),
     [slots],
   );
 
-  // Initialize slots when equipment changes (only for NEW builds)
   useEffect(() => {
     if (!selectedEquipment) {
       setSlots([]);
       return;
     }
 
-    // Don't re-initialize if we're loading an existing build
     if (buildId && slots.length > 0) return;
-    // Wait for stored slots to load
     if (buildId) return;
 
     const config =
@@ -256,7 +244,6 @@ export function ModBuilder() {
     const newSlots: ModSlot[] = [];
     let idx = 0;
 
-    // Parse artifact_slots if available (scraped from Overframe)
     const artifactSlots: string[] = (() => {
       try {
         const eq = selectedEquipment as Warframe & Weapon & Companion;
@@ -292,7 +279,6 @@ export function ModBuilder() {
       newSlots.push({ index: idx++, type: 'posture' });
     }
 
-    // General slot polarities: artifact_slots indices 0-7 reversed, or fallback to polarities JSON
     const generalPolarities: (string | undefined)[] = (() => {
       if (hasArtifactSlots) {
         const slotRange = artifactSlots.slice(0, config.generalSlots);
@@ -330,7 +316,6 @@ export function ModBuilder() {
     setHelminthConfig(undefined);
   }, [selectedEquipment, equipmentType, buildId, slots.length]);
 
-  // Check whether a mod is compatible with a given slot type
   const canPlaceModInSlot = (mod: Mod, slotType: ModSlot['type']): boolean => {
     const modType = (mod.type || '').toUpperCase();
     if (slotType === 'aura' && modType !== 'AURA') return false;
@@ -342,10 +327,8 @@ export function ModBuilder() {
     return true;
   };
 
-  // Key to trigger search field reset in FilterPanel
   const [searchResetKey, setSearchResetKey] = useState(0);
 
-  // Drop a mod into a slot
   const handleModDrop = useCallback((slotIndex: number, mod: Mod) => {
     setSlots((prev) => {
       const targetSlot = prev.find((s) => s.index === slotIndex);
@@ -400,21 +383,17 @@ export function ModBuilder() {
         const targetRank = target.rank;
         const targetSetRank = target.setRank;
 
-        // Validate source mod can go in target slot
         if (!canPlaceModInSlot(sourceMod, target.type)) return prev;
 
-        // If target has a mod, validate it can go in source slot
         if (targetMod && !canPlaceModInSlot(targetMod, source.type))
           return prev;
 
-        // Check lockout: exclude both swapping slots from the "other mods" list
         const otherMods = prev
           .filter(
             (s) => s.mod && s.index !== sourceIndex && s.index !== targetIndex,
           )
           .map((s) => s.mod!);
 
-        // Source mod goes to target position — check it's not locked out with remaining mods + target mod
         if (
           isModLockedOut(sourceMod, [
             ...otherMods,
@@ -423,7 +402,6 @@ export function ModBuilder() {
         )
           return prev;
 
-        // Target mod goes to source position — check it's not locked out with remaining mods + source mod
         if (targetMod && isModLockedOut(targetMod, [...otherMods, sourceMod]))
           return prev;
 
@@ -470,7 +448,6 @@ export function ModBuilder() {
     [slots, orokinReactor],
   );
 
-  // Forma cost
   const formaCost = useMemo<FormaCount>(
     () =>
       calculateFormaCount(
@@ -480,7 +457,6 @@ export function ModBuilder() {
     [defaultPolarities, slots],
   );
 
-  // Handle polarity change in Forma mode
   const handlePolarityChange = useCallback(
     (slotIndex: number, polarity: string | undefined) => {
       setSlots((prev) =>
@@ -490,7 +466,6 @@ export function ModBuilder() {
     [],
   );
 
-  // Arcane slot handlers
   const handleArcaneSlotClick = useCallback(
     (slotIndex: number) => {
       if (activeArcaneSlot === slotIndex && rightPanelMode === 'arcanes') {
@@ -543,7 +518,6 @@ export function ModBuilder() {
     [],
   );
 
-  // Shard slot handlers
   const handleShardSlotClick = useCallback(
     (slotIndex: number) => {
       if (activeShardSlot === slotIndex && rightPanelMode === 'shards') {
@@ -587,7 +561,6 @@ export function ModBuilder() {
     });
   }, []);
 
-  // Save modal state
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState('');
   const [saveToast, setSaveToast] = useState(false);
@@ -666,7 +639,6 @@ export function ModBuilder() {
 
   const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Only clear if clicking on an element that isn't inside a glass-panel or interactive area
     if (
       target.closest(
         '.glass-panel, button, input, [role="button"], [draggable="true"]',

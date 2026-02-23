@@ -21,13 +21,6 @@ export interface ExportFileInfo {
   itemCount?: number;
 }
 
-/**
- * Run the full import pipeline:
- *  1) Download & parse manifest
- *  2) Download required export JSON files
- *
- * Yields status updates as it progresses.
- */
 export async function runImportPipeline(
   onStatus?: (status: ImportStatus) => void,
 ): Promise<ExportFileInfo[]> {
@@ -36,7 +29,6 @@ export async function runImportPipeline(
     ((s: ImportStatus) => console.log(`[Import] ${s.step}: ${s.message}`));
   const results: ExportFileInfo[] = [];
 
-  // Step 1: Download manifest
   report({ step: 'manifest', message: 'Downloading and parsing manifest...' });
   let entries: ManifestEntry[];
   try {
@@ -51,7 +43,6 @@ export async function runImportPipeline(
     throw err;
   }
 
-  // Step 2: Filter to required categories
   const needed = entries.filter((e) => {
     return REQUIRED_EXPORTS.some((req) => e.category.startsWith(req));
   });
@@ -63,7 +54,6 @@ export async function runImportPipeline(
     progress: 0,
   });
 
-  // Step 3: Download each required export
   for (let i = 0; i < needed.length; i++) {
     const entry = needed[i];
     const url = `${CONTENT_BASE_URL}${entry.fullFilename}`;
@@ -71,7 +61,6 @@ export async function runImportPipeline(
     const localPath = path.join(EXPORTS_DIR, localFilename);
     const hashPath = path.join(EXPORTS_DIR, `${entry.category}.hash`);
 
-    // Check if we already have this file with matching hash
     if (fs.existsSync(localPath) && fs.existsSync(hashPath)) {
       const existingHash = fs.readFileSync(hashPath, 'utf-8').trim();
       if (existingHash === entry.hash) {
@@ -88,7 +77,7 @@ export async function runImportPipeline(
           const content = JSON.parse(fs.readFileSync(localPath, 'utf-8'));
           itemCount = getItemCount(content);
         } catch {
-          // ignore parse errors for count
+          // ignore
         }
 
         results.push({
@@ -166,9 +155,6 @@ export async function runImportPipeline(
   return results;
 }
 
-/**
- * List previously downloaded export files.
- */
 export function listExportFiles(): ExportFileInfo[] {
   if (!fs.existsSync(EXPORTS_DIR)) return [];
 
@@ -205,9 +191,6 @@ export function listExportFiles(): ExportFileInfo[] {
   return results;
 }
 
-/**
- * Read an export file and return its parsed JSON content.
- */
 export function readExportFile(category: string): unknown {
   const localPath = path.join(EXPORTS_DIR, `${category}.json`);
   if (!fs.existsSync(localPath)) {
@@ -217,7 +200,6 @@ export function readExportFile(category: string): unknown {
   return JSON.parse(text);
 }
 
-/** Count items in the export JSON (top-level array values). */
 function getItemCount(content: unknown): number | undefined {
   if (typeof content !== 'object' || content === null) return undefined;
   const obj = content as Record<string, unknown>;

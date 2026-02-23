@@ -11,7 +11,6 @@ interface ImportResult {
   error?: string;
 }
 
-// Map export JSON top-level key → corpus table name
 const EXPORT_KEY_TO_TABLE: Record<string, string> = {
   ExportWarframes: 'corpus_warframes',
   ExportWeapons: 'corpus_weapons',
@@ -29,7 +28,6 @@ const EXPORT_KEY_TO_TABLE: Record<string, string> = {
   ExportRegions: 'corpus_regions',
   ExportResources: 'corpus_resources',
   ExportSortieRewards: 'corpus_sortie_rewards',
-  // Extra arrays nested inside other export files
   ExportIntrinsics: 'corpus_intrinsics',
   ExportOther: 'corpus_other',
   ExportModSet: 'corpus_mod_sets',
@@ -39,13 +37,11 @@ const EXPORT_KEY_TO_TABLE: Record<string, string> = {
   ExportRailjackWeapons: 'corpus_railjack_weapons',
 };
 
-// Object-type exports that are stored as single rows
 const OBJECT_KEY_TO_TABLE: Record<string, string> = {
   ExportNightwave: 'corpus_nightwave',
   ExportRailjack: 'corpus_railjack_nodes',
 };
 
-// Category-specific column extractors
 type ColumnExtractor = (
   item: Record<string, unknown>,
 ) => Record<string, unknown>;
@@ -257,9 +253,6 @@ const EXTRACTORS: Record<string, ColumnExtractor> = {
   }),
 };
 
-/**
- * Default extractor for tables that only have unique_name + name + raw_json.
- */
 function defaultExtractor(
   item: Record<string, unknown>,
 ): Record<string, unknown> {
@@ -269,9 +262,6 @@ function defaultExtractor(
   };
 }
 
-/**
- * Import a single export category into the corpus database.
- */
 function importCategory(
   tableName: string,
   items: Record<string, unknown>[],
@@ -279,7 +269,6 @@ function importCategory(
   const db = getCorpusDb();
   const extractor = EXTRACTORS[tableName] || defaultExtractor;
 
-  // Get the first item's columns to build the INSERT statement
   if (items.length === 0) return 0;
 
   const sampleCols = extractor(items[0]);
@@ -300,7 +289,7 @@ function importCategory(
         stmt.run(...values);
         count++;
       } catch {
-        // Skip items that fail (e.g., duplicate keys within same batch)
+        // ignore
       }
     }
     return count;
@@ -309,14 +298,9 @@ function importCategory(
   return insertMany(items);
 }
 
-/**
- * Import all downloaded export files into the corpus database.
- * Returns results for each category processed.
- */
 export function importAllToCorpus(): ImportResult[] {
   const results: ImportResult[] = [];
 
-  // Find all export JSON files
   if (!fs.existsSync(EXPORTS_DIR)) {
     return [
       {
@@ -338,7 +322,6 @@ export function importAllToCorpus(): ImportResult[] {
       const text = fs.readFileSync(filePath, 'utf-8');
       const content = JSON.parse(text) as Record<string, unknown>;
 
-      // Each export file may contain multiple top-level arrays or objects
       for (const [key, value] of Object.entries(content)) {
         if (Array.isArray(value)) {
           const tableName = EXPORT_KEY_TO_TABLE[key];
@@ -362,7 +345,6 @@ export function importAllToCorpus(): ImportResult[] {
             `[Corpus] Imported ${count} items into ${tableName} from ${key}`,
           );
         } else if (typeof value === 'object' && value !== null) {
-          // Object-type exports (e.g., ExportNightwave, ExportRailjack) — store as single row
           const tableName = OBJECT_KEY_TO_TABLE[key];
           if (!tableName) {
             console.log(`[Corpus] Skipping unknown export object: ${key}`);

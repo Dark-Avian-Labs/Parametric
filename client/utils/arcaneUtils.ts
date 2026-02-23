@@ -8,15 +8,11 @@ export function getMaxRank(arcane: Arcane): number {
       return Array.isArray(stats) ? stats.length - 1 : 5;
     }
   } catch {
-    // ignored
+    // ignore
   }
   return 5;
 }
 
-/**
- * Extract description text for an arcane at a given rank.
- * If rank is omitted, uses the max rank.
- */
 export function getArcaneDescription(arcane: Arcane, rank?: number): string {
   try {
     if (arcane.level_stats) {
@@ -32,7 +28,7 @@ export function getArcaneDescription(arcane: Arcane, rank?: number): string {
       }
     }
   } catch {
-    // ignored
+    // ignore
   }
   return '';
 }

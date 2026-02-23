@@ -26,9 +26,7 @@ export interface CardPreviewProps {
   maxRank: number;
   damageValue?: string;
   damageType?: string;
-  /** Slot icon to show at top center: 'aura', 'stance', 'exilus', or '' for none */
   slotIcon?: string;
-  /** Polarity match state: 'match' (green), 'mismatch' (red), or undefined (neutral) */
   polarityMatch?: 'match' | 'mismatch';
   showGuides?: boolean;
   showOutlines?: boolean;

@@ -28,9 +28,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Scrape a single item page from Overframe.
- */
 export async function scrapeItemPage(
   entry: OverframeIndexEntry,
 ): Promise<ScrapedItemData> {
@@ -41,7 +38,6 @@ export async function scrapeItemPage(
   const html = await res.text();
   const $ = cheerio.load(html);
 
-  // Extract __NEXT_DATA__ JSON
   const scriptContent = $('#__NEXT_DATA__').html();
   if (!scriptContent) throw new Error(`No __NEXT_DATA__ found on ${url}`);
 
@@ -51,7 +47,6 @@ export async function scrapeItemPage(
   const artifactSlots: string[] = itemData.ArtifactSlots || [];
   const fireBehaviors: Record<string, unknown>[] = itemData.Behaviors || [];
 
-  // Extract ability tooltips from HTML
   const abilities: ScrapedAbility[] = [];
   $('[class*="abilityTooltip"]').each((_, tooltipEl) => {
     const $tip = $(tooltipEl);
@@ -92,12 +87,6 @@ export interface ScrapeProgress {
   phase: 'index' | 'items' | 'merging' | 'done';
 }
 
-/**
- * Scrape multiple items sequentially with a delay between requests.
- * @param entries - Items to scrape
- * @param delayMs - Delay between requests (default 1500ms)
- * @param onProgress - Progress callback
- */
 export async function scrapeItems(
   entries: OverframeIndexEntry[],
   delayMs = 1500,

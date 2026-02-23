@@ -4,9 +4,6 @@ import path from 'path';
 import { getDb } from './connection.js';
 import { EXPORTS_DIR } from '../config.js';
 
-/**
- * Process downloaded export files and populate the database.
- */
 export function processExports(): {
   warframes: number;
   weapons: number;
@@ -26,45 +23,37 @@ export function processExports(): {
     abilities: 0,
   };
 
-  // Save existing supplementary data before INSERT OR REPLACE wipes them
   const savedImagePaths = saveImagePaths();
   const savedScrapedData = saveScrapedData();
 
-  // Process Warframes
   const warframesData = readExport('ExportWarframes_en');
   if (warframesData) {
     counts.warframes = processWarframes(warframesData);
     counts.abilities = processAbilities(warframesData);
   }
 
-  // Process Weapons
   const weaponsData = readExport('ExportWeapons_en');
   if (weaponsData) {
     counts.weapons = processWeapons(weaponsData);
   }
 
-  // Process Companions
   const companionsData = readExport('ExportSentinels_en');
   if (companionsData) {
     counts.companions = processCompanions(companionsData);
   }
 
-  // Process Mods
   const upgradesData = readExport('ExportUpgrades_en');
   if (upgradesData) {
     counts.modSets = processModSets(upgradesData);
     counts.mods = processMods(upgradesData);
-    // Backfill descriptions from level stats for any mods still missing them
     backfillModDescriptions();
   }
 
-  // Process Arcanes
   const arcaneData = readExport('ExportRelicArcane_en');
   if (arcaneData) {
     counts.arcanes = processArcanes(arcaneData);
   }
 
-  // Restore supplementary data that was lost during INSERT OR REPLACE
   restoreImagePaths(savedImagePaths);
   restoreScrapedData(savedScrapedData);
 
@@ -126,9 +115,6 @@ interface ScrapedRow {
   [key: string]: string | null;
 }
 
-/**
- * Save all scraped/supplementary columns that INSERT OR REPLACE would wipe.
- */
 function saveScrapedData(): {
   warframes: ScrapedRow[];
   weapons: ScrapedRow[];
@@ -330,7 +316,6 @@ function processAbilities(data: Record<string, unknown[]>): number {
   let count = 0;
 
   const tx = db.transaction(() => {
-    // 1. Helminth / standalone abilities from ExportAbilities
     const helminthAbilities = (data.ExportAbilities || []) as Record<
       string,
       unknown
@@ -346,7 +331,6 @@ function processAbilities(data: Record<string, unknown[]>): number {
       count++;
     }
 
-    // 2. Per-warframe abilities (embedded in each warframe's abilities array)
     const warframes = (data.ExportWarframes || []) as Record<string, unknown>[];
     for (const wf of warframes) {
       const abilities = wf.abilities as
@@ -383,7 +367,7 @@ function processWeapons(data: Record<string, unknown[]>): number {
   const items = (data.ExportWeapons || []) as Record<string, unknown>[];
 
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO weapons
+    INSERT INTO weapons
     (unique_name, name, description, product_category, slot, mastery_req,
      total_damage, damage_per_shot, critical_chance, critical_multiplier,
      proc_chance, fire_rate, accuracy, magazine_size, reload_time, multishot,
@@ -393,6 +377,42 @@ function processWeapons(data: Record<string, unknown[]>): number {
      heavy_attack_damage, heavy_slam_attack, heavy_slam_radial_damage,
      heavy_slam_radius, wind_up, codex_secret, exclude_from_codex)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(unique_name) DO UPDATE SET
+      name = excluded.name,
+      description = excluded.description,
+      product_category = excluded.product_category,
+      slot = excluded.slot,
+      mastery_req = excluded.mastery_req,
+      total_damage = excluded.total_damage,
+      damage_per_shot = excluded.damage_per_shot,
+      critical_chance = excluded.critical_chance,
+      critical_multiplier = excluded.critical_multiplier,
+      proc_chance = excluded.proc_chance,
+      fire_rate = excluded.fire_rate,
+      accuracy = excluded.accuracy,
+      magazine_size = excluded.magazine_size,
+      reload_time = excluded.reload_time,
+      multishot = excluded.multishot,
+      noise = excluded.noise,
+      trigger_type = excluded.trigger_type,
+      omega_attenuation = excluded.omega_attenuation,
+      max_level_cap = excluded.max_level_cap,
+      sentinel = excluded.sentinel,
+      blocking_angle = excluded.blocking_angle,
+      combo_duration = excluded.combo_duration,
+      follow_through = excluded.follow_through,
+      range = excluded.range,
+      slam_attack = excluded.slam_attack,
+      slam_radial_damage = excluded.slam_radial_damage,
+      slam_radius = excluded.slam_radius,
+      slide_attack = excluded.slide_attack,
+      heavy_attack_damage = excluded.heavy_attack_damage,
+      heavy_slam_attack = excluded.heavy_slam_attack,
+      heavy_slam_radial_damage = excluded.heavy_slam_radial_damage,
+      heavy_slam_radius = excluded.heavy_slam_radius,
+      wind_up = excluded.wind_up,
+      codex_secret = excluded.codex_secret,
+      exclude_from_codex = excluded.exclude_from_codex
   `);
 
   const tx = db.transaction(() => {
@@ -446,10 +466,22 @@ function processCompanions(data: Record<string, unknown[]>): number {
   const items = (data.ExportSentinels || []) as Record<string, unknown>[];
 
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO companions
+    INSERT INTO companions
     (unique_name, name, description, parent_name, health, shield, armor,
      power, stamina, product_category, mastery_req, codex_secret)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(unique_name) DO UPDATE SET
+      name = excluded.name,
+      description = excluded.description,
+      parent_name = excluded.parent_name,
+      health = excluded.health,
+      shield = excluded.shield,
+      armor = excluded.armor,
+      power = excluded.power,
+      stamina = excluded.stamina,
+      product_category = excluded.product_category,
+      mastery_req = excluded.mastery_req,
+      codex_secret = excluded.codex_secret
   `);
 
   const tx = db.transaction(() => {
@@ -519,16 +551,12 @@ function processMods(data: Record<string, unknown[]>): number {
     for (const item of items) {
       const isAugment = !!item.subtype;
 
-      // Build description from top-level description and/or levelStats.
-      // Keep parsed level stats in memory first; write child rows only
-      // after the parent mod row exists to satisfy FK constraints.
       let description: string | null = null;
       const baseDesc = item.description as string[] | undefined;
       const levelStats = item.levelStats as
         | Array<{ stats?: string[] }>
         | undefined;
       if (levelStats) {
-        // Extract per-rank descriptions from levelStats
         const levelDescs = levelStats.map((ls) => {
           const stats = ls.stats;
           if (Array.isArray(stats) && stats.length > 0) {
@@ -539,9 +567,6 @@ function processMods(data: Record<string, unknown[]>): number {
         const hasLevelDescs = levelDescs.some((d) => d.length > 0);
 
         if (baseDesc && Array.isArray(baseDesc) && hasLevelDescs) {
-          // Combine: prepend base description to each rank's level stats
-          // e.g. base=["On Hit:"], levelStats=["Reveals for +1s", "Reveals for +2s", ...]
-          // => ["On Hit: Reveals for +1s", "On Hit: Reveals for +2s", ...]
           const prefix = baseDesc.join('\n').replace(/\r\n/g, '\n').trim();
           const descs = levelDescs.map((ld) =>
             ld ? `${prefix} ${ld}` : prefix,
@@ -626,7 +651,6 @@ function processArcanes(data: Record<string, unknown[]>): number {
   const db = getDb();
   const items = (data.ExportRelicArcane || []) as Record<string, unknown>[];
 
-  // Filter to actual arcanes only (CosmeticEnhancers path = arcanes; others are relics)
   const arcanes = items.filter(
     (item) =>
       typeof item.uniqueName === 'string' &&
@@ -660,11 +684,6 @@ function processArcanes(data: Record<string, unknown[]>): number {
   return arcanes.length;
 }
 
-/**
- * Backfill mod descriptions from mod_level_stats for mods that have
- * NULL or empty descriptions. This covers data imported before the
- * processMods fix that extracts descriptions from levelStats.
- */
 export function backfillModDescriptions(): number {
   const db = getDb();
 
@@ -701,7 +720,7 @@ export function backfillModDescriptions(): number {
             return (stats as string[]).join('\n').replace(/\r\n/g, '\n').trim();
           }
         } catch {
-          /* skip */
+          // ignore
         }
         return '';
       });

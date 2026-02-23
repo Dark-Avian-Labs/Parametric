@@ -30,7 +30,6 @@ interface ArchonShardSlotsProps {
   onRemove: (slotIndex: number) => void;
 }
 
-// V-shape offsets: slots 0,4 at the top, slot 2 at the bottom, slots 1,3 in between
 const V_OFFSETS = [0, 14, 28, 14, 0];
 
 export function ArchonShardSlots({
@@ -164,7 +163,6 @@ function formatBuffDescription(
   tauforged: boolean,
 ): string {
   if (!buff) return '';
-  // Replace all "BASE (TAUFORGED)" pairs, keeping the correct value
   return buff.description.replace(
     /([+-]?\d+\.?\d*%?)\s*\(([+-]?\d+\.?\d*%?)\)/g,
     (_, base, tau) => (tauforged ? tau : base),

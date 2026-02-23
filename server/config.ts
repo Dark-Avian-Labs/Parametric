@@ -4,8 +4,6 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// In dev __dirname is `server/`, one level up is the project root.
-// In production the compiled file lives at `dist/server/`, so we need two levels.
 const parentName = path.basename(path.resolve(__dirname, '..'));
 export const PROJECT_ROOT = path.resolve(
   __dirname,
@@ -36,14 +34,12 @@ if (NODE_ENV === 'production' && SESSION_SECRET === DEFAULT_SESSION_SECRET) {
 
 export const APP_NAME = 'Parametric';
 
-// Warframe Public Export URLs — ALWAYS use HTTPS
 export const MANIFEST_URL =
   'https://origin.warframe.com/PublicExport/index_en.txt.lzma';
 export const CONTENT_BASE_URL =
   'https://content.warframe.com/PublicExport/Manifest/';
 export const IMAGE_BASE_URL = 'https://content.warframe.com/PublicExport';
 
-// The export categories we need (all available from the manifest)
 export const REQUIRED_EXPORTS = [
   'ExportCustoms',
   'ExportDrones',
@@ -63,7 +59,6 @@ export const REQUIRED_EXPORTS = [
   'ExportWeapons',
 ] as const;
 
-// Auth config
 const _authMaxAttempts = parseInt(process.env.AUTH_MAX_ATTEMPTS || '5', 10);
 export const AUTH_MAX_ATTEMPTS =
   Number.isFinite(_authMaxAttempts) && _authMaxAttempts > 0
@@ -96,7 +91,6 @@ export const SECURE_COOKIES =
 export const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 export const GAME_ID = 'parametric';
 
-// Ensure data directories exist
 export function ensureDataDirs(): void {
   for (const dir of [DATA_DIR, EXPORTS_DIR, IMAGES_DIR]) {
     if (!fs.existsSync(dir)) {

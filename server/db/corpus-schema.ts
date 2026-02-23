@@ -1,10 +1,5 @@
 import type Database from 'better-sqlite3';
 
-/**
- * Create all corpus tables in corpus.db.
- * Each export category gets a table with common columns (unique_name, name, raw_json)
- * plus category-specific typed columns for the most useful fields.
- */
 export function createCorpusSchema(db: Database.Database): void {
   db.exec(`
     -- Warframes (includes Archwings, Necramechs)
@@ -285,7 +280,6 @@ export function createCorpusSchema(db: Database.Database): void {
     );
   `);
 
-  // Unified search view across all categories
   db.exec(`
     DROP VIEW IF EXISTS corpus_search;
     CREATE VIEW corpus_search AS

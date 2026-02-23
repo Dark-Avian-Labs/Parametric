@@ -36,7 +36,6 @@ export function ArcanePickerPanel({
     a.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // Dynamic card scaling — same pattern as FilterPanel
   const gridRef = useRef<HTMLDivElement>(null);
   const [cardScale, setCardScale] = useState<number>(0);
 

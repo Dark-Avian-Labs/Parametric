@@ -1,7 +1,3 @@
-// ==============================
-// Equipment types
-// ==============================
-
 export interface Warframe {
   unique_name: string;
   name: string;
@@ -14,15 +10,12 @@ export interface Warframe {
   passive_description?: string;
   passive_description_wiki?: string;
   product_category?: string;
-  // JSON array
   abilities?: string;
   aura_polarity?: string;
   exilus_polarity?: string;
-  // JSON array
   polarities?: string;
   mastery_req: number;
   image_path?: string;
-  // JSON array of polarity keys from Overframe
   artifact_slots?: string;
 }
 
@@ -34,7 +27,6 @@ export interface Weapon {
   slot?: number;
   mastery_req: number;
   total_damage?: number;
-  // JSON array of 20 floats
   damage_per_shot?: string;
   critical_chance?: number;
   critical_multiplier?: number;
@@ -48,7 +40,6 @@ export interface Weapon {
   trigger_type?: string;
   omega_attenuation?: number;
   sentinel?: number;
-  // Melee-specific
   blocking_angle?: number;
   combo_duration?: number;
   follow_through?: number;
@@ -57,9 +48,7 @@ export interface Weapon {
   heavy_attack_damage?: number;
   wind_up?: number;
   image_path?: string;
-  // JSON array of polarity keys from Overframe
   artifact_slots?: string;
-  // JSON: weapon fire behavior data from Overframe
   fire_behaviors?: string;
 }
 
@@ -74,13 +63,8 @@ export interface Companion {
   product_category?: string;
   mastery_req: number;
   image_path?: string;
-  // JSON array of polarity keys from Overframe
   artifact_slots?: string;
 }
-
-// ==============================
-// Mod types
-// ==============================
 
 export type ModRarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'LEGENDARY';
 
@@ -96,34 +80,24 @@ export interface Mod {
   is_utility?: number;
   is_augment?: number;
   subtype?: string;
-  // JSON array
   description?: string;
   image_path?: string;
-  // unique_name of the mod set
   mod_set?: string;
-  // how many mods in the set
   set_num_in_set?: number;
-  // JSON array of set bonus descriptions per rank
   set_stats?: string;
 }
 
 export interface ModLevelStat {
   mod_unique_name: string;
   rank: number;
-  // JSON
   stats: string;
 }
 
 export interface ModSet {
   unique_name: string;
   num_in_set?: number;
-  // JSON array
   stats?: string;
 }
-
-// ==============================
-// Abilities
-// ==============================
 
 export interface Ability {
   unique_name: string;
@@ -132,14 +106,9 @@ export interface Ability {
   warframe_unique_name?: string;
   is_helminth_extractable?: number;
   image_path?: string;
-  // JSON: { energy_cost, strength, duration, range, misc }
   wiki_stats?: string;
   energy_cost?: number;
 }
-
-// ==============================
-// Build types
-// ==============================
 
 export type EquipmentType =
   | 'warframe'
@@ -161,7 +130,6 @@ export interface ModSlot {
   polarity?: string;
   mod?: Mod;
   rank?: number;
-  // user-chosen number of active set pieces (1..set_num_in_set)
   setRank?: number;
 }
 
@@ -193,7 +161,6 @@ export interface BuildConfig {
   orokinReactor?: boolean;
 }
 
-/** A build with metadata for display in the overview. */
 export interface StoredBuild extends BuildConfig {
   id: string;
   equipment_name: string;
@@ -202,7 +169,6 @@ export interface StoredBuild extends BuildConfig {
   updated_at: string;
 }
 
-/** Equipment type labels for display */
 export const EQUIPMENT_TYPE_LABELS: Record<EquipmentType, string> = {
   warframe: 'Warframes',
   primary: 'Primary',
@@ -216,7 +182,6 @@ export const EQUIPMENT_TYPE_LABELS: Record<EquipmentType, string> = {
   kdrive: 'K-Drive',
 };
 
-/** Canonical category order for display */
 export const EQUIPMENT_TYPE_ORDER: EquipmentType[] = [
   'warframe',
   'primary',
@@ -229,10 +194,6 @@ export const EQUIPMENT_TYPE_ORDER: EquipmentType[] = [
   'necramech',
   'kdrive',
 ];
-
-// ==============================
-// Polarity types
-// ==============================
 
 export const POLARITIES = {
   AP_ATTACK: 'Madurai',
@@ -264,10 +225,6 @@ export const REGULAR_POLARITIES: readonly string[] = [
   AP_POWER,
   AP_PRECEPT,
 ];
-
-// ==============================
-// Damage types
-// ==============================
 
 export const DAMAGE_TYPES = [
   'Impact',
@@ -314,11 +271,6 @@ export const ELEMENT_COMBINATIONS: Record<
   Viral: { a: 'Cold', b: 'Toxin' },
 };
 
-/**
- * The element combination priority order (HCET).
- * When a weapon has two innate elements, the one appearing earlier
- * in this order goes to slot 9, the other to slot 10.
- */
 export const ELEMENT_PRIORITY: PrimaryElement[] = [
   'Heat',
   'Cold',
@@ -326,17 +278,12 @@ export const ELEMENT_PRIORITY: PrimaryElement[] = [
   'Toxin',
 ];
 
-// ==============================
-// Slot configuration per equipment type
-// ==============================
-
 export interface EquipmentSlotConfig {
   generalSlots: number;
   hasAura: boolean;
   hasStance: boolean;
   hasExilus: boolean;
   hasPosture: boolean;
-  /** Second aura slot (only Jade) */
   hasSecondAura: boolean;
 }
 

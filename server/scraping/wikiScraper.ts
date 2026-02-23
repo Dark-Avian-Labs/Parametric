@@ -8,8 +8,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ─────────────────────────── Types ───────────────────────────
-
 export interface WikiAbilityStats {
   energy_cost: number | null;
   strength: string | null;
@@ -74,8 +72,6 @@ export interface WikiScrapeProgress {
   log: string[];
 }
 
-// ─────────────────────── Ability Scraper ──────────────────────
-
 function lastRankValue(text: string): string {
   const parts = text
     .split('/')
@@ -84,10 +80,6 @@ function lastRankValue(text: string): string {
   return parts[parts.length - 1] || text.trim();
 }
 
-/**
- * Extract stat value from the float:right span text inside a stat td.
- * Returns max-rank value only.
- */
 function cleanStatValue(raw: string): string | null {
   const text = raw.trim();
   if (!text || text === 'N/A') return null;
@@ -126,7 +118,6 @@ async function scrapeAbilityPage(
   let range: string | null = null;
   const misc: string[] = [];
 
-  // Energy cost: the <b style="font-size:16px;"> next to the Ability_Efficiency link
   abilityBox.find('a[href="/w/Ability_Efficiency"]').each((_, el) => {
     const b = $(el).find('b[style*="font-size"]');
     if (b.length) {
@@ -139,7 +130,6 @@ async function scrapeAbilityPage(
       if (!isNaN(val)) energy_cost = val;
     }
   });
-  // Fallback: find <b> with font-size:16px directly adjacent to energy orb
   if (energy_cost === null) {
     abilityBox.find('b[style*="font-size:16px"]').each((_, el) => {
       const val = parseInt($(el).text().trim(), 10);
@@ -147,7 +137,6 @@ async function scrapeAbilityPage(
     });
   }
 
-  // Stats: use the data-param-name tooltip spans to identify stat rows
   abilityBox.find('td').each((_, td) => {
     const $td = $(td);
 
@@ -167,7 +156,6 @@ async function scrapeAbilityPage(
     }
   });
 
-  // Misc section: items separated by <br> tags
   abilityBox.find('td').each((_, td) => {
     const $td = $(td);
     const boldTitle = $td.find('b[title*="unlisted"]');
@@ -176,7 +164,6 @@ async function scrapeAbilityPage(
     const miscSpan = $td.find('span[style*="float:right"]').first();
     if (miscSpan.length === 0) return;
 
-    // Replace <br> with newlines before extracting text
     miscSpan.find('br').replaceWith('\n');
     const lines = miscSpan
       .text()
@@ -192,10 +179,6 @@ async function scrapeAbilityPage(
   return { energy_cost, strength, duration, range, misc };
 }
 
-/**
- * Resolve correct wiki URLs for abilities by fetching each warframe's /Abilities page.
- * Returns a map of ability name -> resolved wiki URL.
- */
 async function resolveAbilityUrls(
   abilities: { name: string; wf_name: string | null }[],
   onProgress?: (msg: string) => void,
@@ -250,7 +233,6 @@ async function resolveAbilityUrls(
     }
   }
 
-  // Helminth abilities page
   const helminthAbilities = abilities
     .filter((a) => !a.wf_name)
     .map((a) => a.name);
@@ -279,16 +261,13 @@ async function resolveAbilityUrls(
       }
       await sleep(500);
     } catch {
-      /* fallback strategies will handle it */
+      // ignore
     }
   }
 
   return resolved;
 }
 
-/**
- * Try scraping an ability page with fallback URL strategies.
- */
 async function scrapeAbilityWithFallbacks(
   name: string,
   resolvedUrl?: string,
@@ -298,13 +277,11 @@ async function scrapeAbilityWithFallbacks(
     if (result) return result;
   }
 
-  // Direct slug from name
   const result = await scrapeAbilityPage(name);
   if (result) return result;
 
   const slug = name.replace(/ /g, '_');
 
-  // Title-case each word (handles "Marked for Death" → "Marked_For_Death")
   const titleCased = name
     .split(' ')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -317,7 +294,6 @@ async function scrapeAbilityWithFallbacks(
     if (r) return r;
   }
 
-  // Disambiguation: Name_(Ability)
   const r2 = await scrapeAbilityPage(
     name,
     `${WIKI_BASE}/w/${wikiSlug(`${slug}_(Ability)`)}`,
@@ -327,10 +303,6 @@ async function scrapeAbilityWithFallbacks(
   return null;
 }
 
-/**
- * Scrape ability pages for abilities in our DB.
- * @param onlyMissing - If true, skip abilities that already have wiki_stats data
- */
 export async function scrapeAbilities(
   onProgress?: (msg: string) => void,
   onlyMissing = false,
@@ -398,8 +370,6 @@ export async function scrapeAbilities(
   return results;
 }
 
-// ─────────────────────── Passive Scraper ─────────────────────
-
 async function scrapeWarframePage(wfName: string): Promise<string | null> {
   const slug = wfName.replace(/ /g, '_');
   const url = `${WIKI_BASE}/w/${encodeURIComponent(slug)}`;
@@ -410,7 +380,6 @@ async function scrapeWarframePage(wfName: string): Promise<string | null> {
   const html = await res.text();
   const $ = cheerio.load(html);
 
-  // Try infobox passive extraction
   const infobox = $('div.infobox').first();
   if (infobox.length > 0) {
     const text = infobox.text();
@@ -422,7 +391,6 @@ async function scrapeWarframePage(wfName: string): Promise<string | null> {
     }
   }
 
-  // Fallback: look for the h3 Passive header
   const passiveHeader = $('h3:contains("Passive")').first();
   if (passiveHeader.length > 0) {
     const nextP = passiveHeader.nextAll('p').first();
@@ -434,11 +402,6 @@ async function scrapeWarframePage(wfName: string): Promise<string | null> {
   return null;
 }
 
-/**
- * Scrape passive descriptions for all warframes.
- * Only scrape base versions — skip Primes, Umbras, and variants (they share passives).
- * @param onlyMissing - If true, skip warframes that already have passive_description_wiki
- */
 export async function scrapePassives(
   onProgress?: (msg: string) => void,
   onlyMissing = false,
@@ -493,12 +456,6 @@ export async function scrapePassives(
   return results;
 }
 
-// ─────────────────── Augment Association Scraper ─────────────
-
-/**
- * Extract a balanced-brace block starting after the opening { at `startIdx`.
- * Returns the content between the outer braces.
- */
 function extractBraceBlock(lua: string, startIdx: number): string {
   let depth = 1;
   let i = startIdx;
@@ -510,10 +467,6 @@ function extractBraceBlock(lua: string, startIdx: number): string {
   return lua.substring(startIdx, i - 1);
 }
 
-/**
- * Parse the Module:Ability/data Lua table to extract augment→ability mappings.
- * Uses InternalName for direct DB matching.
- */
 async function fetchAugmentMappings(): Promise<WikiAugmentMapping[]> {
   const url = `${WIKI_BASE}/w/Module:Ability/data?action=raw`;
   const res = await fetch(url);
@@ -523,7 +476,6 @@ async function fetchAugmentMappings(): Promise<WikiAugmentMapping[]> {
   const lua = await res.text();
   const mappings: WikiAugmentMapping[] = [];
 
-  // Find each ability entry: ["AbilityName"] = {
   const entryPattern = /\["([^"]+)"\]\s*=\s*\{/g;
   let match;
 
@@ -564,18 +516,11 @@ export async function scrapeAugments(
   return mappings;
 }
 
-// ─────────────────── Archon Shard Scraper ────────────────────
-
-/**
- * Parse buff text like "+25% (+37.5%) Melee Critical Damage" into values.
- * Returns the first (base, tauforged) number pair found.
- */
 function parseBuffValues(text: string): {
   base: number;
   tauforged: number;
   isPercent: boolean;
 } {
-  // Pattern: optional + then number optionally with %, then (number optionally with %)
   const m = text.match(
     /\+?(\d+(?:\.\d+)?)(%?)\s*\((?:\+?(\d+(?:\.\d+)?))(%?)\)/,
   );
@@ -618,13 +563,11 @@ export async function scrapeArchonShards(
   let buffSortOrder = 0;
 
   table.find('tr').each((i, row) => {
-    // Skip header
     if (i === 0) return;
 
     const cells = $(row).find('td');
     let buffCellIdx = 0;
 
-    // Check if this row starts a new shard type (has a rowspan cell)
     const rowspanCell = cells.filter('[rowspan]').first();
     if (rowspanCell.length > 0) {
       const paramSpan = rowspanCell
@@ -650,11 +593,9 @@ export async function scrapeArchonShards(
         sort_order: shardSortOrder,
       });
 
-      // Buff text is the next cell
       buffCellIdx = 1;
     }
 
-    // Get the buff description cell
     const buffCell = cells.eq(buffCellIdx);
     const buffText = buffCell.text().trim();
     if (!buffText || !currentShardId) return;
@@ -676,8 +617,6 @@ export async function scrapeArchonShards(
   onProgress?.(`Found ${types.length} shard types with ${buffs.length} buffs`);
   return { types, buffs };
 }
-
-// ─────────────────────── Merge into DB ───────────────────────
 
 export interface WikiMergeResult {
   abilitiesUpdated: number;
@@ -706,7 +645,6 @@ export function mergeWikiData(
   const updatePassive = db.prepare(
     'UPDATE warframes SET passive_description_wiki = ? WHERE unique_name = ?',
   );
-  // Also propagate to Prime/Umbra variants
   const updatePassiveLike = db.prepare(
     `UPDATE warframes SET passive_description_wiki = ?
      WHERE unique_name LIKE ? AND passive_description_wiki IS NULL`,
@@ -730,7 +668,6 @@ export function mergeWikiData(
       const changes = updatePassive.run(p.passive, p.uniqueName);
       if (changes.changes > 0) result.passivesUpdated++;
 
-      // Propagate to variants: /Lotus/Powersuits/Excalibur/Excalibur → match /Lotus/Powersuits/Excalibur/%
       const pathBase = `${p.uniqueName.substring(0, p.uniqueName.lastIndexOf('/') + 1)}%`;
       updatePassiveLike.run(p.passive, pathBase);
     }
@@ -740,7 +677,6 @@ export function mergeWikiData(
       if (changes.changes > 0) result.augmentsUpdated++;
     }
 
-    // Archon shards: clear and re-insert for clean data
     if (data.shards.types.length > 0) {
       db.prepare('DELETE FROM archon_shard_buffs').run();
       db.prepare('DELETE FROM archon_shard_types').run();
@@ -786,8 +722,6 @@ export function mergeWikiData(
   return result;
 }
 
-// ──────────────────── Full Pipeline ──────────────────────────
-
 export async function runWikiScrape(
   onProgress?: (progress: WikiScrapeProgress) => void,
   onlyMissing = false,
@@ -805,15 +739,12 @@ export async function runWikiScrape(
     onProgress?.(state);
   };
 
-  // Phase 1: Augments (always refresh — single HTTP request, instant)
   state.phase = 'augments';
   const augments = await scrapeAugments(log);
 
-  // Phase 1b: Archon Shards (single page scrape)
   state.phase = 'shards';
   const shards = await scrapeArchonShards(log);
 
-  // Phase 2: Abilities
   state.phase = 'abilities';
   const abilities = await scrapeAbilities((msg) => {
     const m = msg.match(/\[(\d+)\/(\d+)\]\s*(.*)/);
@@ -825,7 +756,6 @@ export async function runWikiScrape(
     log(msg);
   }, onlyMissing);
 
-  // Phase 3: Passives
   state.phase = 'passives';
   const passives = await scrapePassives((msg) => {
     const m = msg.match(/\[(\d+)\/(\d+)\]\s*(.*)/);
@@ -837,7 +767,6 @@ export async function runWikiScrape(
     log(msg);
   }, onlyMissing);
 
-  // Phase 4: Merge
   state.phase = 'merging';
   log('Merging wiki data into database...');
   const result = mergeWikiData({ abilities, passives, augments, shards }, log);

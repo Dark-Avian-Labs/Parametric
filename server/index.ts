@@ -45,7 +45,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 ensureDataDirs();
 createAppSchema();
 
-// Initialise central DB schema (users, game_access, sessions)
 const centralDb = getCentralDb();
 createCentralSchema(centralDb);
 console.log(`[${APP_NAME}] Central DB ready (${CENTRAL_DB_PATH})`);
@@ -66,14 +65,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Persistent session store backed by central.db
 const sessionStore = new SQLiteStore({
   client: centralDb,
   expired: { clear: true, intervalMs: 15 * 60 * 1000 },
 });
 
 const cookieOptions: express.CookieOptions = {
-  // 7 days
   maxAge: 7 * 24 * 60 * 60 * 1000,
   httpOnly: true,
   secure: SECURE_COOKIES,
@@ -120,7 +117,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiting on auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -150,7 +146,6 @@ const publicPageLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Auth routes (login, register, csrf, etc.) - no game access required
 app.use('/api/auth', authRouter);
 
 app.use('/api/import', adminApiLimiter, requireAdmin, importRouter);

@@ -29,7 +29,6 @@ const CATEGORY_API: Record<EquipmentType, string> = {
   companion: '/api/companions',
   archwing: '/api/warframes',
   necramech: '/api/warframes',
-  // No K-Drive data available in exports
   kdrive: '',
 };
 
@@ -58,7 +57,6 @@ export function EquipmentGridModal({
       .then((data) => {
         let list: EquipmentItem[] = data.items || [];
 
-        // Filter warframes/archwings/necramechs by their actual DB product_category
         if (activeTab === 'warframe') {
           list = list.filter((i) => {
             const cat = i.product_category;

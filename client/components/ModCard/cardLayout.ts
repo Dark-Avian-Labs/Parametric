@@ -1,7 +1,3 @@
-// ==============================
-// Shared card layout types, defaults, and helpers
-// ==============================
-
 export const RARITIES = [
   'Empty',
   'Common',
@@ -80,9 +76,6 @@ export function getModAsset(
   return `/icons/mods/${rarity}${part}.png`;
 }
 
-/** Map DB rarity (COMMON, UNCOMMON, etc.) to card rarity name.
- *  Pass the mod name or unique_name to detect special visual rarities
- *  like Archon mods (which are RARE in the DB but use distinct borders). */
 export function dbRarityToCardRarity(
   dbRarity?: string,
   modName?: string,
@@ -102,7 +95,6 @@ export function dbRarityToCardRarity(
   }
 }
 
-/** Detect Archon rarity mods by name prefix or unique_name path */
 export function isArchonMod(nameOrUniqueName: string): boolean {
   return (
     nameOrUniqueName.startsWith('Archon ') ||
@@ -110,7 +102,6 @@ export function isArchonMod(nameOrUniqueName: string): boolean {
   );
 }
 
-/** Map DB polarity key (AP_ATTACK, etc.) to lowercase icon name */
 export function dbPolarityToIconName(dbPolarity?: string): string {
   switch (dbPolarity) {
     case 'AP_ATTACK':
@@ -134,101 +125,79 @@ export function dbPolarityToIconName(dbPolarity?: string): string {
   }
 }
 
-// ==============================
-// Layout interface & defaults
-// ==============================
-
 export interface CardLayout {
-  // Card container
   cardWidth: number;
   cardHeight: number;
   collapsedHeight: number;
   cardOffsetY: number;
 
-  // Background
   bgOffsetX: number;
   bgOffsetY: number;
   bgWidth: number;
   bgHeight: number;
 
-  // Mod art (the gameplay image)
   artOffsetX: number;
   artOffsetY: number;
   artWidth: number;
   artHeight: number;
 
-  // Frame top
   frameTopOffsetX: number;
   frameTopOffsetY: number;
   frameTopWidth: number;
   frameTopHeight: number;
 
-  // Frame bottom
   frameBotOffsetX: number;
   frameBotOffsetY: number;
   frameBotWidth: number;
   frameBotHeight: number;
 
-  // Side lights (left)
   sideLeftOffsetX: number;
   sideLeftOffsetY: number;
   sideLeftWidth: number;
   sideLeftHeight: number;
 
-  // Lower tab (rank area)
   lowerTabOffsetX: number;
   lowerTabOffsetY: number;
   lowerTabWidth: number;
   lowerTabHeight: number;
 
-  // Polarity icon
   polarityOffsetX: number;
   polarityOffsetY: number;
   polaritySize: number;
 
-  // Slot icon (aura/stance/exilus) — top center
   slotIconOffsetY: number;
   slotIconSize: number;
 
-  // Text content area (art clipping boundary)
   contentAreaY: number;
 
-  // Text block
   textPaddingX: number;
   nameOffsetY: number;
   nameFontSize: number;
 
-  // Mod description text
   descOffsetY: number;
   descFontSize: number;
 
-  // Lower tab type text
   typeFontSize: number;
 
-  // Rank stars
   rankOffsetY: number;
   rankStarSize: number;
   rankStarGap: number;
 
-  // Drain badge (background shape)
   drainOffsetX: number;
   drainOffsetY: number;
   drainBadgeWidth: number;
   drainBadgeHeight: number;
 
-  // Drain number text (independent position)
   drainTextOffsetX: number;
   drainTextOffsetY: number;
   drainFontSize: number;
 
-  // Damage badge (top-left)
   damageBadgeOffsetX: number;
   damageBadgeOffsetY: number;
   damageBadgeWidth: number;
   damageBadgeHeight: number;
   damageBadgeFontSize: number;
 
-  // Collapsed-specific overrides
   collapsedArtHeight: number;
   collapsedFrameBotOffsetY: number;
   collapsedFrameBotHeight: number;
@@ -237,13 +206,8 @@ export interface CardLayout {
   collapsedRankOffsetY: number;
   collapsedRankStarSize: number;
 
-  // Overall scale
   scale: number;
 }
-
-// ==============================
-// Arcane card layout
-// ==============================
 
 export interface ArcaneCardLayout {
   cardWidth: number;
@@ -251,29 +215,24 @@ export interface ArcaneCardLayout {
   collapsedHeight: number;
   cardOffsetY: number;
 
-  // Background (from /icons/arcane/)
   bgOffsetX: number;
   bgOffsetY: number;
   bgWidth: number;
   bgHeight: number;
 
-  // Art overlay
   artOffsetX: number;
   artOffsetY: number;
   artWidth: number;
   artHeight: number;
 
-  // Name text
   textPaddingX: number;
   nameOffsetY: number;
   nameFontSize: number;
 
-  // Diamond rank row
   diamondOffsetY: number;
   diamondSize: number;
   diamondGap: number;
 
-  // Collapsed overrides
   collapsedArtHeight: number;
   collapsedNameOffsetY: number;
   collapsedNameFontSize: number;
@@ -333,10 +292,6 @@ export function getArcaneAsset(rarity?: string): string {
   const key = map[(rarity || '').toUpperCase()] || 'empty';
   return `/icons/arcane/${key}.png`;
 }
-
-// ==============================
-// Mod card defaults
-// ==============================
 
 export const DEFAULT_LAYOUT: CardLayout = {
   cardWidth: 256,

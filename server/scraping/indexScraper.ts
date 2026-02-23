@@ -9,7 +9,6 @@ export interface OverframeIndexEntry {
   slug: string;
   name: string;
   category: string;
-  /** Our DB unique_name if matched, otherwise null */
   dbUniqueName: string | null;
 }
 
@@ -22,9 +21,6 @@ const CATEGORY_URLS: Record<string, string> = {
   companion: '/build/new/sentinels/',
 };
 
-/**
- * Fetch a single category page and extract item links.
- */
 async function scrapeCategory(
   category: string,
   urlPath: string,
@@ -53,11 +49,6 @@ async function scrapeCategory(
   return entries;
 }
 
-/**
- * Match scraped entries against our DB by item name.
- * Returns only entries that have a matching DB row.
- * If onlyMissing is true, filters out entries that already have artifact_slots data.
- */
 function matchToDb(
   entries: OverframeIndexEntry[],
   onlyMissing = false,
@@ -111,12 +102,6 @@ export interface IndexScrapeResult {
   entries: OverframeIndexEntry[];
 }
 
-/**
- * Scrape all category index pages and match to DB.
- * @param categories - Optional list of categories to scrape (defaults to all)
- * @param onProgress - Optional callback for progress updates
- * @param onlyMissing - If true, skip items that already have artifact_slots data
- */
 export async function scrapeIndex(
   categories?: string[],
   onProgress?: (msg: string) => void,

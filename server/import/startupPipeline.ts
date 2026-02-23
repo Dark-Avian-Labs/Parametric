@@ -31,22 +31,10 @@ function hasDbData(): boolean {
   }
 }
 
-/**
- * Run the full data pipeline on startup, skipping steps where data already exists.
- *
- * Steps:
- * 1. Ensure schema exists
- * 2. Download manifest + export files (hash-based skip)
- * 3. Process exports into DB (only if new data downloaded)
- * 4. Download images (hash-based skip)
- * 5. Overframe scrape (only items missing artifact_slots)
- * 6. Wiki scrape (only abilities/passives missing data)
- */
 export async function runStartupPipeline(): Promise<void> {
   const startTime = Date.now();
   console.log(`${TAG} Starting data pipeline...`);
 
-  // Step 1: Schema
   try {
     createAppSchema();
   } catch (err) {
@@ -54,7 +42,6 @@ export async function runStartupPipeline(): Promise<void> {
     return;
   }
 
-  // Step 2: Download exports (hash-based, skips unchanged files)
   try {
     await runImportPipeline((status) => {
       if (status.error) {
@@ -74,7 +61,6 @@ export async function runStartupPipeline(): Promise<void> {
     }
   }
 
-  // Step 3: Process exports into DB
   try {
     console.log(`${TAG} Processing exports into database...`);
     const counts = processExports();
@@ -90,11 +76,10 @@ export async function runStartupPipeline(): Promise<void> {
     );
     if (!hasDbData()) {
       console.error(`${TAG} No DB data available, cannot continue to scrapers`);
-      return;
     }
+    return;
   }
 
-  // Step 4: Download images (hash-based skip)
   try {
     const imgResult = await downloadImages((done, total, current) => {
       if (done === 1 || done % 500 === 0 || done === total) {
@@ -115,7 +100,6 @@ export async function runStartupPipeline(): Promise<void> {
     );
   }
 
-  // Step 5: Overframe scrape (only missing items)
   try {
     const indexResult = await scrapeIndex(
       undefined,
@@ -154,7 +138,6 @@ export async function runStartupPipeline(): Promise<void> {
     );
   }
 
-  // Step 6: Wiki scrape (only missing data)
   try {
     const wikiResult = await runWikiScrape((p) => {
       if (p.log.length > 0) {

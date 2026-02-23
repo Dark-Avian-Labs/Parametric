@@ -9,6 +9,7 @@ on:
     paths:
       - 'client/**'
       - 'server/**'
+      - 'icons/**'
       - 'package*.json'
       - 'tsconfig.json'
       - 'tsconfig.server.json'
@@ -58,7 +59,6 @@ jobs:
           --exclude='/.env.local' \
           --exclude='/logs/' \
           --exclude='/data/' \
-          --exclude='/icons/' \
           -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
           /tmp/deploy/ \
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}/

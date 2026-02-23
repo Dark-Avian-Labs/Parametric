@@ -1,10 +1,5 @@
 import type Database from 'better-sqlite3';
 
-/**
- * Create the central database schema (users, game access, sessions).
- * Matches the Corpus central schema exactly so both apps can share the same DB.
- * All statements are idempotent (CREATE IF NOT EXISTS).
- */
 export function createCentralSchema(db: Database.Database): void {
   db.pragma('foreign_keys = ON');
   db.exec(`

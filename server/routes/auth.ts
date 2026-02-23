@@ -33,19 +33,12 @@ authRouter.use(
   }),
 );
 
-/**
- * GET /api/auth/csrf
- * Provide the CSRF token for the SPA client.
- */
 authRouter.get('/csrf', (req: Request, res: Response) => {
   const token =
     (res.locals as { csrfToken?: string }).csrfToken ?? req.session.csrfToken;
   res.json({ csrfToken: token ?? '' });
 });
 
-/**
- * POST /api/auth/login
- */
 authRouter.post('/login', async (req: Request, res: Response) => {
   const data = validateBody(loginSchema, req.body, res);
   if (!data) return;
@@ -78,9 +71,6 @@ authRouter.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/auth/logout
- */
 authRouter.post('/logout', (req: Request, res: Response) => {
   req.session.destroy((err) => {
     if (err) {
@@ -91,9 +81,6 @@ authRouter.post('/logout', (req: Request, res: Response) => {
   });
 });
 
-/**
- * GET /api/auth/me
- */
 authRouter.get('/me', (req: Request, res: Response) => {
   if (!req.session.user_id) {
     res.json({ authenticated: false, has_game_access: false });
@@ -113,9 +100,6 @@ authRouter.get('/me', (req: Request, res: Response) => {
   });
 });
 
-/**
- * POST /api/auth/register (admin only)
- */
 authRouter.post(
   '/register',
   requireAdmin,
@@ -141,9 +125,6 @@ authRouter.post(
   },
 );
 
-/**
- * GET /api/auth/users (admin only)
- */
 authRouter.get('/users', requireAdmin, (_req: Request, res: Response) => {
   try {
     const users = getAllUsers();
@@ -154,9 +135,6 @@ authRouter.get('/users', requireAdmin, (_req: Request, res: Response) => {
   }
 });
 
-/**
- * DELETE /api/auth/users/:id (admin only)
- */
 authRouter.delete('/users/:id', requireAdmin, (req: Request, res: Response) => {
   const targetId = parseInt(String(req.params.id), 10);
   if (isNaN(targetId)) {
@@ -172,9 +150,6 @@ authRouter.delete('/users/:id', requireAdmin, (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-/**
- * POST /api/auth/change-password
- */
 authRouter.post(
   '/change-password',
   requireAuth,
@@ -200,10 +175,6 @@ authRouter.post(
   },
 );
 
-/**
- * POST /api/auth/game-access (admin only)
- * Toggle game access for a user.
- */
 authRouter.post('/game-access', requireAdmin, (req: Request, res: Response) => {
   try {
     const data = validateBody(gameAccessSchema, req.body, res);
@@ -217,10 +188,6 @@ authRouter.post('/game-access', requireAdmin, (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/auth/users/:id/games (admin only)
- * List game access for a user.
- */
 authRouter.get(
   '/users/:id/games',
   requireAdmin,

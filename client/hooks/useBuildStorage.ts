@@ -21,11 +21,6 @@ function writeBuilds(builds: StoredBuild[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(builds));
 }
 
-/**
- * Hook for managing build storage.
- * Uses localStorage for dev/anonymous, API for authenticated users.
- * Currently implements localStorage only.
- */
 export function useBuildStorage() {
   const [builds, setBuilds] = useState<StoredBuild[]>([]);
   const [loading, setLoading] = useState(true);

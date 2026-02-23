@@ -231,8 +231,6 @@ function WarframeStats({
   );
 }
 
-// ---- Damage type tag → element icon mapping ----
-
 const DT_ICON_MAP: Record<string, string> = {
   DT_IMPACT: '01_impact',
   DT_IMPACT_COLOR: '01_impact',
@@ -269,13 +267,11 @@ const DT_ICON_MAP: Record<string, string> = {
 };
 
 function PassiveText({ text }: { text: string }) {
-  // Split by <TAG> and |VAR| tokens, preserving them
   const parts = text.split(/(<[^>]+>|\|[A-Z_]+\|)/g);
 
   return (
     <span className="inline">
       {parts.map((part, i) => {
-        // <DT_xxx> or <AFFINITY_SHARE> etc.
         const tagMatch = part.match(/^<([^>]+)>$/);
         if (tagMatch) {
           const tag = tagMatch[1];
@@ -292,11 +288,9 @@ function PassiveText({ text }: { text: string }) {
               />
             );
           }
-          // Non-icon tags like <AFFINITY_SHARE> — strip, they just add flavor text coloring
           return null;
         }
 
-        // |VAR| placeholders — actual values not in API, show "?" styled
         const varMatch = part.match(/^\|([A-Z_]+)\|$/);
         if (varMatch) {
           return (
@@ -310,7 +304,6 @@ function PassiveText({ text }: { text: string }) {
           );
         }
 
-        // Plain text
         return <span key={i}>{part}</span>;
       })}
     </span>
@@ -325,10 +318,6 @@ interface FireBehavior {
 
 type StatColor = 'text-foreground' | 'text-green-400' | 'text-red-400';
 
-/**
- * Determine color for a modded stat. `lowerIsBetter` inverts the coloring
- * (e.g. reload time: lower = green, higher = red).
- */
 function statColor(
   base: number,
   modded: number,

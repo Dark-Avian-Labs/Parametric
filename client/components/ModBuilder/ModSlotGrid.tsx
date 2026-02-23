@@ -241,8 +241,6 @@ export function ModSlotGrid({
   );
 }
 
-// ---- Polarity Icon ----
-
 function PolarityIcon({
   polarity,
   mod,
@@ -257,15 +255,12 @@ function PolarityIcon({
   const iconName = POLARITY_ICONS[polarity];
   if (!iconName) return null;
 
-  // Determine color: green if mod matches, red if mismatched, neutral if no mod
   let filterStyle = 'brightness(0) invert(1) opacity(0.7)';
   if (mod?.polarity) {
     if (mod.polarity === polarity) {
-      // green
       filterStyle =
         'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(85deg)';
     } else {
-      // red
       filterStyle =
         'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(-10deg)';
     }
@@ -285,8 +280,6 @@ function PolarityIcon({
   );
 }
 
-// ---- Individual slot cell ----
-
 interface SlotCellProps {
   slot: ModSlot;
   active?: boolean;
@@ -301,7 +294,6 @@ interface SlotCellProps {
   label?: string;
 }
 
-// Fixed dimensions for all slot cells (collapsed card at scale 0.75)
 const SLOT_SCALE = 0.75;
 const SLOT_W = Math.round(DEFAULT_LAYOUT.cardWidth * SLOT_SCALE);
 const SLOT_H = Math.round(DEFAULT_LAYOUT.collapsedHeight * SLOT_SCALE);

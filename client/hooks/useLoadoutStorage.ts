@@ -85,7 +85,6 @@ export function useLoadoutStorage() {
       const loadout = all.find((l) => l.id === loadoutId);
       if (!loadout) return;
 
-      // Replace existing build in same slot
       loadout.builds = loadout.builds.filter((b) => b.slot_type !== slotType);
       loadout.builds.push({ build_id: buildId, slot_type: slotType });
       loadout.updated_at = new Date().toISOString();

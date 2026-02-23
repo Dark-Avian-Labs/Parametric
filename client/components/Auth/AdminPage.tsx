@@ -332,10 +332,6 @@ export function AdminPage() {
   );
 }
 
-// ==============================
-// Archon Shard Admin
-// ==============================
-
 function ArchonShardAdmin() {
   const { data, refetch } = useApi<{ shards: ShardType[] }>(
     '/api/archon-shards',

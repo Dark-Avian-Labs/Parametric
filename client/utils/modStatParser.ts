@@ -1,7 +1,6 @@
 import type { Mod, ModSlot } from '../types/warframe';
 
 export interface StatEffects {
-  // Weapon stats
   baseDamage: number;
   multishot: number;
   critChance: number;
@@ -19,7 +18,6 @@ export interface StatEffects {
   heatDamage: number;
   coldDamage: number;
   electricityDamage: number;
-  // Warframe stats
   health: number;
   shield: number;
   armor: number;
@@ -85,7 +83,6 @@ const STAT_PATTERNS: Array<{ regex: RegExp; key: keyof StatEffects }> = [
   },
   { regex: /([+-][\d.]+)%\s+(?:<[^>]+>)?Toxin/i, key: 'toxinDamage' },
   { regex: /([+-][\d.]+)%\s+Damage to \w+/i, key: 'factionDamage' },
-  // Warframe stats
   { regex: /([+-][\d.]+)%\s+Health/i, key: 'health' },
   { regex: /([+-][\d.]+)%\s+Shield Capacity/i, key: 'shield' },
   { regex: /([+-][\d.]+)%\s+Armor/i, key: 'armor' },
@@ -97,10 +94,6 @@ const STAT_PATTERNS: Array<{ regex: RegExp; key: keyof StatEffects }> = [
   { regex: /([+-][\d.]+)%\s+Ability Range/i, key: 'abilityRange' },
 ];
 
-/**
- * Parse a single mod's description at a given rank into structured stat bonuses.
- * Values are returned as decimals (e.g. +165% -> 1.65).
- */
 export function parseModEffects(mod: Mod, rank: number): StatEffects {
   const effects = emptyEffects();
   if (!mod.description) return effects;
@@ -132,9 +125,6 @@ export function parseModEffects(mod: Mod, rank: number): StatEffects {
   return effects;
 }
 
-/**
- * Aggregate stat effects from all equipped mods in the slot array.
- */
 export function aggregateAllMods(slots: ModSlot[]): StatEffects {
   const total = emptyEffects();
 

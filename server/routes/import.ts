@@ -33,10 +33,6 @@ importRouter.use(
 let importRunning = false;
 const importLog: ImportStatus[] = [];
 
-/**
- * POST /api/import/run
- * Trigger the full import pipeline (download manifest + export files).
- */
 importRouter.post('/run', async (_req: Request, res: Response) => {
   if (importRunning) {
     res.status(409).json({ error: 'Import already in progress' });
@@ -60,10 +56,6 @@ importRouter.post('/run', async (_req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/import/status
- * Get current import status / log.
- */
 importRouter.get('/status', (_req: Request, res: Response) => {
   res.json({
     running: importRunning,
@@ -71,10 +63,6 @@ importRouter.get('/status', (_req: Request, res: Response) => {
   });
 });
 
-/**
- * GET /api/import/files
- * List all downloaded export files.
- */
 importRouter.get('/files', (_req: Request, res: Response) => {
   try {
     const files = listExportFiles();
@@ -85,17 +73,11 @@ importRouter.get('/files', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/import/files/:category
- * Read and return the contents of a specific export file.
- * Supports pagination via ?key=<arrayKey>&offset=<n>&limit=<n>
- */
 importRouter.get('/files/:category', (req: Request, res: Response) => {
   try {
     const category = String(req.params.category);
     const content = readExportFile(category) as Record<string, unknown>;
 
-    // If a specific key is requested, paginate that array
     const key = typeof req.query.key === 'string' ? req.query.key : undefined;
     const offset =
       parseInt(typeof req.query.offset === 'string' ? req.query.offset : '0') ||
@@ -117,7 +99,6 @@ importRouter.get('/files/:category', (req: Request, res: Response) => {
       return;
     }
 
-    // Return summary: list top-level keys and their array lengths
     const summary: Record<
       string,
       { type: string; count?: number; sample?: unknown }
@@ -139,10 +120,6 @@ importRouter.get('/files/:category', (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/import/process
- * Process downloaded exports into the database.
- */
 importRouter.post('/process', (_req: Request, res: Response) => {
   try {
     createAppSchema();
@@ -154,10 +131,6 @@ importRouter.post('/process', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/import/backfill-descriptions
- * Backfill mod descriptions from mod_level_stats for mods missing them.
- */
 importRouter.post('/backfill-descriptions', (_req: Request, res: Response) => {
   try {
     const count = backfillModDescriptions();
@@ -168,12 +141,6 @@ importRouter.post('/backfill-descriptions', (_req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/import/images
- * Download images for items in the database only (warframes, weapons, companions, mods).
- * Uses hash-based caching and concurrent downloads.
- * Prerequisite: run /process first so the DB is populated.
- */
 importRouter.post('/images', async (_req: Request, res: Response) => {
   if (importRunning) {
     res.status(409).json({ error: 'Import already in progress' });
@@ -196,8 +163,6 @@ importRouter.post('/images', async (_req: Request, res: Response) => {
   }
 });
 
-/* ──────────────────── Overframe Scraper ──────────────────── */
-
 let scrapeRunning = false;
 let scrapeProgress: ScrapeProgress & {
   log: string[];
@@ -210,11 +175,6 @@ let scrapeProgress: ScrapeProgress & {
   log: [],
 };
 
-/**
- * POST /api/import/scrape
- * Trigger the Overframe scrape pipeline.
- * Body: { categories?: string[] }  (defaults to all)
- */
 importRouter.post('/scrape', async (req: Request, res: Response) => {
   if (scrapeRunning || importRunning) {
     res.status(409).json({ error: 'Import or scrape already in progress' });
@@ -287,18 +247,12 @@ importRouter.post('/scrape', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/import/scrape/status
- * Poll scrape progress.
- */
 importRouter.get('/scrape/status', (_req: Request, res: Response) => {
   res.json({
     running: scrapeRunning,
     ...scrapeProgress,
   });
 });
-
-/* ──────────────────── Wiki Scraper ──────────────────── */
 
 let wikiRunning = false;
 let wikiProgress: WikiScrapeProgress & { mergeResult?: WikiMergeResult } = {
@@ -309,10 +263,6 @@ let wikiProgress: WikiScrapeProgress & { mergeResult?: WikiMergeResult } = {
   log: [],
 };
 
-/**
- * POST /api/import/wiki-scrape
- * Trigger the wiki scrape pipeline (abilities, passives, augments).
- */
 importRouter.post('/wiki-scrape', async (req: Request, res: Response) => {
   if (wikiRunning || scrapeRunning || importRunning) {
     res
@@ -354,10 +304,6 @@ importRouter.post('/wiki-scrape', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/import/wiki-scrape/status
- * Poll wiki scrape progress.
- */
 importRouter.get('/wiki-scrape/status', (_req: Request, res: Response) => {
   res.json({
     running: wikiRunning,

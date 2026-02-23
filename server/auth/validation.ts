@@ -38,10 +38,6 @@ export const changePasswordSchema = z.object({
     .min(8, 'New password must be at least 8 characters.'),
 });
 
-/**
- * Validate a request body against a Zod schema.
- * Returns the parsed data on success, or null (and sends 400 response) on failure.
- */
 export function validateBody<T extends z.ZodType>(
   schema: T,
   body: unknown,

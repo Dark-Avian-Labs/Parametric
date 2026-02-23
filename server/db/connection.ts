@@ -6,9 +6,6 @@ import { closeCorpusDb } from './corpus.js';
 let db: Database.Database | null = null;
 let centralDb: Database.Database | null = null;
 
-/**
- * Get the main application database (parametric.db).
- */
 export function getDb(): Database.Database {
   if (!db) {
     db = new Database(DB_PATH);
@@ -18,9 +15,6 @@ export function getDb(): Database.Database {
   return db;
 }
 
-/**
- * Get the central user database (central.db).
- */
 export function getCentralDb(): Database.Database {
   if (!centralDb) {
     centralDb = new Database(CENTRAL_DB_PATH);
@@ -30,9 +24,6 @@ export function getCentralDb(): Database.Database {
   return centralDb;
 }
 
-/**
- * Close all database connections (for clean shutdown).
- */
 export function closeAll(): void {
   if (db) {
     db.close();

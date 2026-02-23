@@ -8,11 +8,6 @@ export interface MergeResult {
   abilitiesUpdated: number;
 }
 
-/**
- * Merge scraped data back into the DB by updating existing rows.
- * Matches abilities by unique_name (ability path), not warframe path,
- * so Prime/Umbra variants get the same data as their base.
- */
 export function mergeScrapedData(
   items: ScrapedItemData[],
   onProgress?: (msg: string) => void,
@@ -63,8 +58,6 @@ export function mergeScrapedData(
         continue;
       }
 
-      // Always store a JSON string for successfully scraped items:
-      // "[]" for items with no slot data, so they're not re-scraped next startup
       const artifactSlotsJson = JSON.stringify(item.artifactSlots);
 
       if (table === 'warframes') {
@@ -79,7 +72,6 @@ export function mergeScrapedData(
         result.companionsUpdated++;
       }
 
-      // Merge ability stats by matching ability unique_name (path)
       if (item.abilities.length > 0 && item.itemData) {
         const abilityTypes = (item.itemData as Record<string, unknown>)
           .AbilityTypes as { path: string; LocalizeTag: string }[] | undefined;

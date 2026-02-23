@@ -27,7 +27,6 @@ export function SearchBar() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -142,7 +141,6 @@ export function SearchBar() {
     setOpen(false);
   };
 
-  // Group results by category
   const grouped = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
     (acc[r.category] ??= []).push(r);
     return acc;

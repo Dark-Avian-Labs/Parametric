@@ -34,7 +34,6 @@ export function RivenBuilder({
   );
   const [hasNegative, setHasNegative] = useState(!!config?.negative);
 
-  // Get all currently selected stats for duplicate validation
   const selectedStats = [
     ...positive.map((p) => p.stat),
     ...(negative ? [negative.stat] : []),

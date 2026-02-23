@@ -22,14 +22,9 @@ interface FilterPanelProps {
   onRivenAdd?: (config: RivenConfig) => void;
   targetSlotType?: 'general' | 'aura' | 'stance' | 'exilus' | 'posture';
   active?: boolean;
-  /** Increment to clear the search field externally */
   searchResetKey?: number;
 }
 
-/**
- * Map equipment type → which mod `type` values to fetch from the API.
- * We fetch broadly, then do fine-grained filtering client-side.
- */
 function getModTypes(eqType: EquipmentType): string {
   switch (eqType) {
     case 'warframe':
@@ -49,7 +44,6 @@ function getModTypes(eqType: EquipmentType): string {
     case 'archwing':
       return 'ARCHWING';
     case 'necramech':
-      // Necramech mods have type "---"
       return '---';
     case 'kdrive':
       return '---';
@@ -87,7 +81,6 @@ export function FilterPanel({
   const [showLockedOut, setShowLockedOut] = useState(false);
   const [showRivenBuilder, setShowRivenBuilder] = useState(false);
 
-  // Dynamic card scale: always 4 columns, cards fill their grid cell exactly
   const gridRef = useRef<HTMLDivElement>(null);
   const [cardScale, setCardScale] = useState<number>(0);
 
@@ -110,7 +103,6 @@ export function FilterPanel({
     return () => observer.disconnect();
   }, [measure]);
 
-  // Re-measure when panel becomes visible after being hidden
   useEffect(() => {
     if (active) {
       requestAnimationFrame(measure);
@@ -124,10 +116,8 @@ export function FilterPanel({
   const allMods = data?.items || [];
 
   const { compatible, lockedOut } = useMemo(() => {
-    // Step 1: Filter by equipment compatibility
     const compatMods = filterCompatibleMods(allMods, equipmentType, equipment);
 
-    // Step 2: Further filter by slot type if targeting a specific slot
     let slotFiltered = compatMods;
     if (targetSlotType === 'aura') {
       slotFiltered = compatMods.filter(
@@ -142,14 +132,12 @@ export function FilterPanel({
         (m) => m.is_utility === 1 || (m.type || '').toUpperCase() === 'AURA',
       );
     } else if (targetSlotType) {
-      // General / posture: exclude aura and stance mods
       slotFiltered = compatMods.filter((m) => {
         const t = (m.type || '').toUpperCase();
         return t !== 'AURA' && t !== 'STANCE';
       });
     }
 
-    // Step 3: Apply search and rarity filters
     const textFiltered = slotFiltered.filter((mod) => {
       if (rarity !== 'ALL' && mod.rarity !== rarity) return false;
       if (search && !mod.name.toLowerCase().includes(search.toLowerCase()))
@@ -157,7 +145,6 @@ export function FilterPanel({
       return true;
     });
 
-    // Step 4: Split into available vs locked out
     const available: Mod[] = [];
     const locked: Mod[] = [];
     for (const mod of textFiltered) {
@@ -370,8 +357,6 @@ export function FilterPanel({
   );
 }
 
-// ---- Mod card with description ----
-
 function ModPickerCard({
   mod,
   locked,
@@ -402,7 +387,6 @@ function ModPickerCard({
   );
 }
 
-/** Get common riven stat names based on weapon type */
 function getRivenStatsForType(type: EquipmentType): string[] {
   const common = [
     'Damage',

@@ -41,14 +41,11 @@ function parseAmmoCost(weapon: Weapon): number {
       return behaviors[0].ammoRequirement ?? 1;
     }
   } catch {
-    /* default */
+    // ignore
   }
   return 1;
 }
 
-/**
- * Apply aggregated mod effects to base weapon stats and calculate DPS.
- */
 export function calculateWeaponDps(
   weapon: Weapon,
   slots: ModSlot[],

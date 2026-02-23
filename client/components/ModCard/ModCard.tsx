@@ -20,13 +20,9 @@ interface ModCardProps {
   onRemove?: () => void;
   onRankChange?: (rank: number) => void;
   onSetRankChange?: (setRank: number) => void;
-  /** If true, the card is draggable */
   draggable?: boolean;
-  /** If true, the mod is locked out (same lockout group already equipped) */
   lockedOut?: boolean;
-  /** If true, show collapsed card (for slots/plan view) */
   collapsed?: boolean;
-  /** Override the preview scale (default from layout) */
   scale?: number;
 }
 
@@ -62,7 +58,6 @@ export function ModCard({
   const polarity = dbPolarityToIconName(mod.polarity);
   const modArt = mod.image_path ? `/images${mod.image_path}` : '';
 
-  // Parse description to get rank-appropriate text, strip markup tags
   let description = '';
   try {
     if (mod.description) {
@@ -74,7 +69,6 @@ export function ModCard({
     description = sanitizeDisplayText(mod.description ?? '');
   }
 
-  // Parse set bonus description
   let setDescription = '';
   const maxSetRank = mod.set_num_in_set ?? 0;
   const effectiveSetRank = setRank ?? (maxSetRank > 0 ? 1 : 0);
@@ -87,14 +81,12 @@ export function ModCard({
       );
       setDescription = sanitizeDisplayText(setStats[idx] ?? '');
     } catch {
-      /* ignore */
+      // ignore
     }
   }
 
-  // Determine the mod's type label (compat_name, e.g. "RIFLE")
   const modType = mod.compat_name?.toUpperCase() ?? '';
 
-  // Derive slot icon from mod type
   const modTypeUpper = (mod.type || '').toUpperCase();
   const slotIcon =
     modTypeUpper === 'AURA'
@@ -236,7 +228,6 @@ function RankStars({
 }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  // hoverIndex: -1 = hovering rank-0 button, 0..maxRank-1 = hovering rank stars
   const targetRank = hoverIndex !== null ? hoverIndex + 1 : null;
 
   return (
@@ -266,7 +257,6 @@ function RankStars({
         if (hoverIndex === null) {
           colorClass = i < rank ? 'bg-accent' : 'bg-glass-active/50';
         } else if (hoverIndex === -1) {
-          // Hovering rank-0: all active stars turn red
           colorClass = i < rank ? 'bg-danger' : 'bg-glass-active/50';
         } else if (
           targetRank !== null &&
