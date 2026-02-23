@@ -519,23 +519,15 @@ function processMods(data: Record<string, unknown[]>): number {
     for (const item of items) {
       const isAugment = !!item.subtype;
 
-      // Build description from top-level description and/or levelStats
+      // Build description from top-level description and/or levelStats.
+      // Keep parsed level stats in memory first; write child rows only
+      // after the parent mod row exists to satisfy FK constraints.
       let description: string | null = null;
       const baseDesc = item.description as string[] | undefined;
-
-      // Process level stats
       const levelStats = item.levelStats as
         | Array<{ stats?: string[] }>
         | undefined;
       if (levelStats) {
-        for (let rank = 0; rank < levelStats.length; rank++) {
-          levelStmt.run(
-            item.uniqueName,
-            rank,
-            JSON.stringify(levelStats[rank]),
-          );
-        }
-
         // Extract per-rank descriptions from levelStats
         const levelDescs = levelStats.map((ls) => {
           const stats = ls.stats;
@@ -588,6 +580,16 @@ function processMods(data: Record<string, unknown[]>): number {
         item.codexSecret ? 1 : 0,
         item.excludeFromCodex ? 1 : 0,
       );
+
+      if (levelStats) {
+        for (let rank = 0; rank < levelStats.length; rank++) {
+          levelStmt.run(
+            item.uniqueName,
+            rank,
+            JSON.stringify(levelStats[rank]),
+          );
+        }
+      }
 
       if (modSetRef) {
         memberStmt.run(item.uniqueName, modSetRef);

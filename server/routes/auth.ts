@@ -9,6 +9,7 @@ import {
   getAllUsers,
   getClientIP,
   getGamesForUser,
+  hasAccess,
   setUserGameAccess,
 } from '../auth/auth.js';
 import { requireAuth, requireAdmin } from '../auth/middleware.js';
@@ -19,6 +20,7 @@ import {
   changePasswordSchema,
   validateBody,
 } from '../auth/validation.js';
+import { GAME_ID } from '../config.js';
 
 export const authRouter = Router();
 
@@ -94,12 +96,15 @@ authRouter.post('/logout', (req: Request, res: Response) => {
  */
 authRouter.get('/me', (req: Request, res: Response) => {
   if (!req.session.user_id) {
-    res.json({ authenticated: false });
+    res.json({ authenticated: false, has_game_access: false });
     return;
   }
 
+  const hasGameAccess = hasAccess(req.session.user_id, GAME_ID);
+
   res.json({
     authenticated: true,
+    has_game_access: hasGameAccess,
     user: {
       id: req.session.user_id,
       username: req.session.username,

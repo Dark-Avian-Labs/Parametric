@@ -83,6 +83,7 @@ if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN;
 
 app.use(
   session({
+    name: 'parametric.sid',
     store: sessionStore,
     secret: SESSION_SECRET,
     resave: false,
