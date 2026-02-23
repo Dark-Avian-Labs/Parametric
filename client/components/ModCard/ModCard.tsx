@@ -9,6 +9,7 @@ import {
 import { CardPreview } from './CardPreview';
 import type { Mod, SlotType } from '../../types/warframe';
 import { calculateEffectiveDrain } from '../../utils/drain';
+import { sanitizeDisplayText } from '../../utils/sanitizeDisplayText';
 
 interface ModCardProps {
   mod: Mod;
@@ -67,10 +68,10 @@ export function ModCard({
     if (mod.description) {
       const descriptions: string[] = JSON.parse(mod.description);
       const raw = descriptions[Math.min(rank, descriptions.length - 1)] ?? '';
-      description = raw.replace(/<[^>]+>/g, '').trim();
+      description = sanitizeDisplayText(raw);
     }
   } catch {
-    description = (mod.description ?? '').replace(/<[^>]+>/g, '').trim();
+    description = sanitizeDisplayText(mod.description ?? '');
   }
 
   // Parse set bonus description
@@ -84,7 +85,7 @@ export function ModCard({
         Math.max(effectiveSetRank - 1, 0),
         setStats.length - 1,
       );
-      setDescription = (setStats[idx] ?? '').replace(/<[^>]+>/g, '').trim();
+      setDescription = sanitizeDisplayText(setStats[idx] ?? '');
     } catch {
       /* ignore */
     }

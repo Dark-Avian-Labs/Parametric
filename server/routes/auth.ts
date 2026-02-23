@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { rateLimit } from 'express-rate-limit';
 
 import {
   attemptLogin,
@@ -20,6 +21,15 @@ import {
 } from '../auth/validation.js';
 
 export const authRouter = Router();
+
+authRouter.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
 
 /**
  * GET /api/auth/csrf

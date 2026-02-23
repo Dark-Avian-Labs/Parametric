@@ -29,6 +29,7 @@ import {
 } from './config.js';
 import { createCentralSchema } from './db/centralSchema.js';
 import { getCentralDb } from './db/connection.js';
+import { createAppSchema } from './db/schema.js';
 import { seedArchonShards } from './db/seedArchonShards.js';
 import { runStartupPipeline } from './import/startupPipeline.js';
 import { apiRouter } from './routes/api.js';
@@ -42,6 +43,7 @@ const SQLiteStore = require('better-sqlite3-session-store')(session);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 ensureDataDirs();
+createAppSchema();
 
 // Initialise central DB schema (users, game_access, sessions)
 const centralDb = getCentralDb();
@@ -58,11 +60,7 @@ const app = express();
 
 if (TRUST_PROXY) app.set('trust proxy', 1);
 
-app.use(
-  helmet({
-    contentSecurityPolicy: NODE_ENV === 'production' ? undefined : false,
-  }),
-);
+app.use(helmet());
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -130,18 +128,38 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
+const adminApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const appApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Auth routes (login, register, csrf, etc.) - no game access required
 app.use('/api/auth', authRouter);
 
-app.use('/api/import', requireAdmin, importRouter);
-app.use('/api/corpus', requireAdmin, corpusRouter);
-app.use('/api', requireAuthApi, requireGameAccess(GAME_ID), apiRouter);
+app.use('/api/import', adminApiLimiter, requireAdmin, importRouter);
+app.use('/api/corpus', adminApiLimiter, requireAdmin, corpusRouter);
+app.use(
+  '/api',
+  appApiLimiter,
+  requireAuthApi,
+  requireGameAccess(GAME_ID),
+  apiRouter,
+);
 
 app.use('/images', express.static(IMAGES_DIR));
 
 app.use('/icons', express.static(path.join(PROJECT_ROOT, 'icons')));
 
-app.all('/api/*', (_req, res) => {
+app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 

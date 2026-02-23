@@ -91,16 +91,16 @@ Parametric/
 
 ## Scripts
 
-| Command                | Description                            |
-| ---------------------- | -------------------------------------- |
-| `npm run dev:client`   | Start Vite client dev server           |
-| `npm run build`        | Production build (server + client)     |
-| `npm start`            | Run production server                  |
-| `npm run lint`         | Run ESLint                             |
-| `npm run lint:fix`     | Run ESLint with auto-fix               |
-| `npm run format`       | Format all files with Prettier         |
-| `npm run check-format` | Check formatting (CI)                  |
-| `npm test`             | Run tests with Vitest                  |
+| Command                | Description                        |
+| ---------------------- | ---------------------------------- |
+| `npm run dev:client`   | Start Vite client dev server       |
+| `npm run build`        | Production build (server + client) |
+| `npm start`            | Run production server              |
+| `npm run lint`         | Run ESLint                         |
+| `npm run lint:fix`     | Run ESLint with auto-fix           |
+| `npm run format`       | Format all files with Prettier     |
+| `npm run check-format` | Check formatting (CI)              |
+| `npm test`             | Run tests with Vitest              |
 
 ## Deployment
 

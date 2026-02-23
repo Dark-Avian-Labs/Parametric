@@ -1,9 +1,19 @@
 import { Router, type Request, type Response } from 'express';
+import { rateLimit } from 'express-rate-limit';
 
 import { importAllToCorpus } from '../db/corpus-import.js';
 import { getCorpusDb } from '../db/corpus.js';
 
 export const corpusRouter = Router();
+
+corpusRouter.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
 
 // Valid table names for category browsing
 const VALID_CATEGORIES: Record<string, string> = {

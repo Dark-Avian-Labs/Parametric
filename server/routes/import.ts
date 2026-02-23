@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { rateLimit } from 'express-rate-limit';
 
 import { processExports, backfillModDescriptions } from '../db/queries.js';
 import { createAppSchema } from '../db/schema.js';
@@ -19,6 +20,15 @@ import {
 } from '../scraping/wikiScraper.js';
 
 export const importRouter = Router();
+
+importRouter.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
 
 let importRunning = false;
 const importLog: ImportStatus[] = [];

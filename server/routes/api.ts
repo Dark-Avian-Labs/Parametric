@@ -1,8 +1,18 @@
 import { Router, type Request, type Response } from 'express';
+import { rateLimit } from 'express-rate-limit';
 
 import { getDb } from '../db/connection.js';
 
 export const apiRouter = Router();
+
+apiRouter.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
 
 /**
  * GET /api/health
