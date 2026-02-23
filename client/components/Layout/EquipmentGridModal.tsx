@@ -84,7 +84,7 @@ export function EquipmentGridModal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className="modal max-w-4xl"
+        className="glass-panel max-w-4xl overflow-y-auto bg-black/40 shadow-2xl backdrop-blur-xl"
         style={{ width: '90%', maxHeight: '85vh' }}
         onClick={(e) => e.stopPropagation()}
       >

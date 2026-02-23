@@ -162,7 +162,7 @@ app.use(
 app.use('/images', express.static(IMAGES_DIR));
 
 app.use('/icons', express.static(path.join(PROJECT_ROOT, 'icons')));
-app.get('/favicon.ico', (_req, res) => {
+app.get('/favicon.ico', publicPageLimiter, (_req, res) => {
   res.sendFile(path.join(PROJECT_ROOT, 'favicon.ico'));
 });
 
