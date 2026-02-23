@@ -1,0 +1,611 @@
+import { useState, useEffect, useRef } from 'react';
+
+import {
+  AP_ANY,
+  AP_UMBRA,
+  POLARITIES,
+  REGULAR_POLARITIES,
+  type EquipmentType,
+  type Mod,
+  type ModSlot,
+  type SlotType,
+} from '../../types/warframe';
+import { ModCard, CardPreview, DEFAULT_LAYOUT } from '../ModCard';
+
+const POLARITY_CYCLE_FULL: (string | undefined)[] = [
+  undefined,
+  ...REGULAR_POLARITIES,
+  AP_UMBRA,
+  AP_ANY,
+];
+
+const POLARITY_CYCLE_NO_UMBRA: (string | undefined)[] =
+  POLARITY_CYCLE_FULL.filter((p) => p !== AP_UMBRA);
+
+function getPolarityCycle(
+  slotType: SlotType,
+  equipmentType: EquipmentType,
+): (string | undefined)[] {
+  if (equipmentType !== 'warframe') return POLARITY_CYCLE_NO_UMBRA;
+  if (slotType === 'aura' || slotType === 'exilus')
+    return POLARITY_CYCLE_NO_UMBRA;
+  return POLARITY_CYCLE_FULL;
+}
+
+const POLARITY_LABELS: Record<string, string> = {
+  ...POLARITIES,
+  AP_ANY: 'Universal',
+};
+
+const POLARITY_ICONS: Record<string, string> = {
+  AP_ATTACK: 'madurai',
+  AP_DEFENSE: 'vazarin',
+  AP_TACTIC: 'naramon',
+  AP_WARD: 'unairu',
+  AP_POWER: 'zenurik',
+  AP_PRECEPT: 'penjaga',
+  AP_UMBRA: 'umbra',
+  AP_ANY: 'universal',
+};
+
+interface ModSlotGridProps {
+  slots: ModSlot[];
+  onDrop: (slotIndex: number, mod: Mod) => void;
+  onRemove: (slotIndex: number) => void;
+  onRankChange: (slotIndex: number, rank: number) => void;
+  onSetRankChange: (slotIndex: number, setRank: number) => void;
+  onSlotClick?: (slotIndex: number, slotType: ModSlot['type']) => void;
+  onSwap?: (sourceSlotIndex: number, targetSlotIndex: number) => void;
+  activeSlotIndex?: number;
+  formaMode?: boolean;
+  onPolarityChange?: (slotIndex: number, polarity: string | undefined) => void;
+  equipmentType?: EquipmentType;
+}
+
+export function ModSlotGrid({
+  slots,
+  onDrop,
+  onRemove,
+  onRankChange,
+  onSetRankChange,
+  onSlotClick,
+  onSwap,
+  activeSlotIndex,
+  formaMode = false,
+  onPolarityChange,
+  equipmentType = 'warframe',
+}: ModSlotGridProps) {
+  const specialSlots = slots.filter(
+    (s) => s.type === 'aura' || s.type === 'stance' || s.type === 'posture',
+  );
+  const generalSlots = slots.filter((s) => s.type === 'general');
+  const exilusSlot = slots.find((s) => s.type === 'exilus');
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (slotIndex: number, e: React.DragEvent) => {
+    e.preventDefault();
+    try {
+      const rawData = e.dataTransfer.getData('application/json');
+      if (rawData) {
+        const parsed = JSON.parse(rawData);
+        if (parsed.__remove) {
+          onRemove(slotIndex);
+        } else if (parsed.__sourceSlotIndex !== undefined) {
+          onSwap?.(parsed.__sourceSlotIndex, slotIndex);
+        } else {
+          onDrop(slotIndex, parsed as Mod);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleFormaClick = (
+    slotIndex: number,
+    currentPolarity: string | undefined,
+    slotType: SlotType,
+    reverse = false,
+  ) => {
+    if (!formaMode || !onPolarityChange) return;
+    const cycle = getPolarityCycle(slotType, equipmentType);
+    const currentIdx = cycle.indexOf(currentPolarity);
+    const len = cycle.length;
+    const nextIdx = reverse
+      ? (currentIdx - 1 + len) % len
+      : (currentIdx + 1) % len;
+    onPolarityChange(slotIndex, cycle[nextIdx]);
+  };
+
+  const rows: ModSlot[][] = [];
+  for (let i = 0; i < generalSlots.length; i += 4) {
+    rows.push(generalSlots.slice(i, i + 4));
+  }
+
+  return (
+    <div className="glass-panel relative z-10 space-y-1 overflow-visible p-3">
+      {/* Special slots — positioned to align with center columns of main grid */}
+      {(specialSlots.length > 0 || exilusSlot) && (
+        <div className="grid grid-cols-4 gap-1">
+          {/* Column 1: empty */}
+          <div />
+          {/* Column 2: aura/stance */}
+          {specialSlots[0] ? (
+            <SlotCell
+              slot={specialSlots[0]}
+              active={activeSlotIndex === specialSlots[0].index}
+              formaMode={formaMode}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(specialSlots[0].index, e)}
+              onRemove={() => onRemove(specialSlots[0].index)}
+              onRankChange={(rank) => onRankChange(specialSlots[0].index, rank)}
+              onSetRankChange={(sr) =>
+                onSetRankChange(specialSlots[0].index, sr)
+              }
+              onClick={() =>
+                formaMode
+                  ? handleFormaClick(
+                      specialSlots[0].index,
+                      specialSlots[0].polarity,
+                      specialSlots[0].type,
+                    )
+                  : onSlotClick?.(specialSlots[0].index, specialSlots[0].type)
+              }
+              onRightClick={() =>
+                handleFormaClick(
+                  specialSlots[0].index,
+                  specialSlots[0].polarity,
+                  specialSlots[0].type,
+                  true,
+                )
+              }
+              label={
+                specialSlots[0].type.charAt(0).toUpperCase() +
+                specialSlots[0].type.slice(1)
+              }
+            />
+          ) : (
+            <div />
+          )}
+          {/* Column 3: exilus */}
+          {exilusSlot ? (
+            <SlotCell
+              slot={exilusSlot}
+              active={activeSlotIndex === exilusSlot.index}
+              formaMode={formaMode}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(exilusSlot.index, e)}
+              onRemove={() => onRemove(exilusSlot.index)}
+              onRankChange={(rank) => onRankChange(exilusSlot.index, rank)}
+              onSetRankChange={(sr) => onSetRankChange(exilusSlot.index, sr)}
+              onClick={() =>
+                formaMode
+                  ? handleFormaClick(
+                      exilusSlot.index,
+                      exilusSlot.polarity,
+                      exilusSlot.type,
+                    )
+                  : onSlotClick?.(exilusSlot.index, exilusSlot.type)
+              }
+              onRightClick={() =>
+                handleFormaClick(
+                  exilusSlot.index,
+                  exilusSlot.polarity,
+                  exilusSlot.type,
+                  true,
+                )
+              }
+              label="Exilus"
+            />
+          ) : (
+            <div />
+          )}
+          {/* Column 4: empty */}
+          <div />
+        </div>
+      )}
+
+      {/* Main grid */}
+      <div className="space-y-1">
+        {rows.map((row, rowIndex) => (
+          <div key={rowIndex} className="grid grid-cols-4 gap-1">
+            {row.map((slot) => (
+              <SlotCell
+                key={slot.index}
+                slot={slot}
+                active={activeSlotIndex === slot.index}
+                formaMode={formaMode}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(slot.index, e)}
+                onRemove={() => onRemove(slot.index)}
+                onRankChange={(rank) => onRankChange(slot.index, rank)}
+                onSetRankChange={(sr) => onSetRankChange(slot.index, sr)}
+                onClick={() =>
+                  formaMode
+                    ? handleFormaClick(slot.index, slot.polarity, slot.type)
+                    : onSlotClick?.(slot.index, slot.type)
+                }
+                onRightClick={() =>
+                  handleFormaClick(slot.index, slot.polarity, slot.type, true)
+                }
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---- Polarity Icon ----
+
+function PolarityIcon({
+  polarity,
+  mod,
+  size = 14,
+}: {
+  polarity?: string;
+  mod?: Mod;
+  size?: number;
+}) {
+  if (!polarity) return null;
+
+  const iconName = POLARITY_ICONS[polarity];
+  if (!iconName) return null;
+
+  // Determine color: green if mod matches, red if mismatched, neutral if no mod
+  let filterStyle = 'brightness(0) invert(1) opacity(0.7)';
+  if (mod?.polarity) {
+    if (mod.polarity === polarity) {
+      // green
+      filterStyle =
+        'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(85deg)';
+    } else {
+      // red
+      filterStyle =
+        'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(-10deg)';
+    }
+  }
+
+  return (
+    <img
+      src={`/icons/polarity/${iconName}.svg`}
+      alt={POLARITY_LABELS[polarity] || polarity}
+      style={{
+        width: size,
+        height: size,
+        filter: `${filterStyle} drop-shadow(0 0 1.5px rgba(0,0,0,1)) drop-shadow(0 0 1.5px rgba(0,0,0,1))`,
+      }}
+      draggable={false}
+    />
+  );
+}
+
+// ---- Individual slot cell ----
+
+interface SlotCellProps {
+  slot: ModSlot;
+  active?: boolean;
+  formaMode?: boolean;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onRemove: () => void;
+  onRankChange: (rank: number) => void;
+  onSetRankChange: (rank: number) => void;
+  onClick?: () => void;
+  onRightClick?: () => void;
+  label?: string;
+}
+
+// Fixed dimensions for all slot cells (collapsed card at scale 0.75)
+const SLOT_SCALE = 0.75;
+const SLOT_W = Math.round(DEFAULT_LAYOUT.cardWidth * SLOT_SCALE);
+const SLOT_H = Math.round(DEFAULT_LAYOUT.collapsedHeight * SLOT_SCALE);
+
+function SlotCell({
+  slot,
+  active,
+  formaMode,
+  onDragOver,
+  onDrop,
+  onRemove,
+  onRankChange,
+  onSetRankChange,
+  onClick,
+  onRightClick,
+  label,
+}: SlotCellProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const slotRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsDragging(false);
+  }, [slot.mod?.unique_name]);
+
+  const polarityLabel = slot.polarity
+    ? POLARITY_LABELS[slot.polarity] || slot.polarity
+    : 'None';
+  const slotIconName =
+    slot.type === 'aura'
+      ? 'aura'
+      : slot.type === 'stance'
+        ? 'stance'
+        : slot.type === 'exilus'
+          ? 'exilus'
+          : '';
+
+  const canDrag = !!slot.mod && !formaMode;
+
+  const handleSlotDragStart = (e: React.DragEvent) => {
+    if (!slot.mod || formaMode) return;
+    e.dataTransfer.setData(
+      'application/json',
+      JSON.stringify({
+        ...slot.mod,
+        __sourceSlotIndex: slot.index,
+        __sourceRank: slot.rank,
+      }),
+    );
+    e.dataTransfer.effectAllowed = 'move';
+    setIsDragging(true);
+  };
+
+  const handleSlotDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleLocalDragOver = (e: React.DragEvent) => {
+    onDragOver(e);
+    setIsDragOver(true);
+  };
+
+  const handleLocalDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleLocalDrop = (e: React.DragEvent) => {
+    setIsDragOver(false);
+    onDrop(e);
+  };
+
+  return (
+    <div
+      ref={slotRef}
+      style={{ width: SLOT_W, height: SLOT_H, marginBottom: 4 }}
+      className={`relative overflow-visible select-none rounded-lg transition-opacity ${
+        active && !formaMode ? 'ring-1 ring-accent' : ''
+      } ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-accent/60' : ''}`}
+      onDragOver={!formaMode ? handleLocalDragOver : undefined}
+      onDragLeave={!formaMode ? handleLocalDragLeave : undefined}
+      onDrop={!formaMode ? handleLocalDrop : undefined}
+      onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (formaMode && onRightClick) {
+          onRightClick();
+        } else if (slot.mod && !formaMode) {
+          onRemove();
+        }
+      }}
+    >
+      {/* ---- FILLED SLOT ---- */}
+      {slot.mod ? (
+        <>
+          {/* Card wrapper — draggable, CSS-only hover expansion via .mod-slot-card */}
+          <div
+            className={`absolute left-0 select-none ${!formaMode ? 'mod-slot-card' : ''}`}
+            style={{
+              width: SLOT_W,
+              bottom: 0,
+              cursor: canDrag ? 'grab' : undefined,
+            }}
+            draggable={canDrag || undefined}
+            onDragStart={canDrag ? handleSlotDragStart : undefined}
+            onDragEnd={canDrag ? handleSlotDragEnd : undefined}
+          >
+            <div className="pointer-events-none">
+              <ModCard
+                mod={slot.mod}
+                rank={slot.rank ?? 0}
+                setRank={slot.setRank}
+                slotType={slot.type}
+                slotPolarity={slot.polarity}
+                collapsed
+                scale={SLOT_SCALE}
+              />
+            </div>
+            {!formaMode && (
+              <div
+                className="mod-slot-expanded relative"
+                style={{ width: SLOT_W }}
+              >
+                <ModCard
+                  mod={slot.mod}
+                  rank={slot.rank ?? 0}
+                  setRank={slot.setRank}
+                  slotType={slot.type}
+                  slotPolarity={slot.polarity}
+                  collapsed={false}
+                  scale={SLOT_SCALE}
+                />
+                {/* +/- rank & remove buttons overlaying the stars row */}
+                <div
+                  className="absolute left-0 flex w-full items-center justify-center"
+                  style={{
+                    top:
+                      Math.round(
+                        (DEFAULT_LAYOUT.rankOffsetY +
+                          DEFAULT_LAYOUT.cardOffsetY) *
+                          SLOT_SCALE,
+                      ) - 5,
+                    height: 16,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {(slot.mod.fusion_limit ?? 0) > 0 && (
+                    <button
+                      onClick={() =>
+                        onRankChange(Math.max(0, (slot.rank ?? 0) - 1))
+                      }
+                      className="absolute left-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border bg-white/50 text-[9px] font-bold text-black backdrop-blur-xl transition-colors hover:text-foreground"
+                      title="Decrease rank"
+                    >
+                      −
+                    </button>
+                  )}
+                  {(slot.mod.fusion_limit ?? 0) > 0 && (
+                    <button
+                      onClick={() =>
+                        onRankChange(
+                          Math.min(
+                            slot.mod!.fusion_limit ?? 0,
+                            (slot.rank ?? 0) + 1,
+                          ),
+                        )
+                      }
+                      className="absolute right-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border bg-white/50 text-[9px] font-bold text-black backdrop-blur-xl transition-colors hover:text-foreground"
+                      title="Increase rank"
+                    >
+                      +
+                    </button>
+                  )}
+                  {slot.mod!.set_stats &&
+                    (slot.mod!.set_num_in_set ?? 0) > 0 && (
+                      <>
+                        <button
+                          onClick={() =>
+                            onSetRankChange(
+                              Math.max(1, (slot.setRank ?? 1) - 1),
+                            )
+                          }
+                          className="absolute left-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border bg-white/50 text-[9px] font-bold text-black backdrop-blur-xl transition-colors hover:text-foreground"
+                          title="Decrease set rank"
+                        >
+                          −
+                        </button>
+                        <button
+                          onClick={() =>
+                            onSetRankChange(
+                              Math.min(
+                                slot.mod!.set_num_in_set ?? 0,
+                                (slot.setRank ?? 1) + 1,
+                              ),
+                            )
+                          }
+                          className="absolute right-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border bg-white/50 text-[9px] font-bold text-black backdrop-blur-xl transition-colors hover:text-foreground"
+                          title="Increase set rank"
+                        >
+                          +
+                        </button>
+                      </>
+                    )}
+                  <button
+                    onClick={onRemove}
+                    className="absolute right-[12px] flex h-[15px] w-[15px] items-center justify-center rounded-full border bg-white/50 text-[7px] font-bold text-black backdrop-blur-xl transition-colors hover:text-danger"
+                    title="Remove"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Polarity icon on slot wrapper (visible when card is collapsed, hidden behind expanded) */}
+          {slot.polarity && (
+            <div className="absolute right-1 top-1 z-10">
+              <PolarityIcon polarity={slot.polarity} mod={slot.mod} size={12} />
+            </div>
+          )}
+          {/* Forma overlay on top of mod */}
+          {formaMode && (
+            <div className="absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-warning/60 bg-warning/15 transition-all hover:bg-warning/25">
+              {slot.polarity ? (
+                <PolarityIcon polarity={slot.polarity} size={20} />
+              ) : (
+                <span className="text-sm text-muted/40">-</span>
+              )}
+              <span className="mt-0.5 text-[9px] font-medium text-warning/80">
+                {polarityLabel}
+              </span>
+            </div>
+          )}
+        </>
+      ) : (
+        /* ---- EMPTY SLOT ---- */
+        <>
+          <CardPreview
+            layout={{ ...DEFAULT_LAYOUT, scale: SLOT_SCALE }}
+            rarity="Empty"
+            polarity=""
+            modArt=""
+            modName=""
+            modType=""
+            modDescription=""
+            drain={0}
+            rank={0}
+            maxRank={0}
+            damageValue=""
+            damageType="none"
+            collapsed
+          />
+
+          {formaMode ? (
+            /* Forma overlay on empty */
+            <>
+              <div className="absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-warning/50 bg-warning/10 transition-all hover:bg-warning/20">
+                {slot.polarity ? (
+                  <PolarityIcon polarity={slot.polarity} size={24} />
+                ) : (
+                  <span className="text-lg text-muted/30">-</span>
+                )}
+                <span className="mt-0.5 text-[9px] text-warning/70">
+                  {polarityLabel}
+                </span>
+                {label && (
+                  <span className="text-[8px] text-muted/40">{label}</span>
+                )}
+              </div>
+              {slotIconName && !slot.polarity && (
+                <img
+                  src={`/icons/icon-${slotIconName}.png`}
+                  alt={slotIconName}
+                  className="pointer-events-none absolute left-1/2 top-1/3 z-10 -translate-x-1/2 -translate-y-1/2"
+                  style={{ height: 20, width: 'auto', opacity: 0.3 }}
+                  draggable={false}
+                />
+              )}
+            </>
+          ) : (
+            /* Normal empty slot overlays (z-10 to sit above CardPreview internal layers) */
+            <>
+              {slotIconName && (
+                <img
+                  src={`/icons/icon-${slotIconName}.png`}
+                  alt={slotIconName}
+                  className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+                  style={{ height: 28, width: 'auto', opacity: 0.5 }}
+                  draggable={false}
+                />
+              )}
+              {slot.polarity && (
+                <div className="pointer-events-none absolute right-1 top-1 z-10">
+                  <PolarityIcon polarity={slot.polarity} size={12} />
+                </div>
+              )}
+              {label && (
+                <span className="pointer-events-none absolute bottom-2 left-1/2 z-10 -translate-x-1/2 text-[10px] font-medium uppercase tracking-wider text-muted/40">
+                  {label}
+                </span>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,393 @@
+import fs from 'fs';
+import path from 'path';
+
+import { EXPORTS_DIR } from '../config.js';
+import { getCorpusDb } from './corpus.js';
+
+interface ImportResult {
+  category: string;
+  table: string;
+  count: number;
+  error?: string;
+}
+
+// Map export JSON top-level key → corpus table name
+const EXPORT_KEY_TO_TABLE: Record<string, string> = {
+  ExportWarframes: 'corpus_warframes',
+  ExportWeapons: 'corpus_weapons',
+  ExportSentinels: 'corpus_sentinels',
+  ExportUpgrades: 'corpus_upgrades',
+  ExportRelicArcane: 'corpus_relic_arcane',
+  Manifest: 'corpus_manifest',
+  ExportCustoms: 'corpus_customs',
+  ExportDrones: 'corpus_drones',
+  ExportFlavour: 'corpus_flavour',
+  ExportFusionBundles: 'corpus_fusion_bundles',
+  ExportGear: 'corpus_gear',
+  ExportKeys: 'corpus_keys',
+  ExportRecipes: 'corpus_recipes',
+  ExportRegions: 'corpus_regions',
+  ExportResources: 'corpus_resources',
+  ExportSortieRewards: 'corpus_sortie_rewards',
+  // Extra arrays nested inside other export files
+  ExportIntrinsics: 'corpus_intrinsics',
+  ExportOther: 'corpus_other',
+  ExportModSet: 'corpus_mod_sets',
+  ExportAvionics: 'corpus_avionics',
+  ExportFocusUpgrades: 'corpus_focus_upgrades',
+  ExportAbilities: 'corpus_abilities',
+  ExportRailjackWeapons: 'corpus_railjack_weapons',
+};
+
+// Object-type exports that are stored as single rows
+const OBJECT_KEY_TO_TABLE: Record<string, string> = {
+  ExportNightwave: 'corpus_nightwave',
+  ExportRailjack: 'corpus_railjack_nodes',
+};
+
+// Category-specific column extractors
+type ColumnExtractor = (
+  item: Record<string, unknown>,
+) => Record<string, unknown>;
+
+const EXTRACTORS: Record<string, ColumnExtractor> = {
+  corpus_warframes: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || '',
+    description: item.description || null,
+    health: item.health ?? null,
+    shield: item.shield ?? null,
+    armor: item.armor ?? null,
+    power: item.power ?? null,
+    sprint_speed: item.sprintSpeed ?? null,
+    stamina: item.stamina ?? null,
+    passive_description: item.passiveDescription ?? null,
+    product_category: item.productCategory ?? null,
+    mastery_req: item.masteryReq ?? 0,
+  }),
+
+  corpus_weapons: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || '',
+    description: item.description || null,
+    product_category: item.productCategory ?? null,
+    slot: item.slot ?? null,
+    mastery_req: item.masteryReq ?? 0,
+    total_damage: item.totalDamage ?? null,
+    damage_per_shot: item.damagePerShot
+      ? JSON.stringify(item.damagePerShot)
+      : null,
+    critical_chance: item.criticalChance ?? null,
+    critical_multiplier: item.criticalMultiplier ?? null,
+    proc_chance: item.procChance ?? null,
+    fire_rate: item.fireRate ?? null,
+    accuracy: item.accuracy ?? null,
+    magazine_size: item.magazineSize ?? null,
+    reload_time: item.reloadTime ?? null,
+    multishot: item.multishot ?? null,
+    noise: item.noise ?? null,
+    trigger_type: item.trigger ?? null,
+    omega_attenuation: item.omegaAttenuation ?? null,
+  }),
+
+  corpus_sentinels: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || '',
+    description: item.description || null,
+    health: item.health ?? null,
+    shield: item.shield ?? null,
+    armor: item.armor ?? null,
+    power: item.power ?? null,
+    product_category: item.productCategory ?? null,
+    mastery_req: item.masteryReq ?? 0,
+  }),
+
+  corpus_upgrades: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || '',
+    polarity: item.polarity ?? null,
+    rarity: item.rarity ?? null,
+    type: item.type ?? null,
+    compat_name: item.compatName ?? null,
+    base_drain: item.baseDrain ?? null,
+    fusion_limit: item.fusionLimit ?? null,
+    level_stats: item.levelStats ? JSON.stringify(item.levelStats) : null,
+  }),
+
+  corpus_relic_arcane: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || '',
+    description: item.description || null,
+    rarity: item.rarity ?? null,
+    level_stats: item.levelStats ? JSON.stringify(item.levelStats) : null,
+  }),
+
+  corpus_manifest: (item) => ({
+    unique_name: item.uniqueName,
+    name:
+      String(item.uniqueName || '')
+        .split('/')
+        .pop() || null,
+    texture_location: item.textureLocation ?? null,
+  }),
+
+  corpus_customs: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+  }),
+
+  corpus_drones: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+  }),
+
+  corpus_flavour: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    description: item.description || null,
+  }),
+
+  corpus_fusion_bundles: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+  }),
+
+  corpus_gear: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    description: item.description || null,
+  }),
+
+  corpus_keys: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    description: item.description || null,
+  }),
+
+  corpus_recipes: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.resultType ? String(item.resultType).split('/').pop() : null,
+    result_type: item.resultType ?? null,
+    build_price: item.buildPrice ?? null,
+    build_time: item.buildTime ?? null,
+    build_count: item.buildCount ?? null,
+    ingredients: item.ingredients ? JSON.stringify(item.ingredients) : null,
+  }),
+
+  corpus_regions: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+  }),
+
+  corpus_resources: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    description: item.description || null,
+    product_category: item.productCategory ?? null,
+  }),
+
+  corpus_sortie_rewards: (item) => ({
+    unique_name:
+      item.uniqueName ||
+      item.rewardName ||
+      `sortie_${Math.random().toString(36).slice(2)}`,
+    name: item.name || item.rewardName || null,
+  }),
+
+  corpus_intrinsics: (item) => ({
+    unique_name:
+      item.uniqueName ||
+      item.name ||
+      `intrinsic_${Math.random().toString(36).slice(2)}`,
+    name: item.name || null,
+  }),
+
+  corpus_other: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    description: item.description || null,
+  }),
+
+  corpus_mod_sets: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.uniqueName ? String(item.uniqueName).split('/').pop() : null,
+    num_in_set: item.numUpgradesInSet ?? null,
+    stats: item.stats ? JSON.stringify(item.stats) : null,
+  }),
+
+  corpus_avionics: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    polarity: item.polarity ?? null,
+    rarity: item.rarity ?? null,
+    base_drain: item.baseDrain ?? null,
+    fusion_limit: item.fusionLimit ?? null,
+    level_stats: item.levelStats ? JSON.stringify(item.levelStats) : null,
+  }),
+
+  corpus_focus_upgrades: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    polarity: item.polarity ?? null,
+    rarity: item.rarity ?? null,
+    base_drain: item.baseDrain ?? null,
+    fusion_limit: item.fusionLimit ?? null,
+    level_stats: item.levelStats ? JSON.stringify(item.levelStats) : null,
+  }),
+
+  corpus_abilities: (item) => ({
+    unique_name: item.abilityUniqueName || item.uniqueName,
+    name: item.abilityName || item.name || null,
+    description: item.description || null,
+  }),
+
+  corpus_railjack_weapons: (item) => ({
+    unique_name: item.uniqueName,
+    name: item.name || null,
+    description: item.description || null,
+    product_category: item.productCategory ?? null,
+    total_damage: item.totalDamage ?? null,
+    damage_per_shot: item.damagePerShot
+      ? JSON.stringify(item.damagePerShot)
+      : null,
+    critical_chance: item.criticalChance ?? null,
+    critical_multiplier: item.criticalMultiplier ?? null,
+    proc_chance: item.procChance ?? null,
+    fire_rate: item.fireRate ?? null,
+  }),
+};
+
+/**
+ * Default extractor for tables that only have unique_name + name + raw_json.
+ */
+function defaultExtractor(
+  item: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    unique_name: item.uniqueName,
+    name: item.name || null,
+  };
+}
+
+/**
+ * Import a single export category into the corpus database.
+ */
+function importCategory(
+  tableName: string,
+  items: Record<string, unknown>[],
+): number {
+  const db = getCorpusDb();
+  const extractor = EXTRACTORS[tableName] || defaultExtractor;
+
+  // Get the first item's columns to build the INSERT statement
+  if (items.length === 0) return 0;
+
+  const sampleCols = extractor(items[0]);
+  const colNames = [...Object.keys(sampleCols), 'raw_json'];
+  const placeholders = colNames.map(() => '?').join(', ');
+  const sql = `INSERT OR REPLACE INTO ${tableName} (${colNames.join(', ')}) VALUES (${placeholders})`;
+
+  const stmt = db.prepare(sql);
+  const insertMany = db.transaction((entries: Record<string, unknown>[]) => {
+    let count = 0;
+    for (const item of entries) {
+      const extracted = extractor(item);
+      if (!extracted.unique_name) continue;
+
+      const rawJson = JSON.stringify(item);
+      const values = [...Object.values(extracted), rawJson];
+      try {
+        stmt.run(...values);
+        count++;
+      } catch {
+        // Skip items that fail (e.g., duplicate keys within same batch)
+      }
+    }
+    return count;
+  });
+
+  return insertMany(items);
+}
+
+/**
+ * Import all downloaded export files into the corpus database.
+ * Returns results for each category processed.
+ */
+export function importAllToCorpus(): ImportResult[] {
+  const results: ImportResult[] = [];
+
+  // Find all export JSON files
+  if (!fs.existsSync(EXPORTS_DIR)) {
+    return [
+      {
+        category: 'error',
+        table: '',
+        count: 0,
+        error: 'Exports directory not found',
+      },
+    ];
+  }
+
+  const files = fs.readdirSync(EXPORTS_DIR).filter((f) => f.endsWith('.json'));
+
+  for (const file of files) {
+    const filePath = path.join(EXPORTS_DIR, file);
+    const category = file.replace('.json', '');
+
+    try {
+      const text = fs.readFileSync(filePath, 'utf-8');
+      const content = JSON.parse(text) as Record<string, unknown>;
+
+      // Each export file may contain multiple top-level arrays or objects
+      for (const [key, value] of Object.entries(content)) {
+        if (Array.isArray(value)) {
+          const tableName = EXPORT_KEY_TO_TABLE[key];
+          if (!tableName) {
+            console.log(
+              `[Corpus] Skipping unknown export array: ${key} (${value.length} items)`,
+            );
+            continue;
+          }
+
+          const count = importCategory(
+            tableName,
+            value as Record<string, unknown>[],
+          );
+          results.push({
+            category: `${category}/${key}`,
+            table: tableName,
+            count,
+          });
+          console.log(
+            `[Corpus] Imported ${count} items into ${tableName} from ${key}`,
+          );
+        } else if (typeof value === 'object' && value !== null) {
+          // Object-type exports (e.g., ExportNightwave, ExportRailjack) — store as single row
+          const tableName = OBJECT_KEY_TO_TABLE[key];
+          if (!tableName) {
+            console.log(`[Corpus] Skipping unknown export object: ${key}`);
+            continue;
+          }
+
+          const db = getCorpusDb();
+          const rawJson = JSON.stringify(value);
+          db.prepare(
+            `INSERT OR REPLACE INTO ${tableName} (id, name, raw_json) VALUES (?, ?, ?)`,
+          ).run('current', key, rawJson);
+          results.push({
+            category: `${category}/${key}`,
+            table: tableName,
+            count: 1,
+          });
+          console.log(`[Corpus] Imported object ${key} into ${tableName}`);
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      results.push({ category, table: '', count: 0, error: msg });
+      console.error(`[Corpus] Failed to import ${category}: ${msg}`);
+    }
+  }
+
+  return results;
+}

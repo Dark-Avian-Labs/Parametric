@@ -1,0 +1,165 @@
+import { calculateFinalDamage, type DamageEntry } from './elements';
+import { aggregateAllMods } from './modStatParser';
+import {
+  DAMAGE_TYPES,
+  PRIMARY_ELEMENTS,
+  type DamageType,
+  type ModSlot,
+  type Weapon,
+} from '../types/warframe';
+
+/**
+ * Parse a weapon's damagePerShot JSON string into the 20-element float array.
+ */
+export function parseDamageArray(weapon: Weapon): number[] {
+  if (!weapon.damage_per_shot) return new Array(20).fill(0);
+  try {
+    const arr = JSON.parse(weapon.damage_per_shot);
+    if (Array.isArray(arr)) return arr;
+    return new Array(20).fill(0);
+  } catch {
+    return new Array(20).fill(0);
+  }
+}
+
+/**
+ * Get the innate secondary elements on a weapon.
+ * These are damage types at indices 7-12 (Blast, Radiation, Gas, Magnetic, Viral, Corrosive).
+ */
+export function getInnateSecondaryElements(
+  baseDamage: number[],
+): DamageEntry[] {
+  const result: DamageEntry[] = [];
+  // Secondary elements are at indices 7-12
+  const secondaryIndices = [7, 8, 9, 10, 11, 12];
+  for (const idx of secondaryIndices) {
+    if (baseDamage[idx] > 0) {
+      result.push({
+        type: DAMAGE_TYPES[idx],
+        value: baseDamage[idx],
+      });
+    }
+  }
+  return result;
+}
+
+/**
+ * Extract element mods from the mod slots.
+ * Returns which primary elements are being added and in which slot.
+ */
+export function extractElementMods(slots: ModSlot[]): Array<{
+  slotIndex: number;
+  element: (typeof PRIMARY_ELEMENTS)[number];
+  value: number;
+}> {
+  const result: Array<{
+    slotIndex: number;
+    element: (typeof PRIMARY_ELEMENTS)[number];
+    value: number;
+  }> = [];
+
+  for (const slot of slots) {
+    if (!slot.mod || slot.type !== 'general') continue;
+
+    // Check if this mod adds an elemental damage type
+    // We'd need to look at the mod's levelStats to determine this
+    // For now, check the mod description for element keywords
+    const modDesc = slot.mod.description;
+    if (!modDesc) continue;
+
+    try {
+      const descriptions: string[] = JSON.parse(modDesc);
+      for (const desc of descriptions) {
+        const lower = desc.toLowerCase();
+        for (const element of PRIMARY_ELEMENTS) {
+          if (lower.includes(`${element.toLowerCase()} damage`)) {
+            // Extract the percentage value
+            const match = desc.match(/\+?([\d.]+)%/);
+            const value = match ? parseFloat(match[1]) : 0;
+            result.push({
+              slotIndex: slot.index,
+              element,
+              value,
+            });
+          }
+        }
+      }
+    } catch {
+      // Not valid JSON description
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Calculate the complete damage output for a weapon build.
+ * Applies base damage, physical IPS, and multishot multipliers from mods
+ * so the element breakdown reflects actual modded values.
+ */
+export function calculateBuildDamage(
+  weapon: Weapon,
+  slots: ModSlot[],
+): {
+  totalDamage: number;
+  damageBreakdown: DamageEntry[];
+  innateSecondary: DamageEntry[];
+} {
+  const baseDamage = parseDamageArray(weapon);
+  const elementMods = extractElementMods(slots);
+  const innateSecondary = getInnateSecondaryElements(baseDamage);
+
+  const effects = aggregateAllMods(slots);
+
+  // Build per-type multipliers: base damage bonus applies to all,
+  // physical bonuses (IPS) stack on top for their respective types.
+  const damageMultipliers: Partial<Record<DamageType, number>> = {};
+  for (const dt of DAMAGE_TYPES) {
+    let mult = effects.baseDamage;
+    if (dt === 'Impact') mult += effects.impactDamage;
+    else if (dt === 'Puncture') mult += effects.punctureDamage;
+    else if (dt === 'Slash') mult += effects.slashDamage;
+    if (mult !== 0) damageMultipliers[dt] = mult;
+  }
+
+  const damageBreakdown = calculateFinalDamage(
+    baseDamage,
+    elementMods,
+    damageMultipliers,
+  );
+
+  for (const innate of innateSecondary) {
+    const existing = damageBreakdown.find((d) => d.type === innate.type);
+    if (existing) {
+      existing.value += innate.value * (1 + effects.baseDamage);
+    } else {
+      damageBreakdown.push({
+        type: innate.type,
+        value: innate.value * (1 + effects.baseDamage),
+      });
+    }
+  }
+
+  const totalDamage = damageBreakdown.reduce((sum, d) => sum + d.value, 0);
+
+  return {
+    totalDamage: Math.round(totalDamage * 10) / 10,
+    damageBreakdown,
+    innateSecondary,
+  };
+}
+
+/**
+ * Format a damage value for display.
+ */
+export function formatDamage(value: number): string {
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  return value.toFixed(1);
+}
+
+/**
+ * Format a percentage value.
+ */
+export function formatPercent(value: number): string {
+  return `${(value * 100).toFixed(1)}%`;
+}

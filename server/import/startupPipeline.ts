@@ -1,0 +1,187 @@
+import { downloadImages } from './images.js';
+import { runImportPipeline, listExportFiles } from './pipeline.js';
+import { getDb } from '../db/connection.js';
+import { processExports, backfillModDescriptions } from '../db/queries.js';
+import { createAppSchema } from '../db/schema.js';
+import { mergeScrapedData } from '../scraping/dataMerger.js';
+import { scrapeIndex } from '../scraping/indexScraper.js';
+import { scrapeItems } from '../scraping/itemScraper.js';
+import { runWikiScrape } from '../scraping/wikiScraper.js';
+
+const TAG = '[Startup]';
+
+function hasExportFiles(): boolean {
+  try {
+    const files = listExportFiles();
+    return files.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function hasDbData(): boolean {
+  try {
+    const db = getDb();
+    const count = (
+      db.prepare('SELECT COUNT(*) as c FROM warframes').get() as { c: number }
+    ).c;
+    return count > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Run the full data pipeline on startup, skipping steps where data already exists.
+ *
+ * Steps:
+ * 1. Ensure schema exists
+ * 2. Download manifest + export files (hash-based skip)
+ * 3. Process exports into DB (only if new data downloaded)
+ * 4. Download images (hash-based skip)
+ * 5. Overframe scrape (only items missing artifact_slots)
+ * 6. Wiki scrape (only abilities/passives missing data)
+ */
+export async function runStartupPipeline(): Promise<void> {
+  const startTime = Date.now();
+  console.log(`${TAG} Starting data pipeline...`);
+
+  // Step 1: Schema
+  try {
+    createAppSchema();
+  } catch (err) {
+    console.error(`${TAG} Schema creation failed:`, err);
+    return;
+  }
+
+  // Step 2: Download exports (hash-based, skips unchanged files)
+  try {
+    await runImportPipeline((status) => {
+      if (status.error) {
+        console.error(`${TAG} Import: ${status.message}`);
+      } else if (!status.message.includes('Skipping')) {
+        console.log(`${TAG} Import: ${status.message}`);
+      }
+    });
+  } catch (err) {
+    console.error(
+      `${TAG} Export download failed:`,
+      err instanceof Error ? err.message : err,
+    );
+    if (!hasExportFiles()) {
+      console.error(`${TAG} No export files available, cannot continue`);
+      return;
+    }
+  }
+
+  // Step 3: Process exports into DB
+  try {
+    console.log(`${TAG} Processing exports into database...`);
+    const counts = processExports();
+    console.log(
+      `${TAG} Processed: ${counts.warframes} warframes, ${counts.weapons} weapons, ` +
+        `${counts.mods} mods, ${counts.abilities} abilities`,
+    );
+    backfillModDescriptions();
+  } catch (err) {
+    console.error(
+      `${TAG} Export processing failed:`,
+      err instanceof Error ? err.message : err,
+    );
+    if (!hasDbData()) {
+      console.error(`${TAG} No DB data available, cannot continue to scrapers`);
+      return;
+    }
+  }
+
+  // Step 4: Download images (hash-based skip)
+  try {
+    const imgResult = await downloadImages((done, total, current) => {
+      if (done === 1 || done % 500 === 0 || done === total) {
+        console.log(`${TAG} Images: ${done}/${total} (${current})`);
+      }
+    });
+    if (imgResult.downloaded > 0) {
+      console.log(
+        `${TAG} Images: ${imgResult.downloaded} downloaded, ${imgResult.skipped} skipped`,
+      );
+    } else {
+      console.log(`${TAG} Images: all ${imgResult.skipped} up to date`);
+    }
+  } catch (err) {
+    console.error(
+      `${TAG} Image download failed:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  // Step 5: Overframe scrape (only missing items)
+  try {
+    const indexResult = await scrapeIndex(
+      undefined,
+      (msg) => {
+        console.log(`${TAG} Overframe: ${msg}`);
+      },
+      true,
+    );
+
+    if (indexResult.entries.length > 0) {
+      console.log(
+        `${TAG} Overframe: scraping ${indexResult.entries.length} items...`,
+      );
+      const scrapedItems = await scrapeItems(indexResult.entries, 1500, (p) => {
+        if (p.current === 1 || p.current % 50 === 0 || p.current === p.total) {
+          console.log(
+            `${TAG} Overframe: ${p.current}/${p.total} ${p.currentItem}`,
+          );
+        }
+      });
+
+      const mergeResult = mergeScrapedData(scrapedItems, (msg) => {
+        console.log(`${TAG} Overframe merge: ${msg}`);
+      });
+      console.log(
+        `${TAG} Overframe: merged ${mergeResult.warframesUpdated} warframes, ` +
+          `${mergeResult.weaponsUpdated} weapons, ${mergeResult.companionsUpdated} companions`,
+      );
+    } else {
+      console.log(`${TAG} Overframe: all items up to date`);
+    }
+  } catch (err) {
+    console.error(
+      `${TAG} Overframe scrape failed:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  // Step 6: Wiki scrape (only missing data)
+  try {
+    const wikiResult = await runWikiScrape((p) => {
+      if (p.log.length > 0) {
+        const last = p.log[p.log.length - 1];
+        if (
+          last.includes('already have') ||
+          last.includes('Found') ||
+          last.includes('Scraped') ||
+          last.includes('Merged') ||
+          last.includes('Fetching') ||
+          last.includes('complete')
+        ) {
+          console.log(`${TAG} Wiki: ${last}`);
+        }
+      }
+    }, true);
+    console.log(
+      `${TAG} Wiki: ${wikiResult.abilitiesUpdated} abilities, ` +
+        `${wikiResult.passivesUpdated} passives, ${wikiResult.augmentsUpdated} augments`,
+    );
+  } catch (err) {
+    console.error(
+      `${TAG} Wiki scrape failed:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`${TAG} Data pipeline complete in ${elapsed}s`);
+}

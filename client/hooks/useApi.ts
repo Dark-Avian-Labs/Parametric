@@ -1,0 +1,53 @@
+import { useState, useEffect, useCallback } from 'react';
+
+interface ApiState<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+/**
+ * Generic hook for fetching data from the API.
+ */
+export function useApi<T>(url: string | null): ApiState<T> {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [trigger, setTrigger] = useState(0);
+
+  const refetch = useCallback(() => setTrigger((t) => t + 1), []);
+
+  useEffect(() => {
+    if (!url) {
+      setData(null);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+
+    fetch(url, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json) => {
+        setData(json);
+        setLoading(false);
+        return undefined;
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setError(err.message);
+        setLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [url, trigger]);
+
+  return { data, loading, error, refetch };
+}

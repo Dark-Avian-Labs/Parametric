@@ -1,0 +1,391 @@
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+import {
+  DEFAULT_LAYOUT,
+  dbRarityToCardRarity,
+  dbPolarityToIconName,
+} from './cardLayout';
+import { CardPreview } from './CardPreview';
+import type { Mod, SlotType } from '../../types/warframe';
+import { calculateEffectiveDrain } from '../../utils/drain';
+
+interface ModCardProps {
+  mod: Mod;
+  rank?: number;
+  setRank?: number;
+  slotType?: SlotType;
+  slotPolarity?: string;
+  onRemove?: () => void;
+  onRankChange?: (rank: number) => void;
+  onSetRankChange?: (setRank: number) => void;
+  /** If true, the card is draggable */
+  draggable?: boolean;
+  /** If true, the mod is locked out (same lockout group already equipped) */
+  lockedOut?: boolean;
+  /** If true, show collapsed card (for slots/plan view) */
+  collapsed?: boolean;
+  /** Override the preview scale (default from layout) */
+  scale?: number;
+}
+
+export function ModCard({
+  mod,
+  rank = 0,
+  setRank,
+  slotType = 'general',
+  slotPolarity,
+  onRemove,
+  onRankChange,
+  onSetRankChange,
+  draggable = false,
+  lockedOut = false,
+  collapsed = false,
+  scale,
+}: ModCardProps) {
+  const [hovered, setHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const maxRank = mod.fusion_limit ?? 0;
+  const baseDrain = mod.base_drain ?? 0;
+  const effectiveDrain = calculateEffectiveDrain(
+    baseDrain,
+    rank,
+    maxRank,
+    slotPolarity,
+    mod.polarity,
+    slotType,
+  );
+
+  const rarity = dbRarityToCardRarity(mod.rarity, mod.name || mod.unique_name);
+  const polarity = dbPolarityToIconName(mod.polarity);
+  const modArt = mod.image_path ? `/images${mod.image_path}` : '';
+
+  // Parse description to get rank-appropriate text, strip markup tags
+  let description = '';
+  try {
+    if (mod.description) {
+      const descriptions: string[] = JSON.parse(mod.description);
+      const raw = descriptions[Math.min(rank, descriptions.length - 1)] ?? '';
+      description = raw.replace(/<[^>]+>/g, '').trim();
+    }
+  } catch {
+    description = (mod.description ?? '').replace(/<[^>]+>/g, '').trim();
+  }
+
+  // Parse set bonus description
+  let setDescription = '';
+  const maxSetRank = mod.set_num_in_set ?? 0;
+  const effectiveSetRank = setRank ?? (maxSetRank > 0 ? 1 : 0);
+  if (mod.set_stats && maxSetRank > 0) {
+    try {
+      const setStats: string[] = JSON.parse(mod.set_stats);
+      const idx = Math.min(
+        Math.max(effectiveSetRank - 1, 0),
+        setStats.length - 1,
+      );
+      setDescription = (setStats[idx] ?? '').replace(/<[^>]+>/g, '').trim();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Determine the mod's type label (compat_name, e.g. "RIFLE")
+  const modType = mod.compat_name?.toUpperCase() ?? '';
+
+  // Derive slot icon from mod type
+  const modTypeUpper = (mod.type || '').toUpperCase();
+  const slotIcon =
+    modTypeUpper === 'AURA'
+      ? 'aura'
+      : modTypeUpper === 'STANCE'
+        ? 'stance'
+        : mod.is_utility === 1
+          ? 'exilus'
+          : '';
+
+  const displayDrain = Math.abs(effectiveDrain);
+
+  const polarityMatch: 'match' | 'mismatch' | undefined =
+    slotPolarity && mod.polarity
+      ? slotPolarity === mod.polarity
+        ? 'match'
+        : 'mismatch'
+      : undefined;
+
+  const layout = {
+    ...DEFAULT_LAYOUT,
+    ...(scale != null ? { scale } : {}),
+  };
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(mod));
+    e.dataTransfer.effectAllowed = 'move';
+
+    if (cardRef.current) {
+      const el = cardRef.current;
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.style.position = 'fixed';
+      clone.style.top = '-9999px';
+      clone.style.left = '-9999px';
+      clone.style.zIndex = '-1';
+      clone.style.pointerEvents = 'none';
+      document.body.appendChild(clone);
+
+      const rect = el.getBoundingClientRect();
+      e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+
+      requestAnimationFrame(() => {
+        document.body.removeChild(clone);
+      });
+    }
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      className={`relative inline-block ${lockedOut ? 'opacity-40' : ''}`}
+      draggable={(draggable && !lockedOut) || undefined}
+      onDragStart={draggable && !lockedOut ? handleDragStart : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: lockedOut ? 'not-allowed' : draggable ? 'grab' : 'default',
+      }}
+    >
+      <CardPreview
+        layout={layout}
+        rarity={rarity}
+        polarity={polarity}
+        modArt={modArt}
+        modName={mod.name}
+        modType={modType}
+        modDescription={description}
+        setDescription={setDescription}
+        setActive={effectiveSetRank}
+        setTotal={maxSetRank}
+        modSet={mod.mod_set}
+        drain={displayDrain}
+        rank={rank}
+        maxRank={maxRank}
+        slotIcon={slotIcon}
+        polarityMatch={polarityMatch}
+        collapsed={collapsed}
+      />
+
+      {/* Hover expand for collapsed cards in the mod picker (not slots — slots handle their own) */}
+      {collapsed && hovered && !onRemove && (
+        <CollapsedHoverExpand
+          cardRef={cardRef}
+          layout={layout}
+          rarity={rarity}
+          polarity={polarity}
+          modArt={modArt}
+          modName={mod.name}
+          modType={modType}
+          modDescription={description}
+          setDescription={setDescription}
+          setActive={effectiveSetRank}
+          setTotal={maxSetRank}
+          modSet={mod.mod_set}
+          drain={displayDrain}
+          rank={rank}
+          maxRank={maxRank}
+          slotIcon={slotIcon}
+          polarityMatch={polarityMatch}
+        />
+      )}
+
+      {/* Inline controls for non-collapsed cards */}
+      {hovered && !collapsed && (
+        <>
+          {onRemove && (
+            <button
+              onClick={onRemove}
+              className="absolute right-0.5 top-0.5 z-50 flex h-4 w-4 items-center justify-center rounded-full bg-glass-active text-[10px] font-bold text-danger shadow-lg transition-opacity hover:bg-glass-active/80"
+            >
+              X
+            </button>
+          )}
+          {onRankChange && maxRank > 0 && (
+            <RankStars rank={rank} maxRank={maxRank} onChange={onRankChange} />
+          )}
+          {onSetRankChange && maxSetRank > 0 && (
+            <SetRankDots
+              setRank={setRank ?? 1}
+              maxSetRank={maxSetRank}
+              onChange={onSetRankChange}
+              hasRankStars={!!onRankChange && maxRank > 0}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function RankStars({
+  rank,
+  maxRank,
+  onChange,
+}: {
+  rank: number;
+  maxRank: number;
+  onChange: (rank: number) => void;
+}) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  // hoverIndex: -1 = hovering rank-0 button, 0..maxRank-1 = hovering rank stars
+  const targetRank = hoverIndex !== null ? hoverIndex + 1 : null;
+
+  return (
+    <div
+      className="absolute bottom-1 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded bg-black/80 px-1.5 py-1"
+      onMouseLeave={() => setHoverIndex(null)}
+    >
+      {/* Rank 0 button */}
+      <button
+        onMouseEnter={() => setHoverIndex(-1)}
+        onClick={() => onChange(0)}
+        className={`mr-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-sm text-[8px] font-bold leading-none transition-colors ${
+          hoverIndex === -1
+            ? 'bg-danger text-white'
+            : rank === 0
+              ? 'bg-accent text-white'
+              : 'bg-glass-active/50 text-muted/50'
+        }`}
+        title="Rank 0"
+      >
+        0
+      </button>
+      {Array.from({ length: maxRank }, (_, i) => {
+        const starRank = i + 1;
+        let colorClass: string;
+
+        if (hoverIndex === null) {
+          colorClass = i < rank ? 'bg-accent' : 'bg-glass-active/50';
+        } else if (hoverIndex === -1) {
+          // Hovering rank-0: all active stars turn red
+          colorClass = i < rank ? 'bg-danger' : 'bg-glass-active/50';
+        } else if (
+          targetRank !== null &&
+          targetRank < rank &&
+          starRank > targetRank &&
+          starRank <= rank
+        ) {
+          colorClass = 'bg-danger';
+        } else if (starRank <= (targetRank ?? 0)) {
+          colorClass = 'bg-accent';
+        } else {
+          colorClass = 'bg-glass-active/50';
+        }
+
+        return (
+          <button
+            key={i}
+            onMouseEnter={() => setHoverIndex(i)}
+            onClick={() => onChange(starRank)}
+            className={`h-2.5 w-2.5 rounded-full transition-colors ${colorClass}`}
+            title={`Rank ${starRank}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function CollapsedHoverExpand({
+  cardRef,
+  layout,
+  ...previewProps
+}: {
+  cardRef: React.RefObject<HTMLDivElement | null>;
+  layout: typeof DEFAULT_LAYOUT;
+} & Omit<
+  React.ComponentProps<typeof CardPreview>,
+  'layout' | 'collapsed' | 'showGuides' | 'showOutlines'
+>) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!cardRef.current) {
+      setPos(null);
+      return;
+    }
+    const rect = cardRef.current.getBoundingClientRect();
+    setPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+  }, [cardRef]);
+
+  if (!pos) return null;
+
+  return createPortal(
+    <div
+      className="pointer-events-none fixed z-[9999] mod-selector-expand"
+      style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
+    >
+      <CardPreview layout={layout} {...previewProps} />
+    </div>,
+    document.body,
+  );
+}
+
+function SetRankDots({
+  setRank,
+  maxSetRank,
+  onChange,
+  hasRankStars,
+}: {
+  setRank: number;
+  maxSetRank: number;
+  onChange: (rank: number) => void;
+  hasRankStars: boolean;
+}) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const targetRank = hoverIndex !== null ? hoverIndex + 1 : null;
+
+  return (
+    <div
+      className="absolute left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded bg-black/80 px-1.5 py-1"
+      style={{ bottom: hasRankStars ? 24 : 4 }}
+      onMouseLeave={() => setHoverIndex(null)}
+    >
+      <span
+        className="mr-0.5 text-[7px] font-semibold uppercase leading-none"
+        style={{ color: 'rgba(200,170,100,0.6)' }}
+      >
+        Set
+      </span>
+      {Array.from({ length: maxSetRank }, (_, i) => {
+        const dotRank = i + 1;
+        let bg: string;
+
+        if (hoverIndex === null) {
+          bg =
+            dotRank <= setRank ? 'rgb(200,170,100)' : 'rgba(200,170,100,0.2)';
+        } else if (
+          targetRank !== null &&
+          targetRank < setRank &&
+          dotRank > targetRank &&
+          dotRank <= setRank
+        ) {
+          bg = 'rgb(220,80,80)';
+        } else if (dotRank <= (targetRank ?? 0)) {
+          bg = 'rgb(200,170,100)';
+        } else {
+          bg = 'rgba(200,170,100,0.2)';
+        }
+
+        return (
+          <button
+            key={i}
+            onMouseEnter={() => setHoverIndex(i)}
+            onClick={() => onChange(dotRank)}
+            className="h-2.5 w-2.5 rounded-full transition-colors"
+            style={{ backgroundColor: bg }}
+            title={`Set pieces: ${dotRank}`}
+          />
+        );
+      })}
+    </div>
+  );
+}

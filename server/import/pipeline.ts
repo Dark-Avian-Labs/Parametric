@@ -1,0 +1,237 @@
+import fs from 'fs';
+import path from 'path';
+
+import { CONTENT_BASE_URL, EXPORTS_DIR, REQUIRED_EXPORTS } from '../config.js';
+import { downloadAndParseManifest, type ManifestEntry } from './manifest.js';
+
+export interface ImportStatus {
+  step: string;
+  message: string;
+  progress?: number;
+  total?: number;
+  error?: string;
+}
+
+export interface ExportFileInfo {
+  category: string;
+  filename: string;
+  hash: string;
+  localPath: string;
+  size: number;
+  itemCount?: number;
+}
+
+/**
+ * Run the full import pipeline:
+ *  1) Download & parse manifest
+ *  2) Download required export JSON files
+ *
+ * Yields status updates as it progresses.
+ */
+export async function runImportPipeline(
+  onStatus?: (status: ImportStatus) => void,
+): Promise<ExportFileInfo[]> {
+  const report =
+    onStatus ??
+    ((s: ImportStatus) => console.log(`[Import] ${s.step}: ${s.message}`));
+  const results: ExportFileInfo[] = [];
+
+  // Step 1: Download manifest
+  report({ step: 'manifest', message: 'Downloading and parsing manifest...' });
+  let entries: ManifestEntry[];
+  try {
+    entries = await downloadAndParseManifest();
+    report({
+      step: 'manifest',
+      message: `Parsed ${entries.length} entries from manifest`,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    report({ step: 'manifest', message: `Failed: ${msg}`, error: msg });
+    throw err;
+  }
+
+  // Step 2: Filter to required categories
+  const needed = entries.filter((e) => {
+    return REQUIRED_EXPORTS.some((req) => e.category.startsWith(req));
+  });
+
+  report({
+    step: 'download',
+    message: `Found ${needed.length} required exports to download`,
+    total: needed.length,
+    progress: 0,
+  });
+
+  // Step 3: Download each required export
+  for (let i = 0; i < needed.length; i++) {
+    const entry = needed[i];
+    const url = `${CONTENT_BASE_URL}${entry.fullFilename}`;
+    const localFilename = `${entry.category}.json`;
+    const localPath = path.join(EXPORTS_DIR, localFilename);
+    const hashPath = path.join(EXPORTS_DIR, `${entry.category}.hash`);
+
+    // Check if we already have this file with matching hash
+    if (fs.existsSync(localPath) && fs.existsSync(hashPath)) {
+      const existingHash = fs.readFileSync(hashPath, 'utf-8').trim();
+      if (existingHash === entry.hash) {
+        const stats = fs.statSync(localPath);
+        report({
+          step: 'download',
+          message: `Skipping ${entry.category} (hash unchanged)`,
+          progress: i + 1,
+          total: needed.length,
+        });
+
+        let itemCount: number | undefined;
+        try {
+          const content = JSON.parse(fs.readFileSync(localPath, 'utf-8'));
+          itemCount = getItemCount(content);
+        } catch {
+          // ignore parse errors for count
+        }
+
+        results.push({
+          category: entry.category,
+          filename: localFilename,
+          hash: entry.hash,
+          localPath,
+          size: stats.size,
+          itemCount,
+        });
+        continue;
+      }
+    }
+
+    report({
+      step: 'download',
+      message: `Downloading ${entry.category}...`,
+      progress: i,
+      total: needed.length,
+    });
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      fs.writeFileSync(localPath, text, 'utf-8');
+      fs.writeFileSync(hashPath, entry.hash, 'utf-8');
+
+      const stats = fs.statSync(localPath);
+      let itemCount: number | undefined;
+      try {
+        const content = JSON.parse(text);
+        itemCount = getItemCount(content);
+      } catch {
+        // ignore
+      }
+
+      results.push({
+        category: entry.category,
+        filename: localFilename,
+        hash: entry.hash,
+        localPath,
+        size: stats.size,
+        itemCount,
+      });
+
+      report({
+        step: 'download',
+        message: `Downloaded ${entry.category} (${formatSize(stats.size)})`,
+        progress: i + 1,
+        total: needed.length,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      report({
+        step: 'download',
+        message: `Failed to download ${entry.category}: ${msg}`,
+        error: msg,
+        progress: i + 1,
+        total: needed.length,
+      });
+    }
+  }
+
+  report({
+    step: 'complete',
+    message: `Import complete. ${results.length} files downloaded.`,
+    progress: needed.length,
+    total: needed.length,
+  });
+
+  return results;
+}
+
+/**
+ * List previously downloaded export files.
+ */
+export function listExportFiles(): ExportFileInfo[] {
+  if (!fs.existsSync(EXPORTS_DIR)) return [];
+
+  const files = fs.readdirSync(EXPORTS_DIR).filter((f) => f.endsWith('.json'));
+  const results: ExportFileInfo[] = [];
+
+  for (const file of files) {
+    const localPath = path.join(EXPORTS_DIR, file);
+    const category = file.replace('.json', '');
+    const hashPath = path.join(EXPORTS_DIR, `${category}.hash`);
+    const hash = fs.existsSync(hashPath)
+      ? fs.readFileSync(hashPath, 'utf-8').trim()
+      : '';
+    const stats = fs.statSync(localPath);
+
+    let itemCount: number | undefined;
+    try {
+      const content = JSON.parse(fs.readFileSync(localPath, 'utf-8'));
+      itemCount = getItemCount(content);
+    } catch {
+      // ignore
+    }
+
+    results.push({
+      category,
+      filename: file,
+      hash,
+      localPath,
+      size: stats.size,
+      itemCount,
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Read an export file and return its parsed JSON content.
+ */
+export function readExportFile(category: string): unknown {
+  const localPath = path.join(EXPORTS_DIR, `${category}.json`);
+  if (!fs.existsSync(localPath)) {
+    throw new Error(`Export file not found: ${category}`);
+  }
+  const text = fs.readFileSync(localPath, 'utf-8');
+  return JSON.parse(text);
+}
+
+/** Count items in the export JSON (top-level array values). */
+function getItemCount(content: unknown): number | undefined {
+  if (typeof content !== 'object' || content === null) return undefined;
+  const obj = content as Record<string, unknown>;
+  let total = 0;
+  for (const value of Object.values(obj)) {
+    if (Array.isArray(value)) {
+      total += value.length;
+    }
+  }
+  return total || undefined;
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}

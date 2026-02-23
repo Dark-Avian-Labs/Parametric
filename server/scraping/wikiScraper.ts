@@ -1,0 +1,850 @@
+import * as cheerio from 'cheerio';
+
+import { getDb } from '../db/connection.js';
+
+const WIKI_BASE = 'https://wiki.warframe.com';
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ─────────────────────────── Types ───────────────────────────
+
+export interface WikiAbilityStats {
+  energy_cost: number | null;
+  strength: string | null;
+  duration: string | null;
+  range: string | null;
+  misc: string[];
+}
+
+export interface WikiAbilityResult {
+  uniqueName: string;
+  name: string;
+  stats: WikiAbilityStats;
+}
+
+export interface WikiPassiveResult {
+  uniqueName: string;
+  name: string;
+  passive: string;
+}
+
+export interface WikiAugmentMapping {
+  augmentName: string;
+  abilityName: string;
+  abilityUniqueName: string;
+  warframeName: string;
+}
+
+export interface WikiShardType {
+  id: string;
+  name: string;
+  icon_path: string;
+  tauforged_icon_path: string;
+  sort_order: number;
+}
+
+export interface WikiShardBuff {
+  shard_type_id: string;
+  description: string;
+  base_value: number;
+  tauforged_value: number;
+  value_format: string;
+  sort_order: number;
+}
+
+export interface WikiShardResult {
+  types: WikiShardType[];
+  buffs: WikiShardBuff[];
+}
+
+export interface WikiScrapeResult {
+  abilities: WikiAbilityResult[];
+  passives: WikiPassiveResult[];
+  augments: WikiAugmentMapping[];
+  shards: WikiShardResult;
+}
+
+export interface WikiScrapeProgress {
+  phase: 'abilities' | 'passives' | 'augments' | 'shards' | 'merging' | 'done';
+  current: number;
+  total: number;
+  currentItem: string;
+  log: string[];
+}
+
+// ─────────────────────── Ability Scraper ──────────────────────
+
+function lastRankValue(text: string): string {
+  const parts = text
+    .split('/')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts[parts.length - 1] || text.trim();
+}
+
+/**
+ * Extract stat value from the float:right span text inside a stat td.
+ * Returns max-rank value only.
+ */
+function cleanStatValue(raw: string): string | null {
+  const text = raw.trim();
+  if (!text || text === 'N/A') return null;
+  return lastRankValue(text);
+}
+
+function wikiSlug(name: string): string {
+  return encodeURIComponent(name.replace(/ /g, '_')).replace(/'/g, '%27');
+}
+
+function normalizeText(s: string): string {
+  return s
+    .replace(/\u00A0/g, ' ')
+    .replace(/[\u2018\u2019]/g, "'")
+    .trim();
+}
+
+async function scrapeAbilityPage(
+  abilityName: string,
+  overrideUrl?: string,
+): Promise<WikiAbilityStats | null> {
+  const url = overrideUrl ?? `${WIKI_BASE}/w/${wikiSlug(abilityName)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) return null;
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  const abilityBox = $('table.ability-box').first();
+  if (abilityBox.length === 0) return null;
+
+  let energy_cost: number | null = null;
+  let strength: string | null = null;
+  let duration: string | null = null;
+  let range: string | null = null;
+  const misc: string[] = [];
+
+  // Energy cost: the <b style="font-size:16px;"> next to the Ability_Efficiency link
+  abilityBox.find('a[href="/w/Ability_Efficiency"]').each((_, el) => {
+    const b = $(el).find('b[style*="font-size"]');
+    if (b.length) {
+      const val = parseInt(b.text().trim(), 10);
+      if (!isNaN(val)) energy_cost = val;
+    }
+    const siblingB = $(el).prev('b[style*="font-size"]');
+    if (siblingB.length) {
+      const val = parseInt(siblingB.text().trim(), 10);
+      if (!isNaN(val)) energy_cost = val;
+    }
+  });
+  // Fallback: find <b> with font-size:16px directly adjacent to energy orb
+  if (energy_cost === null) {
+    abilityBox.find('b[style*="font-size:16px"]').each((_, el) => {
+      const val = parseInt($(el).text().trim(), 10);
+      if (!isNaN(val) && val > 0 && val <= 200) energy_cost = val;
+    });
+  }
+
+  // Stats: use the data-param-name tooltip spans to identify stat rows
+  abilityBox.find('td').each((_, td) => {
+    const $td = $(td);
+
+    const paramSpan = $td.find('span.tooltip[data-param-name]').first();
+    if (paramSpan.length === 0) return;
+
+    const paramName = paramSpan.attr('data-param-name') || '';
+    const valueSpan = $td.find('span[style*="float:right"]').first();
+    const rawValue = valueSpan.length ? valueSpan.text().trim() : '';
+
+    if (paramName === 'Ability Strength') {
+      strength = cleanStatValue(rawValue);
+    } else if (paramName === 'Ability Duration') {
+      duration = cleanStatValue(rawValue);
+    } else if (paramName === 'Ability Range') {
+      range = cleanStatValue(rawValue);
+    }
+  });
+
+  // Misc section: items separated by <br> tags
+  abilityBox.find('td').each((_, td) => {
+    const $td = $(td);
+    const boldTitle = $td.find('b[title*="unlisted"]');
+    if (boldTitle.length === 0 && !$td.text().trim().startsWith('Misc')) return;
+
+    const miscSpan = $td.find('span[style*="float:right"]').first();
+    if (miscSpan.length === 0) return;
+
+    // Replace <br> with newlines before extracting text
+    miscSpan.find('br').replaceWith('\n');
+    const lines = miscSpan
+      .text()
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    for (const line of lines) {
+      const maxed = lastRankValue(line);
+      if (maxed) misc.push(maxed);
+    }
+  });
+
+  return { energy_cost, strength, duration, range, misc };
+}
+
+/**
+ * Resolve correct wiki URLs for abilities by fetching each warframe's /Abilities page.
+ * Returns a map of ability name -> resolved wiki URL.
+ */
+async function resolveAbilityUrls(
+  abilities: { name: string; wf_name: string | null }[],
+  onProgress?: (msg: string) => void,
+): Promise<Map<string, string>> {
+  const resolved = new Map<string, string>();
+
+  const warframeNames = new Set<string>();
+  for (const ab of abilities) {
+    if (ab.wf_name) warframeNames.add(ab.wf_name);
+  }
+
+  for (const rawName of warframeNames) {
+    const cleanName = rawName.replace(/^<ARCHWING>\s*/i, '').trim();
+    const slug = cleanName.replace(/ /g, '_');
+    const url = `${WIKI_BASE}/w/${encodeURIComponent(slug)}/Abilities`;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        onProgress?.(
+          `  Could not fetch ${cleanName}/Abilities (${res.status})`,
+        );
+        continue;
+      }
+      const html = await res.text();
+      const $ = cheerio.load(html);
+
+      const abilityNames = abilities
+        .filter((a) => a.wf_name === rawName)
+        .map((a) => a.name);
+
+      for (const name of abilityNames) {
+        const normName = normalizeText(name);
+        $('a[href^="/w/"]').each((_, el) => {
+          if (resolved.has(name)) return;
+          const linkText = normalizeText($(el).text());
+          const title = normalizeText($(el).attr('title') || '');
+          const href = $(el).attr('href') || '';
+          if (href.includes('/Abilities')) return;
+          if (
+            linkText === normName ||
+            title === normName ||
+            title.startsWith(`${normName} (`)
+          ) {
+            resolved.set(name, `${WIKI_BASE}${href}`);
+          }
+        });
+      }
+      await sleep(500);
+    } catch (err) {
+      onProgress?.(`  Error resolving ${rawName}: ${err}`);
+    }
+  }
+
+  // Helminth abilities page
+  const helminthAbilities = abilities
+    .filter((a) => !a.wf_name)
+    .map((a) => a.name);
+  if (helminthAbilities.length > 0) {
+    try {
+      const res = await fetch(`${WIKI_BASE}/w/Helminth`);
+      if (res.ok) {
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        for (const name of helminthAbilities) {
+          const normName = normalizeText(name);
+          $('a[href^="/w/"]').each((_, el) => {
+            if (resolved.has(name)) return;
+            const linkText = normalizeText($(el).text());
+            const title = normalizeText($(el).attr('title') || '');
+            const href = $(el).attr('href') || '';
+            if (
+              linkText === normName ||
+              title === normName ||
+              title.startsWith(`${normName} (`)
+            ) {
+              resolved.set(name, `${WIKI_BASE}${href}`);
+            }
+          });
+        }
+      }
+      await sleep(500);
+    } catch {
+      /* fallback strategies will handle it */
+    }
+  }
+
+  return resolved;
+}
+
+/**
+ * Try scraping an ability page with fallback URL strategies.
+ */
+async function scrapeAbilityWithFallbacks(
+  name: string,
+  resolvedUrl?: string,
+): Promise<WikiAbilityStats | null> {
+  if (resolvedUrl) {
+    const result = await scrapeAbilityPage(name, resolvedUrl);
+    if (result) return result;
+  }
+
+  // Direct slug from name
+  const result = await scrapeAbilityPage(name);
+  if (result) return result;
+
+  const slug = name.replace(/ /g, '_');
+
+  // Title-case each word (handles "Marked for Death" → "Marked_For_Death")
+  const titleCased = name
+    .split(' ')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('_');
+  if (titleCased !== slug) {
+    const r = await scrapeAbilityPage(
+      name,
+      `${WIKI_BASE}/w/${wikiSlug(titleCased)}`,
+    );
+    if (r) return r;
+  }
+
+  // Disambiguation: Name_(Ability)
+  const r2 = await scrapeAbilityPage(
+    name,
+    `${WIKI_BASE}/w/${wikiSlug(`${slug}_(Ability)`)}`,
+  );
+  if (r2) return r2;
+
+  return null;
+}
+
+/**
+ * Scrape ability pages for abilities in our DB.
+ * @param onlyMissing - If true, skip abilities that already have wiki_stats data
+ */
+export async function scrapeAbilities(
+  onProgress?: (msg: string) => void,
+  onlyMissing = false,
+): Promise<WikiAbilityResult[]> {
+  const db = getDb();
+  const baseFilter = onlyMissing ? 'WHERE a.wiki_stats IS NULL' : '';
+  const abilities = db
+    .prepare(
+      `
+    SELECT a.unique_name, a.name, w.name as wf_name
+    FROM abilities a
+    LEFT JOIN warframes w ON a.warframe_unique_name = w.unique_name
+    ${baseFilter}
+    ORDER BY a.name
+  `,
+    )
+    .all() as { unique_name: string; name: string; wf_name: string | null }[];
+
+  if (onlyMissing) {
+    const total = (
+      db.prepare('SELECT COUNT(*) as c FROM abilities').get() as { c: number }
+    ).c;
+    onProgress?.(
+      `${abilities.length} abilities need scraping (${total - abilities.length} already have data)`,
+    );
+  } else {
+    onProgress?.(`Found ${abilities.length} abilities to scrape`);
+  }
+
+  if (abilities.length === 0) {
+    onProgress?.('All abilities already have wiki data, skipping');
+    return [];
+  }
+
+  onProgress?.('Resolving ability URLs from warframe pages...');
+  const urlMap = await resolveAbilityUrls(abilities, onProgress);
+  onProgress?.(
+    `Resolved ${urlMap.size}/${abilities.length} ability URLs from warframe pages`,
+  );
+
+  const results: WikiAbilityResult[] = [];
+
+  for (let i = 0; i < abilities.length; i++) {
+    const ab = abilities[i];
+    const resolvedUrl = urlMap.get(ab.name);
+    onProgress?.(
+      `[${i + 1}/${abilities.length}] ${ab.name}${resolvedUrl ? '' : ' (fallbacks)'}`,
+    );
+
+    try {
+      const stats = await scrapeAbilityWithFallbacks(ab.name, resolvedUrl);
+      if (stats) {
+        results.push({ uniqueName: ab.unique_name, name: ab.name, stats });
+      } else {
+        onProgress?.(`  No data found for ${ab.name}`);
+      }
+    } catch (err) {
+      onProgress?.(`  Failed: ${err instanceof Error ? err.message : err}`);
+    }
+
+    if (i < abilities.length - 1) await sleep(800);
+  }
+
+  onProgress?.(`Scraped ${results.length} abilities successfully`);
+  return results;
+}
+
+// ─────────────────────── Passive Scraper ─────────────────────
+
+async function scrapeWarframePage(wfName: string): Promise<string | null> {
+  const slug = wfName.replace(/ /g, '_');
+  const url = `${WIKI_BASE}/w/${encodeURIComponent(slug)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) return null;
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  // Try infobox passive extraction
+  const infobox = $('div.infobox').first();
+  if (infobox.length > 0) {
+    const text = infobox.text();
+    const passiveMatch = text.match(
+      /Passive\s*(.+?)(?=Abilities|General Information|1st Ability|Health|Shield)/s,
+    );
+    if (passiveMatch) {
+      return passiveMatch[1].trim();
+    }
+  }
+
+  // Fallback: look for the h3 Passive header
+  const passiveHeader = $('h3:contains("Passive")').first();
+  if (passiveHeader.length > 0) {
+    const nextP = passiveHeader.nextAll('p').first();
+    if (nextP.length > 0) {
+      return nextP.text().trim();
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Scrape passive descriptions for all warframes.
+ * Only scrape base versions — skip Primes, Umbras, and variants (they share passives).
+ * @param onlyMissing - If true, skip warframes that already have passive_description_wiki
+ */
+export async function scrapePassives(
+  onProgress?: (msg: string) => void,
+  onlyMissing = false,
+): Promise<WikiPassiveResult[]> {
+  const db = getDb();
+  const baseFilter = `product_category = 'Suits' AND name NOT LIKE '%Prime' AND name NOT LIKE '%Umbra'`;
+  const query = onlyMissing
+    ? `SELECT unique_name, name FROM warframes WHERE ${baseFilter} AND passive_description_wiki IS NULL ORDER BY name`
+    : `SELECT unique_name, name FROM warframes WHERE ${baseFilter} ORDER BY name`;
+  const warframes = db.prepare(query).all() as {
+    unique_name: string;
+    name: string;
+  }[];
+
+  if (onlyMissing) {
+    const total = (
+      db
+        .prepare(`SELECT COUNT(*) as c FROM warframes WHERE ${baseFilter}`)
+        .get() as { c: number }
+    ).c;
+    onProgress?.(
+      `${warframes.length} warframes need passive scraping (${total - warframes.length} already have data)`,
+    );
+  } else {
+    onProgress?.(`Found ${warframes.length} warframes to scrape`);
+  }
+
+  if (warframes.length === 0) {
+    onProgress?.('All warframes already have passive data, skipping');
+    return [];
+  }
+
+  const results: WikiPassiveResult[] = [];
+
+  for (let i = 0; i < warframes.length; i++) {
+    const wf = warframes[i];
+    onProgress?.(`[${i + 1}/${warframes.length}] ${wf.name}`);
+
+    try {
+      const passive = await scrapeWarframePage(wf.name);
+      if (passive) {
+        results.push({ uniqueName: wf.unique_name, name: wf.name, passive });
+      }
+    } catch (err) {
+      onProgress?.(`  Failed: ${err instanceof Error ? err.message : err}`);
+    }
+
+    if (i < warframes.length - 1) await sleep(800);
+  }
+
+  onProgress?.(`Scraped ${results.length} passives successfully`);
+  return results;
+}
+
+// ─────────────────── Augment Association Scraper ─────────────
+
+/**
+ * Extract a balanced-brace block starting after the opening { at `startIdx`.
+ * Returns the content between the outer braces.
+ */
+function extractBraceBlock(lua: string, startIdx: number): string {
+  let depth = 1;
+  let i = startIdx;
+  while (i < lua.length && depth > 0) {
+    if (lua[i] === '{') depth++;
+    else if (lua[i] === '}') depth--;
+    i++;
+  }
+  return lua.substring(startIdx, i - 1);
+}
+
+/**
+ * Parse the Module:Ability/data Lua table to extract augment→ability mappings.
+ * Uses InternalName for direct DB matching.
+ */
+async function fetchAugmentMappings(): Promise<WikiAugmentMapping[]> {
+  const url = `${WIKI_BASE}/w/Module:Ability/data?action=raw`;
+  const res = await fetch(url);
+  if (!res.ok)
+    throw new Error(`Failed to fetch Module:Ability/data: ${res.status}`);
+
+  const lua = await res.text();
+  const mappings: WikiAugmentMapping[] = [];
+
+  // Find each ability entry: ["AbilityName"] = {
+  const entryPattern = /\["([^"]+)"\]\s*=\s*\{/g;
+  let match;
+
+  while ((match = entryPattern.exec(lua)) !== null) {
+    const abilityName = match[1];
+    const blockStart = match.index + match[0].length;
+    const body = extractBraceBlock(lua, blockStart);
+
+    const psMatch = body.match(/Powersuit\s*=\s*"([^"]+)"/);
+    const warframeName = psMatch?.[1] || '';
+
+    const inMatch = body.match(/InternalName\s*=\s*"([^"]+)"/);
+    const internalName = inMatch?.[1] || '';
+
+    const augMatch = body.match(/Augments\s*=\s*\{([^}]*)\}/);
+    if (augMatch && warframeName) {
+      const augNames = [...augMatch[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+      for (const augName of augNames) {
+        mappings.push({
+          augmentName: augName,
+          abilityName,
+          abilityUniqueName: internalName,
+          warframeName,
+        });
+      }
+    }
+  }
+
+  return mappings;
+}
+
+export async function scrapeAugments(
+  onProgress?: (msg: string) => void,
+): Promise<WikiAugmentMapping[]> {
+  onProgress?.('Fetching Module:Ability/data...');
+  const mappings = await fetchAugmentMappings();
+  onProgress?.(`Found ${mappings.length} augment→ability mappings`);
+  return mappings;
+}
+
+// ─────────────────── Archon Shard Scraper ────────────────────
+
+/**
+ * Parse buff text like "+25% (+37.5%) Melee Critical Damage" into values.
+ * Returns the first (base, tauforged) number pair found.
+ */
+function parseBuffValues(text: string): {
+  base: number;
+  tauforged: number;
+  isPercent: boolean;
+} {
+  // Pattern: optional + then number optionally with %, then (number optionally with %)
+  const m = text.match(
+    /\+?(\d+(?:\.\d+)?)(%?)\s*\((?:\+?(\d+(?:\.\d+)?))(%?)\)/,
+  );
+  if (m) {
+    return {
+      base: parseFloat(m[1]),
+      tauforged: parseFloat(m[3]),
+      isPercent: m[2] === '%' || m[4] === '%',
+    };
+  }
+  return { base: 0, tauforged: 0, isPercent: false };
+}
+
+function deriveValueFormat(text: string, isPercent: boolean): string {
+  if (isPercent) return '%';
+  if (/\/s\b/i.test(text)) return '/s';
+  return '+flat';
+}
+
+export async function scrapeArchonShards(
+  onProgress?: (msg: string) => void,
+): Promise<WikiShardResult> {
+  onProgress?.('Fetching Archon Shard wiki page...');
+  const url = `${WIKI_BASE}/w/Archon_Shard`;
+  const res = await fetch(url);
+  if (!res.ok)
+    throw new Error(`Failed to fetch Archon Shard page: ${res.status}`);
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  const table = $('table.wikitable.sortable').first();
+  if (table.length === 0) throw new Error('Shard buff table not found');
+
+  const types: WikiShardType[] = [];
+  const buffs: WikiShardBuff[] = [];
+
+  let currentShardId = '';
+  let shardSortOrder = 0;
+  let buffSortOrder = 0;
+
+  table.find('tr').each((i, row) => {
+    // Skip header
+    if (i === 0) return;
+
+    const cells = $(row).find('td');
+    let buffCellIdx = 0;
+
+    // Check if this row starts a new shard type (has a rowspan cell)
+    const rowspanCell = cells.filter('[rowspan]').first();
+    if (rowspanCell.length > 0) {
+      const paramSpan = rowspanCell
+        .find('span.tooltip[data-param-name]')
+        .first();
+      const shardName =
+        paramSpan.attr('data-param-name') || rowspanCell.text().trim();
+      const color = shardName
+        .replace(/\s*Archon Shard.*/, '')
+        .replace('Tauforged ', '')
+        .trim();
+      const id = color.toLowerCase();
+
+      shardSortOrder++;
+      buffSortOrder = 0;
+      currentShardId = id;
+
+      types.push({
+        id,
+        name: color,
+        icon_path: `/icons/shards/${color}ArchonShard.png`,
+        tauforged_icon_path: `/icons/shards/Tauforged${color}ArchonShard.png`,
+        sort_order: shardSortOrder,
+      });
+
+      // Buff text is the next cell
+      buffCellIdx = 1;
+    }
+
+    // Get the buff description cell
+    const buffCell = cells.eq(buffCellIdx);
+    const buffText = buffCell.text().trim();
+    if (!buffText || !currentShardId) return;
+
+    buffSortOrder++;
+    const { base, tauforged, isPercent } = parseBuffValues(buffText);
+    const valueFormat = deriveValueFormat(buffText, isPercent);
+
+    buffs.push({
+      shard_type_id: currentShardId,
+      description: buffText,
+      base_value: base,
+      tauforged_value: tauforged,
+      value_format: valueFormat,
+      sort_order: buffSortOrder,
+    });
+  });
+
+  onProgress?.(`Found ${types.length} shard types with ${buffs.length} buffs`);
+  return { types, buffs };
+}
+
+// ─────────────────────── Merge into DB ───────────────────────
+
+export interface WikiMergeResult {
+  abilitiesUpdated: number;
+  passivesUpdated: number;
+  augmentsUpdated: number;
+  shardTypes: number;
+  shardBuffs: number;
+}
+
+export function mergeWikiData(
+  data: WikiScrapeResult,
+  onProgress?: (msg: string) => void,
+): WikiMergeResult {
+  const db = getDb();
+  const result: WikiMergeResult = {
+    abilitiesUpdated: 0,
+    passivesUpdated: 0,
+    augmentsUpdated: 0,
+    shardTypes: 0,
+    shardBuffs: 0,
+  };
+
+  const updateAbility = db.prepare(
+    'UPDATE abilities SET wiki_stats = ?, energy_cost = ? WHERE unique_name = ?',
+  );
+  const updatePassive = db.prepare(
+    'UPDATE warframes SET passive_description_wiki = ? WHERE unique_name = ?',
+  );
+  // Also propagate to Prime/Umbra variants
+  const updatePassiveLike = db.prepare(
+    `UPDATE warframes SET passive_description_wiki = ?
+     WHERE unique_name LIKE ? AND passive_description_wiki IS NULL`,
+  );
+  const updateAugment = db.prepare(
+    'UPDATE mods SET augment_for_ability = ? WHERE name = ? AND is_augment = 1',
+  );
+
+  const mergeAll = db.transaction(() => {
+    for (const ab of data.abilities) {
+      const statsJson = JSON.stringify(ab.stats);
+      const changes = updateAbility.run(
+        statsJson,
+        ab.stats.energy_cost,
+        ab.uniqueName,
+      );
+      if (changes.changes > 0) result.abilitiesUpdated++;
+    }
+
+    for (const p of data.passives) {
+      const changes = updatePassive.run(p.passive, p.uniqueName);
+      if (changes.changes > 0) result.passivesUpdated++;
+
+      // Propagate to variants: /Lotus/Powersuits/Excalibur/Excalibur → match /Lotus/Powersuits/Excalibur/%
+      const pathBase = `${p.uniqueName.substring(0, p.uniqueName.lastIndexOf('/') + 1)}%`;
+      updatePassiveLike.run(p.passive, pathBase);
+    }
+
+    for (const aug of data.augments) {
+      const changes = updateAugment.run(aug.abilityName, aug.augmentName);
+      if (changes.changes > 0) result.augmentsUpdated++;
+    }
+
+    // Archon shards: clear and re-insert for clean data
+    if (data.shards.types.length > 0) {
+      db.prepare('DELETE FROM archon_shard_buffs').run();
+      db.prepare('DELETE FROM archon_shard_types').run();
+
+      const insertType = db.prepare(
+        'INSERT INTO archon_shard_types (id, name, icon_path, tauforged_icon_path, sort_order) VALUES (?, ?, ?, ?, ?)',
+      );
+      const insertBuff = db.prepare(
+        'INSERT INTO archon_shard_buffs (shard_type_id, description, base_value, tauforged_value, value_format, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+      );
+
+      for (const st of data.shards.types) {
+        insertType.run(
+          st.id,
+          st.name,
+          st.icon_path,
+          st.tauforged_icon_path,
+          st.sort_order,
+        );
+        result.shardTypes++;
+      }
+      for (const sb of data.shards.buffs) {
+        insertBuff.run(
+          sb.shard_type_id,
+          sb.description,
+          sb.base_value,
+          sb.tauforged_value,
+          sb.value_format,
+          sb.sort_order,
+        );
+        result.shardBuffs++;
+      }
+    }
+  });
+
+  mergeAll();
+  onProgress?.(
+    `Merged: ${result.abilitiesUpdated} abilities, ` +
+      `${result.passivesUpdated} passives, ` +
+      `${result.augmentsUpdated} augments, ` +
+      `${result.shardTypes} shard types, ${result.shardBuffs} shard buffs`,
+  );
+  return result;
+}
+
+// ──────────────────── Full Pipeline ──────────────────────────
+
+export async function runWikiScrape(
+  onProgress?: (progress: WikiScrapeProgress) => void,
+  onlyMissing = false,
+): Promise<WikiMergeResult> {
+  const state: WikiScrapeProgress = {
+    phase: 'augments',
+    current: 0,
+    total: 0,
+    currentItem: '',
+    log: [],
+  };
+
+  const log = (msg: string) => {
+    state.log.push(msg);
+    onProgress?.(state);
+  };
+
+  // Phase 1: Augments (always refresh — single HTTP request, instant)
+  state.phase = 'augments';
+  const augments = await scrapeAugments(log);
+
+  // Phase 1b: Archon Shards (single page scrape)
+  state.phase = 'shards';
+  const shards = await scrapeArchonShards(log);
+
+  // Phase 2: Abilities
+  state.phase = 'abilities';
+  const abilities = await scrapeAbilities((msg) => {
+    const m = msg.match(/\[(\d+)\/(\d+)\]\s*(.*)/);
+    if (m) {
+      state.current = parseInt(m[1]);
+      state.total = parseInt(m[2]);
+      state.currentItem = m[3];
+    }
+    log(msg);
+  }, onlyMissing);
+
+  // Phase 3: Passives
+  state.phase = 'passives';
+  const passives = await scrapePassives((msg) => {
+    const m = msg.match(/\[(\d+)\/(\d+)\]\s*(.*)/);
+    if (m) {
+      state.current = parseInt(m[1]);
+      state.total = parseInt(m[2]);
+      state.currentItem = m[3];
+    }
+    log(msg);
+  }, onlyMissing);
+
+  // Phase 4: Merge
+  state.phase = 'merging';
+  log('Merging wiki data into database...');
+  const result = mergeWikiData({ abilities, passives, augments, shards }, log);
+
+  state.phase = 'done';
+  log('Wiki scrape complete');
+  onProgress?.(state);
+
+  return result;
+}
