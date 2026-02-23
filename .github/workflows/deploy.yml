@@ -52,12 +52,11 @@ jobs:
       - name: Deploy to server
         run: |
           rsync -av --delete \
-          --exclude='.env' \
-          --exclude='.env.local' \
-          --exclude='logs/' \
-          --exclude='data/' \
-          --exclude='import/' \
-          --exclude='icons/' \
+          --exclude='/.env' \
+          --exclude='/.env.local' \
+          --exclude='/logs/' \
+          --exclude='/data/' \
+          --exclude='/icons/' \
           -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
           /tmp/deploy/ \
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}/
