@@ -265,11 +265,29 @@ function processWarframes(data: Record<string, unknown[]>): number {
   const items = (data.ExportWarframes || []) as Record<string, unknown>[];
 
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO warframes
+    INSERT INTO warframes
     (unique_name, name, description, health, shield, armor, power, sprint_speed, stamina,
      passive_description, product_category, abilities, aura_polarity, exilus_polarity,
      polarities, mastery_req, codex_secret, exclude_from_codex)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(unique_name) DO UPDATE SET
+      name = excluded.name,
+      description = excluded.description,
+      health = excluded.health,
+      shield = excluded.shield,
+      armor = excluded.armor,
+      power = excluded.power,
+      sprint_speed = excluded.sprint_speed,
+      stamina = excluded.stamina,
+      passive_description = excluded.passive_description,
+      product_category = excluded.product_category,
+      abilities = excluded.abilities,
+      aura_polarity = excluded.aura_polarity,
+      exilus_polarity = excluded.exilus_polarity,
+      polarities = excluded.polarities,
+      mastery_req = excluded.mastery_req,
+      codex_secret = excluded.codex_secret,
+      exclude_from_codex = excluded.exclude_from_codex
   `);
 
   const tx = db.transaction(() => {
@@ -461,11 +479,26 @@ function processMods(data: Record<string, unknown[]>): number {
   const items = (data.ExportUpgrades || []) as Record<string, unknown>[];
 
   const modStmt = db.prepare(`
-    INSERT OR REPLACE INTO mods
+    INSERT INTO mods
     (unique_name, name, polarity, rarity, type, compat_name, base_drain,
      fusion_limit, is_utility, is_augment, subtype, description,
      mod_set, codex_secret, exclude_from_codex)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(unique_name) DO UPDATE SET
+      name = excluded.name,
+      polarity = excluded.polarity,
+      rarity = excluded.rarity,
+      type = excluded.type,
+      compat_name = excluded.compat_name,
+      base_drain = excluded.base_drain,
+      fusion_limit = excluded.fusion_limit,
+      is_utility = excluded.is_utility,
+      is_augment = excluded.is_augment,
+      subtype = excluded.subtype,
+      description = excluded.description,
+      mod_set = excluded.mod_set,
+      codex_secret = excluded.codex_secret,
+      exclude_from_codex = excluded.exclude_from_codex
   `);
 
   const memberStmt = db.prepare(`
@@ -534,8 +567,7 @@ function processMods(data: Record<string, unknown[]>): number {
       const rawModSetRef =
         typeof item.modSet === 'string' ? (item.modSet as string) : null;
       const modSetRef =
-        rawModSetRef &&
-        modSetExistsStmt.get(rawModSetRef) !== undefined
+        rawModSetRef && modSetExistsStmt.get(rawModSetRef) !== undefined
           ? rawModSetRef
           : null;
 
