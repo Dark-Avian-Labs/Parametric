@@ -62,6 +62,27 @@ const RARITIES: { value: ModRarity | 'ALL'; label: string }[] = [
   { value: 'LEGENDARY', label: 'Legendary' },
 ];
 
+function isImportedRivenPlaceholder(mod: Mod): boolean {
+  return (
+    /\bRiven Mod$/i.test(mod.name) && (mod.type || '').toUpperCase() !== 'RIVEN'
+  );
+}
+
+function getRivenArtNameForType(equipmentType: EquipmentType): string | null {
+  switch (equipmentType) {
+    case 'primary':
+      return 'Rifle Riven Mod';
+    case 'secondary':
+      return 'Pistol Riven Mod';
+    case 'melee':
+      return 'Melee Riven Mod';
+    case 'archgun':
+      return 'Archgun Riven Mod';
+    default:
+      return null;
+  }
+}
+
 export function FilterPanel({
   equipmentType,
   equipment,
@@ -113,7 +134,15 @@ export function FilterPanel({
   const { data, loading } = useApi<{ items: Mod[] }>(
     `/api/mods?types=${encodeURIComponent(modTypes)}`,
   );
-  const allMods = data?.items || [];
+  const rawMods = data?.items || [];
+  const importedRivenMods = useMemo(
+    () => rawMods.filter(isImportedRivenPlaceholder),
+    [rawMods],
+  );
+  const allMods = useMemo(
+    () => rawMods.filter((mod) => !isImportedRivenPlaceholder(mod)),
+    [rawMods],
+  );
 
   const { compatible, lockedOut } = useMemo(() => {
     const compatMods = filterCompatibleMods(allMods, equipmentType, equipment);
@@ -171,10 +200,19 @@ export function FilterPanel({
     : compatible;
   const rivenWeaponType = getRivenWeaponType(equipmentType);
   const rivenArt = useMemo(() => {
-    const pool = allMods.filter((m) => !!m.image_path);
-    if (pool.length === 0) return undefined;
-    return pool[Math.floor(Math.random() * pool.length)]?.image_path;
-  }, [allMods]);
+    const preferredName = getRivenArtNameForType(equipmentType);
+    if (preferredName) {
+      const preferred = importedRivenMods.find(
+        (mod) => mod.name === preferredName && !!mod.image_path,
+      );
+      if (preferred?.image_path) return preferred.image_path;
+    }
+    return importedRivenMods.find((mod) => !!mod.image_path)?.image_path;
+  }, [equipmentType, importedRivenMods]);
+  const rivenPlaceholderMod = useMemo(
+    () => createRivenPlaceholderMod(rivenArt),
+    [rivenArt],
+  );
 
   return (
     <div className="glass-panel p-4">
@@ -333,14 +371,12 @@ export function FilterPanel({
                 )}
                 {rivenWeaponType && !search && (
                   <div
-                    onClick={() =>
-                      onModSelect(createRivenPlaceholderMod(rivenArt))
-                    }
+                    onClick={() => onModSelect(rivenPlaceholderMod)}
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.setData(
                         'application/json',
-                        JSON.stringify(createRivenPlaceholderMod(rivenArt)),
+                        JSON.stringify(rivenPlaceholderMod),
                       );
                       e.dataTransfer.effectAllowed = 'move';
                       const el = e.currentTarget;
@@ -363,17 +399,11 @@ export function FilterPanel({
                     }}
                     className="cursor-grab"
                   >
-                    <CardPreview
-                      layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
-                      rarity="Riven"
-                      polarity=""
-                      modArt={rivenArt ? `/images${rivenArt}` : ''}
-                      modName="Riven Mod"
-                      modType=""
-                      modDescription="Place the mod to edit the perks"
-                      drain={0}
+                    <ModCard
+                      mod={rivenPlaceholderMod}
                       rank={0}
-                      maxRank={0}
+                      draggable
+                      scale={cardScale}
                       collapsed={!expandMods}
                     />
                   </div>

@@ -63,7 +63,7 @@ export function CardPreview({
   const slotRarity =
     rarity === 'Common' || rarity === 'Uncommon' || rarity === 'Rare'
       ? rarity
-      : 'Rare';
+      : 'Uncommon';
   const slotIconAsset = slotIcon
     ? `/icons/${slotRarity}${slotIcon.charAt(0).toUpperCase() + slotIcon.slice(1)}Icon.png`
     : '';
@@ -287,6 +287,7 @@ export function CardPreview({
               top: L.slotIconOffsetY * s,
               height: L.slotIconSize * s,
               width: 'auto',
+              filter: 'drop-shadow(0px 0px 2px #000)',
             }}
             draggable={false}
           />
