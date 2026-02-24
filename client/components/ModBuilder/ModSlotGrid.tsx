@@ -229,7 +229,9 @@ export function ModSlotGrid({
                 onRemove={() => onRemove(slot.index)}
                 onRankChange={(rank) => onRankChange(slot.index, rank)}
                 onSetRankChange={(sr) => onSetRankChange(slot.index, sr)}
-                onEditRiven={onEditRiven ? () => onEditRiven(slot.index) : undefined}
+                onEditRiven={
+                  onEditRiven ? () => onEditRiven(slot.index) : undefined
+                }
                 onClick={() =>
                   formaMode
                     ? handleFormaClick(slot.index, slot.polarity, slot.type)

@@ -60,6 +60,13 @@ export function CardPreview({
   const s = L.scale;
   const h = collapsed ? L.collapsedHeight : L.cardHeight;
   const isEmptyCard = rarity === 'Empty';
+  const slotRarity =
+    rarity === 'Common' || rarity === 'Uncommon' || rarity === 'Rare'
+      ? rarity
+      : 'Rare';
+  const slotIconAsset = slotIcon
+    ? `/icons/${slotRarity}${slotIcon.charAt(0).toUpperCase() + slotIcon.slice(1)}Icon.png`
+    : '';
   const primaryTextColor = isEmptyCard ? 'var(--color-foreground)' : '#ffffff';
   const secondaryTextColor = isEmptyCard
     ? 'color-mix(in srgb, var(--color-foreground) 80%, transparent)'
@@ -271,7 +278,7 @@ export function CardPreview({
 
         {slotIcon && (
           <img
-            src={`/icons/icon-${slotIcon}.png`}
+            src={slotIconAsset}
             alt={slotIcon}
             className="absolute left-1/2"
             style={{
@@ -443,6 +450,7 @@ export function CardPreview({
                   fontSize: L.descFontSize * s,
                   fontWeight: 400,
                   lineHeight: 1.4,
+                  whiteSpace: 'pre-line',
                   color: secondaryTextColor,
                   textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                 }}

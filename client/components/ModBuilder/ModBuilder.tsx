@@ -146,6 +146,7 @@ export function ModBuilder() {
   const [activeArcaneSlot, setActiveArcaneSlot] = useState<number | null>(null);
   const [activeShardSlot, setActiveShardSlot] = useState<number | null>(null);
   const [editingRivenSlot, setEditingRivenSlot] = useState<number | null>(null);
+  const [draftRivenSlot, setDraftRivenSlot] = useState<number | null>(null);
 
   const routeKey = `${buildId ?? ''}|${routeEqType ?? ''}|${equipmentId ?? ''}`;
   const prevRouteKey = useRef(routeKey);
@@ -170,6 +171,7 @@ export function ModBuilder() {
     setActiveArcaneSlot(null);
     setActiveShardSlot(null);
     setEditingRivenSlot(null);
+    setDraftRivenSlot(null);
     if (routeEqType) setEquipmentType(routeEqType as EquipmentType);
   }, [routeKey, buildId, routeEqType]);
 
@@ -357,48 +359,76 @@ export function ModBuilder() {
     };
   }, []);
 
-  const handleModDrop = useCallback((slotIndex: number, mod: Mod) => {
-    const isRivenPlaceholder = mod.unique_name === RIVEN_PLACEHOLDER_UNIQUE;
-    const openedRiven = { value: false };
-    setSlots((prev) => {
-      const targetSlot = prev.find((s) => s.index === slotIndex);
-      if (!targetSlot) return prev;
+  const handleModDrop = useCallback(
+    (slotIndex: number, mod: Mod) => {
+      const isRivenPlaceholder = mod.unique_name === RIVEN_PLACEHOLDER_UNIQUE;
+      const openRivenEditorForSlot = { value: null as number | null };
+      const placedNewRiven = { value: false };
+      const showRivenLimitToast = { value: false };
+      setSlots((prev) => {
+        const targetSlot = prev.find((s) => s.index === slotIndex);
+        if (!targetSlot) return prev;
 
-      if (isRivenPlaceholder && targetSlot.type !== 'general') return prev;
-      if (!isRivenPlaceholder && !canPlaceModInSlot(mod, targetSlot.type)) return prev;
+        if (isRivenPlaceholder && targetSlot.type !== 'general') return prev;
+        if (!isRivenPlaceholder && !canPlaceModInSlot(mod, targetSlot.type))
+          return prev;
 
-      const currentMods = prev
-        .filter((s) => s.mod && s.index !== slotIndex)
-        .map((s) => s.mod!);
+        if (isRivenPlaceholder) {
+          if (targetSlot.mod && isRivenMod(targetSlot.mod)) {
+            openRivenEditorForSlot.value = slotIndex;
+            return prev;
+          }
+          const existingRiven = prev.find((s) => s.mod && isRivenMod(s.mod));
+          if (existingRiven && existingRiven.index !== slotIndex) {
+            showRivenLimitToast.value = true;
+            return prev;
+          }
+        }
 
-      if (!isRivenPlaceholder && isModLockedOut(mod, currentMods)) {
-        return prev;
+        const currentMods = prev
+          .filter((s) => s.mod && s.index !== slotIndex)
+          .map((s) => s.mod!);
+
+        if (!isRivenPlaceholder && isModLockedOut(mod, currentMods)) {
+          return prev;
+        }
+
+        const rivenConfig = getDefaultRivenConfig();
+        const resolvedMod = isRivenPlaceholder
+          ? createRivenMod(rivenConfig, mod.image_path)
+          : mod;
+        if (isRivenPlaceholder) {
+          openRivenEditorForSlot.value = slotIndex;
+          placedNewRiven.value = true;
+        }
+
+        return prev.map((s) =>
+          s.index === slotIndex
+            ? {
+                ...s,
+                mod: resolvedMod,
+                rank: resolvedMod.fusion_limit ?? 0,
+                setRank: resolvedMod.set_stats ? 1 : undefined,
+                riven_config: isRivenPlaceholder ? rivenConfig : undefined,
+                riven_art_path: isRivenPlaceholder ? mod.image_path : undefined,
+              }
+            : s,
+        );
+      });
+      if (showRivenLimitToast.value) {
+        setRivenToastMessage('Only one Riven mod can be equipped at a time.');
+        return;
       }
-
-      const rivenConfig = getDefaultRivenConfig();
-      const resolvedMod = isRivenPlaceholder
-        ? createRivenMod(rivenConfig, mod.image_path)
-        : mod;
-      if (isRivenPlaceholder) openedRiven.value = true;
-
-      return prev.map((s) =>
-        s.index === slotIndex
-          ? {
-              ...s,
-              mod: resolvedMod,
-              rank: resolvedMod.fusion_limit ?? 0,
-              setRank: resolvedMod.set_stats ? 1 : undefined,
-              riven_config: isRivenPlaceholder ? rivenConfig : undefined,
-              riven_art_path: isRivenPlaceholder ? mod.image_path : undefined,
-            }
-          : s,
-      );
-    });
-    if (openedRiven.value) {
-      setEditingRivenSlot(slotIndex);
-    }
-    setSearchResetKey((k) => k + 1);
-  }, [getDefaultRivenConfig]);
+      if (openRivenEditorForSlot.value !== null) {
+        setEditingRivenSlot(openRivenEditorForSlot.value);
+        setDraftRivenSlot(
+          placedNewRiven.value ? openRivenEditorForSlot.value : null,
+        );
+      }
+      setSearchResetKey((k) => k + 1);
+    },
+    [getDefaultRivenConfig],
+  );
 
   const handleSetRankChange = useCallback(
     (slotIndex: number, setRank: number) => {
@@ -628,14 +658,49 @@ export function ModBuilder() {
           return {
             ...slot,
             riven_config: config,
-            mod: createRivenMod(config, slot.riven_art_path ?? slot.mod.image_path),
+            mod: createRivenMod(
+              config,
+              slot.riven_art_path ?? slot.mod.image_path,
+            ),
           };
         }),
       );
       setEditingRivenSlot(null);
+      setDraftRivenSlot(null);
     },
     [editingRivenSlot],
   );
+
+  const [rivenToastMessage, setRivenToastMessage] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!rivenToastMessage) return undefined;
+    const timer = window.setTimeout(() => setRivenToastMessage(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [rivenToastMessage]);
+
+  const handleRivenClose = useCallback(() => {
+    if (editingRivenSlot !== null && draftRivenSlot === editingRivenSlot) {
+      setSlots((prev) =>
+        prev.map((s) =>
+          s.index === editingRivenSlot
+            ? {
+                ...s,
+                mod: undefined,
+                rank: undefined,
+                setRank: undefined,
+                riven_config: undefined,
+                riven_art_path: undefined,
+              }
+            : s,
+        ),
+      );
+    }
+    setEditingRivenSlot(null);
+    setDraftRivenSlot(null);
+  }, [draftRivenSlot, editingRivenSlot]);
 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState('');
@@ -844,6 +909,7 @@ export function ModBuilder() {
               const slot = slots.find((s) => s.index === slotIndex);
               if (!slot?.mod || !isRivenMod(slot.mod)) return;
               setEditingRivenSlot(slotIndex);
+              setDraftRivenSlot(null);
             }}
             activeSlotIndex={activeSlotIndex}
             onSlotClick={(slotIndex, slotType) => {
@@ -929,7 +995,9 @@ export function ModBuilder() {
               let emptySlot;
 
               if (activeSlotType) {
-                const targetType = isRivenPlaceholder ? 'general' : activeSlotType;
+                const targetType = isRivenPlaceholder
+                  ? 'general'
+                  : activeSlotType;
                 emptySlot = slots.find((s) => !s.mod && s.type === targetType);
               } else if (modType === 'AURA') {
                 emptySlot = slots.find((s) => !s.mod && s.type === 'aura');
@@ -1062,12 +1130,17 @@ export function ModBuilder() {
         <RivenBuilder
           availableStats={getRivenStatsForType(equipmentType)}
           weaponType={rivenWeaponType}
-          config={
-            slots.find((s) => s.index === editingRivenSlot)?.riven_config
-          }
+          config={slots.find((s) => s.index === editingRivenSlot)?.riven_config}
           onSave={handleRivenSave}
-          onClose={() => setEditingRivenSlot(null)}
+          onClose={handleRivenClose}
         />
+      )}
+      {rivenToastMessage && (
+        <div
+          className={`fixed left-1/2 z-[9999] -translate-x-1/2 rounded-lg border border-warning/30 bg-warning/10 px-5 py-2.5 text-sm font-medium text-warning shadow-lg backdrop-blur transition-all ${compareSnapshots.length > 0 ? 'bottom-24' : 'bottom-6'}`}
+        >
+          {rivenToastMessage}
+        </div>
       )}
     </div>
   );

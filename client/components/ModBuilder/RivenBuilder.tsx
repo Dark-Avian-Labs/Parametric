@@ -50,7 +50,9 @@ export function RivenBuilder({
   const selectedStats = rows.map((r) => r.stat).filter(Boolean);
 
   const getFilteredStats = (currentStat: string) =>
-    availableStats.filter((s) => s === currentStat || !selectedStats.includes(s));
+    availableStats.filter(
+      (s) => s === currentStat || !selectedStats.includes(s),
+    );
 
   const updateRow = (
     idx: number,
@@ -59,7 +61,8 @@ export function RivenBuilder({
   ) => {
     const next = [...rows];
     if (key === 'stat') next[idx] = { ...next[idx], stat: value as string };
-    else if (key === 'value') next[idx] = { ...next[idx], value: value as number };
+    else if (key === 'value')
+      next[idx] = { ...next[idx], value: value as number };
     setRows(next);
   };
 
@@ -82,7 +85,12 @@ export function RivenBuilder({
       if (!row.stat) return row;
       return {
         ...row,
-        value: normalizeRivenValue(row.value, row.stat, weaponType, row.isNegative),
+        value: normalizeRivenValue(
+          row.value,
+          row.stat,
+          weaponType,
+          row.isNegative,
+        ),
       };
     });
     setRows(normalized);
@@ -133,17 +141,54 @@ export function RivenBuilder({
           </div>
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-muted">Polarity</span>
-            <select
-              value={polarity}
-              onChange={(e) =>
-                setPolarity(e.target.value as RivenConfig['polarity'])
-              }
-              className="form-input riven-select w-36 text-xs"
-            >
-              <option value={AP_ATTACK}>{POLARITIES.AP_ATTACK}</option>
-              <option value={AP_TACTIC}>{POLARITIES.AP_TACTIC}</option>
-              <option value={AP_DEFENSE}>{POLARITIES.AP_DEFENSE}</option>
-            </select>
+            <div className="flex items-center gap-1.5">
+              {[
+                {
+                  key: AP_ATTACK,
+                  icon: 'madurai',
+                  label: POLARITIES.AP_ATTACK,
+                },
+                {
+                  key: AP_TACTIC,
+                  icon: 'naramon',
+                  label: POLARITIES.AP_TACTIC,
+                },
+                {
+                  key: AP_DEFENSE,
+                  icon: 'vazarin',
+                  label: POLARITIES.AP_DEFENSE,
+                },
+              ].map((p) => {
+                const active = polarity === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setPolarity(p.key)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-md border transition-all ${
+                      active
+                        ? 'border-accent bg-accent-weak'
+                        : 'border-glass-border bg-glass-hover hover:border-glass-border-hover'
+                    }`}
+                    title={p.label}
+                    aria-label={p.label}
+                    aria-pressed={active}
+                  >
+                    <img
+                      src={`/icons/polarity/${p.icon}.svg`}
+                      alt={p.label}
+                      className="h-4 w-4"
+                      style={{
+                        filter: active
+                          ? 'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(85deg)'
+                          : 'brightness(0) invert(1)',
+                      }}
+                      draggable={false}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="space-y-1 text-xs whitespace-pre-line">
             {buildRivenDescription({
@@ -151,7 +196,9 @@ export function RivenBuilder({
                 .slice(0, 3)
                 .filter((r) => r.stat)
                 .map((r) => ({ ...r, isNegative: false })),
-              negative: rows[3]?.stat ? { ...rows[3], isNegative: true } : undefined,
+              negative: rows[3]?.stat
+                ? { ...rows[3], isNegative: true }
+                : undefined,
             }) || 'Select at least two positive stats'}
           </div>
         </div>

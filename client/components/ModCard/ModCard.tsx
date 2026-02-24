@@ -54,7 +54,10 @@ export function ModCard({
     slotType,
   );
 
-  const rarity = dbRarityToCardRarity(mod.rarity, mod.name || mod.unique_name);
+  const rarity =
+    (mod.type || '').toUpperCase() === 'RIVEN'
+      ? 'Riven'
+      : dbRarityToCardRarity(mod.rarity, mod.name || mod.unique_name);
   const polarity = dbPolarityToIconName(mod.polarity);
   const modArt = mod.image_path ? `/images${mod.image_path}` : '';
 

@@ -282,120 +282,122 @@ export function FilterPanel({
           </p>
         )}
         <div ref={gridRef} className="grid grid-cols-4">
-          {cardScale > 0 && !loading && (displayMods.length > 0 || !!rivenWeaponType) && (
-            <>
-              {rivenWeaponType && !search && (
-                <div
-                  onClick={() =>
-                    onModSelect(createRivenPlaceholderMod(rivenArt))
-                  }
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData(
-                      'application/json',
-                      JSON.stringify(createRivenPlaceholderMod(rivenArt)),
-                    );
-                    e.dataTransfer.effectAllowed = 'move';
-                    const el = e.currentTarget;
-                    const clone = el.cloneNode(true) as HTMLElement;
-                    clone.style.position = 'fixed';
-                    clone.style.top = '-9999px';
-                    clone.style.left = '-9999px';
-                    clone.style.zIndex = '-1';
-                    clone.style.pointerEvents = 'none';
-                    document.body.appendChild(clone);
-                    const rect = el.getBoundingClientRect();
-                    e.dataTransfer.setDragImage(
-                      clone,
-                      rect.width / 2,
-                      rect.height / 2,
-                    );
-                    requestAnimationFrame(() =>
-                      document.body.removeChild(clone),
-                    );
-                  }}
-                  className="cursor-grab"
-                >
-                  <CardPreview
-                    layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
-                    rarity="Riven"
-                    polarity=""
-                    modArt={rivenArt ? `/images${rivenArt}` : ''}
-                    modName="Riven Mod"
-                    modType=""
-                    modDescription="Place the mod to edit the perks"
-                    drain={0}
-                    rank={0}
-                    maxRank={0}
-                    collapsed={!expandMods}
-                  />
-                </div>
-              )}
-              {!search && (
-                <div
-                  onClick={onModRemove}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData(
-                      'application/json',
-                      JSON.stringify({ __remove: true }),
-                    );
-                    e.dataTransfer.effectAllowed = 'move';
-                    const el = e.currentTarget;
-                    const clone = el.cloneNode(true) as HTMLElement;
-                    clone.style.position = 'fixed';
-                    clone.style.top = '-9999px';
-                    clone.style.left = '-9999px';
-                    clone.style.zIndex = '-1';
-                    clone.style.pointerEvents = 'none';
-                    document.body.appendChild(clone);
-                    const rect = el.getBoundingClientRect();
-                    e.dataTransfer.setDragImage(
-                      clone,
-                      rect.width / 2,
-                      rect.height / 2,
-                    );
-                    requestAnimationFrame(() =>
-                      document.body.removeChild(clone),
-                    );
-                  }}
-                  className="cursor-grab"
-                >
-                  <CardPreview
-                    layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
-                    rarity="Empty"
-                    polarity=""
-                    modArt=""
-                    modName="Remove"
-                    modType=""
-                    modDescription=""
-                    drain={0}
-                    rank={0}
-                    maxRank={0}
-                    collapsed={!expandMods}
-                  />
-                </div>
-              )}
-              {displayMods.map((mod) => {
-                const locked = lockedOut.includes(mod);
-                return (
-                  <ModPickerCard
-                    key={mod.unique_name}
-                    mod={mod}
-                    locked={locked}
-                    expanded={expandMods}
-                    scale={cardScale}
-                    onClick={() => {
-                      if (!locked) {
-                        onModSelect(mod);
-                        setSearch('');
-                      }
+          {cardScale > 0 &&
+            !loading &&
+            (displayMods.length > 0 || !!rivenWeaponType) && (
+              <>
+                {!search && (
+                  <div
+                    onClick={onModRemove}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(
+                        'application/json',
+                        JSON.stringify({ __remove: true }),
+                      );
+                      e.dataTransfer.effectAllowed = 'move';
+                      const el = e.currentTarget;
+                      const clone = el.cloneNode(true) as HTMLElement;
+                      clone.style.position = 'fixed';
+                      clone.style.top = '-9999px';
+                      clone.style.left = '-9999px';
+                      clone.style.zIndex = '-1';
+                      clone.style.pointerEvents = 'none';
+                      document.body.appendChild(clone);
+                      const rect = el.getBoundingClientRect();
+                      e.dataTransfer.setDragImage(
+                        clone,
+                        rect.width / 2,
+                        rect.height / 2,
+                      );
+                      requestAnimationFrame(() =>
+                        document.body.removeChild(clone),
+                      );
                     }}
-                  />
-                );
-              })}
-            </>
-          )}
+                    className="cursor-grab"
+                  >
+                    <CardPreview
+                      layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
+                      rarity="Empty"
+                      polarity=""
+                      modArt=""
+                      modName="Remove"
+                      modType=""
+                      modDescription=""
+                      drain={0}
+                      rank={0}
+                      maxRank={0}
+                      collapsed={!expandMods}
+                    />
+                  </div>
+                )}
+                {rivenWeaponType && !search && (
+                  <div
+                    onClick={() =>
+                      onModSelect(createRivenPlaceholderMod(rivenArt))
+                    }
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData(
+                        'application/json',
+                        JSON.stringify(createRivenPlaceholderMod(rivenArt)),
+                      );
+                      e.dataTransfer.effectAllowed = 'move';
+                      const el = e.currentTarget;
+                      const clone = el.cloneNode(true) as HTMLElement;
+                      clone.style.position = 'fixed';
+                      clone.style.top = '-9999px';
+                      clone.style.left = '-9999px';
+                      clone.style.zIndex = '-1';
+                      clone.style.pointerEvents = 'none';
+                      document.body.appendChild(clone);
+                      const rect = el.getBoundingClientRect();
+                      e.dataTransfer.setDragImage(
+                        clone,
+                        rect.width / 2,
+                        rect.height / 2,
+                      );
+                      requestAnimationFrame(() =>
+                        document.body.removeChild(clone),
+                      );
+                    }}
+                    className="cursor-grab"
+                  >
+                    <CardPreview
+                      layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
+                      rarity="Riven"
+                      polarity=""
+                      modArt={rivenArt ? `/images${rivenArt}` : ''}
+                      modName="Riven Mod"
+                      modType=""
+                      modDescription="Place the mod to edit the perks"
+                      drain={0}
+                      rank={0}
+                      maxRank={0}
+                      collapsed={!expandMods}
+                    />
+                  </div>
+                )}
+                {displayMods.map((mod) => {
+                  const locked = lockedOut.includes(mod);
+                  return (
+                    <ModPickerCard
+                      key={mod.unique_name}
+                      mod={mod}
+                      locked={locked}
+                      expanded={expandMods}
+                      scale={cardScale}
+                      onClick={() => {
+                        if (!locked) {
+                          onModSelect(mod);
+                          setSearch('');
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </>
+            )}
         </div>
       </div>
     </div>
@@ -431,4 +433,3 @@ function ModPickerCard({
     </div>
   );
 }
-

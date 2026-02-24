@@ -669,7 +669,10 @@ export async function scrapeRivenDispositions(
       .each((__, row) => {
         const cells = $(row).find('td');
         if (cells.length < 2) return;
-        const weaponName = normalizeText(cells.eq(0).text()).replace(/\s+/g, ' ');
+        const weaponName = normalizeText(cells.eq(0).text()).replace(
+          /\s+/g,
+          ' ',
+        );
         const rowText = normalizeText($(row).text());
         const multMatch = rowText.match(/(\d+(?:\.\d+)?)\s*x/i);
         if (!weaponName || !multMatch) return;
@@ -795,7 +798,8 @@ export function mergeWikiData(
 
     for (const d of data.dispositions) {
       const changes = updateRivenDisposition.run(d.disposition, d.weapon_name);
-      if (changes.changes > 0) result.rivenDispositionsUpdated += changes.changes;
+      if (changes.changes > 0)
+        result.rivenDispositionsUpdated += changes.changes;
     }
     const fallback = fallbackRivenDisposition.run();
     result.rivenDispositionsFallbackFromOmega = fallback.changes;

@@ -89,7 +89,11 @@ export function calculateBuildDamage(
   const disposition = weapon.riven_disposition ?? weapon.omega_attenuation ?? 1;
   const elementMods = extractElementMods(slots).map((entry) => {
     const sourceSlot = slots.find((slot) => slot.index === entry.slotIndex);
-    if (sourceSlot?.mod && sourceSlot.riven_config && isRivenMod(sourceSlot.mod)) {
+    if (
+      sourceSlot?.mod &&
+      sourceSlot.riven_config &&
+      isRivenMod(sourceSlot.mod)
+    ) {
       return { ...entry, value: entry.value * disposition };
     }
     return entry;

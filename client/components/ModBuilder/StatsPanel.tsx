@@ -512,9 +512,18 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
         {rivenDisposition != null && dispositionPips != null && (
           <div className="flex justify-between text-xs">
             <span className="text-muted">Riven Dispo</span>
-            <span className="font-medium text-foreground">
-              {'●'.repeat(dispositionPips)}
-              {'○'.repeat(5 - dispositionPips)} {rivenDisposition.toFixed(3)}
+            <span className="flex items-center gap-1 font-medium text-foreground">
+              <span
+                style={{
+                  fontFamily: 'Roboto, sans-serif',
+                  fontSize: '1.5em',
+                  lineHeight: 1,
+                }}
+              >
+                {'●'.repeat(dispositionPips)}
+                {'○'.repeat(5 - dispositionPips)}
+              </span>
+              <span>{rivenDisposition.toFixed(3)}</span>
             </span>
           </div>
         )}
