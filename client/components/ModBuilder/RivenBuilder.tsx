@@ -98,7 +98,6 @@ export function RivenBuilder({
           </button>
         </div>
 
-        {/* Riven card visual */}
         <div className="mb-4 rounded-lg border border-riven bg-glass p-4">
           <div className="mb-2 text-center text-sm font-semibold text-riven-light">
             Riven Mod
@@ -119,7 +118,6 @@ export function RivenBuilder({
           </div>
         </div>
 
-        {/* Positive stats */}
         <div className="mb-4">
           <div className="mb-2 flex items-center justify-between">
             <label className="text-xs font-semibold text-muted">
@@ -171,7 +169,6 @@ export function RivenBuilder({
           </div>
         </div>
 
-        {/* Negative stat */}
         <div className="mb-4">
           <label className="mb-2 flex items-center gap-2 text-xs text-muted">
             <input
@@ -223,7 +220,6 @@ export function RivenBuilder({
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex justify-end gap-2">
           <button className="btn btn-secondary text-xs" onClick={onClose}>
             Cancel

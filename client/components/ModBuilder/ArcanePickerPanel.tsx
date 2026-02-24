@@ -98,7 +98,6 @@ export function ArcanePickerPanel({
         <div ref={gridRef} className="grid grid-cols-4">
           {cardScale > 0 && !loading && filtered.length > 0 && (
             <>
-              {/* Remove option */}
               {!search && (
                 <div
                   onClick={onRemove}

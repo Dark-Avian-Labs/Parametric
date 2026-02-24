@@ -196,7 +196,6 @@ export function FilterPanel({
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative mb-3">
         <input
           type="text"
@@ -215,7 +214,6 @@ export function FilterPanel({
         )}
       </div>
 
-      {/* Rarity filter */}
       <div className="mb-3 flex flex-wrap gap-1">
         {RARITIES.map((r) => (
           <button
@@ -232,7 +230,6 @@ export function FilterPanel({
         ))}
       </div>
 
-      {/* Mod count */}
       <div className="mb-2 text-xs text-muted">
         {compatible.length} available
         {lockedOut.length > 0 && (
@@ -243,7 +240,6 @@ export function FilterPanel({
         {(search || rarity !== 'ALL') && ' (filtered)'}
       </div>
 
-      {/* Riven button */}
       {['primary', 'secondary', 'melee', 'archgun'].includes(equipmentType) && (
         <button
           onClick={() => setShowRivenBuilder(true)}
@@ -253,14 +249,12 @@ export function FilterPanel({
         </button>
       )}
 
-      {/* Slot type indicator */}
       {targetSlotType && targetSlotType !== 'general' && (
         <div className="mb-2 rounded-md bg-accent-weak/20 px-2 py-1 text-xs text-accent">
           Showing {targetSlotType} mods
         </div>
       )}
 
-      {/* Mod grid */}
       <div className="max-h-[calc(100vh-420px)] overflow-y-auto custom-scroll">
         {loading && <p className="text-sm text-muted">Loading mods...</p>}
         {!loading && displayMods.length === 0 && (
@@ -273,7 +267,6 @@ export function FilterPanel({
         <div ref={gridRef} className="grid grid-cols-4">
           {cardScale > 0 && !loading && displayMods.length > 0 && (
             <>
-              {/* Empty / Remove option — only shown when NOT searching */}
               {!search && (
                 <div
                   onClick={onModRemove}
@@ -342,7 +335,6 @@ export function FilterPanel({
         </div>
       </div>
 
-      {/* Riven Builder modal */}
       {showRivenBuilder && (
         <RivenBuilder
           availableStats={getRivenStatsForType(equipmentType)}

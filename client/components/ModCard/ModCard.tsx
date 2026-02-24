@@ -166,7 +166,6 @@ export function ModCard({
         collapsed={collapsed}
       />
 
-      {/* Hover expand for collapsed cards in the mod picker (not slots — slots handle their own) */}
       {collapsed && hovered && !onRemove && (
         <CollapsedHoverExpand
           cardRef={cardRef}
@@ -189,7 +188,6 @@ export function ModCard({
         />
       )}
 
-      {/* Inline controls for non-collapsed cards */}
       {hovered && !collapsed && (
         <>
           {onRemove && (
@@ -235,7 +233,6 @@ function RankStars({
       className="absolute bottom-1 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded border border-glass-border bg-glass-active px-1.5 py-1 backdrop-blur-md"
       onMouseLeave={() => setHoverIndex(null)}
     >
-      {/* Rank 0 button */}
       <button
         onMouseEnter={() => setHoverIndex(-1)}
         onClick={() => onChange(0)}

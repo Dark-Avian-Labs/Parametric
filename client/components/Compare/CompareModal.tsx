@@ -144,7 +144,6 @@ export function CompareModal({ onClose }: CompareModalProps) {
         className="w-full max-w-4xl rounded-xl border border-glass-border bg-surface-modal p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             Build Comparison
@@ -164,7 +163,6 @@ export function CompareModal({ onClose }: CompareModalProps) {
           </button>
         </div>
 
-        {/* Build headers */}
         <div
           className={`grid gap-3 mb-4`}
           style={{ gridTemplateColumns: `160px repeat(${cols}, 1fr)` }}
@@ -190,7 +188,6 @@ export function CompareModal({ onClose }: CompareModalProps) {
           ))}
         </div>
 
-        {/* Modded Stats */}
         <SectionLabel>Modded Stats</SectionLabel>
         <div className="space-y-0.5">
           {STAT_ROWS.map((row) => {
@@ -209,7 +206,6 @@ export function CompareModal({ onClose }: CompareModalProps) {
           })}
         </div>
 
-        {/* DPS */}
         <SectionLabel>DPS</SectionLabel>
         <div className="space-y-0.5">
           {DPS_ROWS.map((row) => {
@@ -228,7 +224,6 @@ export function CompareModal({ onClose }: CompareModalProps) {
           })}
         </div>
 
-        {/* Element Breakdown */}
         {elementTypes.length > 0 && (
           <>
             <SectionLabel>Element Breakdown</SectionLabel>
@@ -268,7 +263,6 @@ export function CompareModal({ onClose }: CompareModalProps) {
                   </div>
                 );
               })}
-              {/* Total */}
               <div
                 className="grid items-center gap-3 border-t border-glass-divider pt-1.5 px-2"
                 style={{ gridTemplateColumns: `160px repeat(${cols}, 1fr)` }}

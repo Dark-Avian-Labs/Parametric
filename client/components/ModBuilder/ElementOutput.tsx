@@ -58,7 +58,6 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
               key={entry.type}
               className="relative flex items-center gap-2 overflow-hidden rounded py-1 pl-1 pr-2"
             >
-              {/* Gauge bar background */}
               <div
                 className="absolute inset-y-0 left-0 rounded transition-all duration-300"
                 style={{
@@ -68,7 +67,6 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
                 }}
               />
 
-              {/* Element icon */}
               <div className="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center">
                 {iconFile ? (
                   <img
@@ -85,7 +83,6 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
                 )}
               </div>
 
-              {/* Element name */}
               <span
                 className="relative z-10 min-w-[70px] text-xs font-medium"
                 style={{ color }}
@@ -93,15 +90,12 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
                 {entry.type}
               </span>
 
-              {/* Spacer */}
               <div className="relative z-10 flex-1" />
 
-              {/* Percentage */}
               <span className="relative z-10 text-[10px] tabular-nums text-muted">
                 {pct.toFixed(1)}%
               </span>
 
-              {/* Damage value */}
               <span className="relative z-10 min-w-[48px] text-right text-xs font-semibold tabular-nums text-foreground">
                 {formatDamage(entry.value)}
               </span>

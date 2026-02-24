@@ -36,7 +36,6 @@ export function ShardPickerPanel({
         </button>
       </div>
 
-      {/* Shard type selection */}
       <div className="mb-3 flex flex-wrap gap-2">
         {shards.map((shard) => {
           const icon = tauforged ? shard.tauforged_icon_path : shard.icon_path;
@@ -62,7 +61,6 @@ export function ShardPickerPanel({
         })}
       </div>
 
-      {/* Tauforged toggle */}
       <label className="mb-3 flex items-center gap-2 text-xs text-muted">
         <input
           type="checkbox"
@@ -73,10 +71,8 @@ export function ShardPickerPanel({
         Tauforged (1.5x values)
       </label>
 
-      {/* Buff selection */}
       <div className="max-h-[calc(100vh-500px)] overflow-y-auto custom-scroll">
         <div className="space-y-1">
-          {/* Remove option */}
           <button
             onClick={onRemove}
             className="flex w-full items-center justify-between rounded-lg border border-dashed border-danger/40 px-3 py-2 text-left text-sm text-danger/70 transition-all hover:border-danger hover:bg-danger/10"

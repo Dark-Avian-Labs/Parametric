@@ -42,7 +42,6 @@ export function CapacityBar({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Forma cost display */}
           {formaCost && formaCost.total > 0 && (
             <div className="flex items-center gap-2">
               {formaCost.regular > 0 && (
@@ -96,7 +95,6 @@ export function CapacityBar({
             </div>
           )}
 
-          {/* Forma toggle button */}
           {onFormaToggle && (
             <button
               onClick={onFormaToggle}
@@ -123,7 +121,6 @@ export function CapacityBar({
         </div>
       </div>
 
-      {/* Bar */}
       <div className="h-2 overflow-hidden rounded-full bg-glass-active">
         <div
           className={`h-full rounded-full transition-all duration-300 ${

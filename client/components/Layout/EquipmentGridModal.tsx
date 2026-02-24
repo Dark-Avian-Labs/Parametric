@@ -100,7 +100,6 @@ export function EquipmentGridModal({
           </button>
         </div>
 
-        {/* Category tabs */}
         <div className="mb-3 flex flex-wrap gap-1">
           {EQUIPMENT_TYPE_ORDER.map((t) => (
             <button
@@ -120,7 +119,6 @@ export function EquipmentGridModal({
           ))}
         </div>
 
-        {/* Search */}
         <input
           type="text"
           placeholder="Search..."
@@ -130,7 +128,6 @@ export function EquipmentGridModal({
           autoFocus
         />
 
-        {/* Grid */}
         <div className="max-h-[55vh] overflow-y-auto custom-scroll">
           {loading ? (
             <div className="flex h-32 items-center justify-center">

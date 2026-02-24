@@ -128,12 +128,9 @@ export function ModSlotGrid({
 
   return (
     <div className="glass-panel relative z-10 space-y-1 overflow-visible p-3">
-      {/* Special slots — positioned to align with center columns of main grid */}
       {(specialSlots.length > 0 || exilusSlot) && (
         <div className="grid grid-cols-4 gap-1">
-          {/* Column 1: empty */}
           <div />
-          {/* Column 2: aura/stance */}
           {specialSlots[0] ? (
             <SlotCell
               slot={specialSlots[0]}
@@ -171,7 +168,6 @@ export function ModSlotGrid({
           ) : (
             <div />
           )}
-          {/* Column 3: exilus */}
           {exilusSlot ? (
             <SlotCell
               slot={exilusSlot}
@@ -204,12 +200,10 @@ export function ModSlotGrid({
           ) : (
             <div />
           )}
-          {/* Column 4: empty */}
           <div />
         </div>
       )}
 
-      {/* Main grid */}
       <div className="space-y-1">
         {rows.map((row, rowIndex) => (
           <div key={rowIndex} className="grid grid-cols-4 gap-1">
@@ -385,10 +379,8 @@ function SlotCell({
         }
       }}
     >
-      {/* ---- FILLED SLOT ---- */}
       {slot.mod ? (
         <>
-          {/* Card wrapper — draggable, CSS-only hover expansion via .mod-slot-card */}
           <div
             className={`absolute left-0 select-none ${!formaMode ? 'mod-slot-card' : ''}`}
             style={{
@@ -425,7 +417,6 @@ function SlotCell({
                   collapsed={false}
                   scale={SLOT_SCALE}
                 />
-                {/* +/- rank & remove buttons overlaying the stars row */}
                 <div
                   className="absolute left-0 flex w-full items-center justify-center"
                   style={{
@@ -507,13 +498,11 @@ function SlotCell({
               </div>
             )}
           </div>
-          {/* Polarity icon on slot wrapper (visible when card is collapsed, hidden behind expanded) */}
           {slot.polarity && (
             <div className="absolute right-1 top-1 z-10">
               <PolarityIcon polarity={slot.polarity} mod={slot.mod} size={12} />
             </div>
           )}
-          {/* Forma overlay on top of mod */}
           {formaMode && (
             <div className="absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-warning/60 bg-warning/15 transition-all hover:bg-warning/25">
               {slot.polarity ? (
@@ -528,7 +517,6 @@ function SlotCell({
           )}
         </>
       ) : (
-        /* ---- EMPTY SLOT ---- */
         <>
           <CardPreview
             layout={{ ...DEFAULT_LAYOUT, scale: SLOT_SCALE }}
@@ -547,7 +535,6 @@ function SlotCell({
           />
 
           {formaMode ? (
-            /* Forma overlay on empty */
             <>
               <div className="absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-warning/50 bg-warning/10 transition-all hover:bg-warning/20">
                 {slot.polarity ? (
@@ -566,20 +553,19 @@ function SlotCell({
                 <img
                   src={`/icons/icon-${slotIconName}.png`}
                   alt={slotIconName}
-                  className="pointer-events-none absolute left-1/2 top-1/3 z-10 -translate-x-1/2 -translate-y-1/2"
+                  className="invert-on-light pointer-events-none absolute left-1/2 top-1/3 z-10 -translate-x-1/2 -translate-y-1/2"
                   style={{ height: 20, width: 'auto', opacity: 0.3 }}
                   draggable={false}
                 />
               )}
             </>
           ) : (
-            /* Normal empty slot overlays (z-10 to sit above CardPreview internal layers) */
             <>
               {slotIconName && (
                 <img
                   src={`/icons/icon-${slotIconName}.png`}
                   alt={slotIconName}
-                  className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+                  className="invert-on-light pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
                   style={{ height: 28, width: 'auto', opacity: 0.5 }}
                   draggable={false}
                 />

@@ -64,7 +64,6 @@ export function HelminthPickerPanel({
           <p className="text-sm text-muted">No abilities match the search.</p>
         ) : (
           <div className="space-y-1.5">
-            {/* Restore original option */}
             <button
               onClick={onRestore}
               className="flex w-full items-start gap-3 rounded-lg border border-dashed border-danger/40 p-3 text-left transition-all hover:border-danger hover:bg-danger/10"
@@ -91,7 +90,7 @@ export function HelminthPickerPanel({
                   <img
                     src={`/images${ability.image_path}`}
                     alt=""
-                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                    className="invert-on-light h-10 w-10 shrink-0 rounded-lg object-cover"
                     draggable={false}
                   />
                 ) : (

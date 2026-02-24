@@ -102,21 +102,13 @@ export function ArchonShardSlots({
                     <img
                       src="/icons/shards/filledBackground.png"
                       alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                      style={
-                        slot.tauforged
-                          ? {
-                              filter:
-                                'sepia(1) saturate(3) brightness(1.1) hue-rotate(10deg)',
-                            }
-                          : undefined
-                      }
+                      className={`absolute inset-0 h-full w-full object-cover ${slot.tauforged ? 'archon-shard-filled-bg--tau' : 'invert-on-light'}`}
                       draggable={false}
                     />
                     <img
                       src={iconPath}
                       alt={info.shard.name}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="invert-on-light absolute inset-0 h-full w-full object-cover"
                       draggable={false}
                     />
                   </button>
@@ -147,7 +139,7 @@ export function ArchonShardSlots({
               <img
                 src="/icons/shards/emptyBackground.png"
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover"
+                className="invert-on-light absolute inset-0 h-full w-full object-cover"
                 draggable={false}
               />
             </button>

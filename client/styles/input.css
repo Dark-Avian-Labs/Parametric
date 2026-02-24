@@ -3,25 +3,18 @@
 @source "../../client/**/*.{ts,tsx,js,jsx,html}";
 @source "../../index.html";
 
-/* ==========================================================================
-   DESIGN TOKENS  (inherited from Corpus design system)
-   ========================================================================== */
 @theme {
-  /* Foreground / text */
   --color-foreground: #f8fafc;
   --color-muted: #c7c7cf;
 
-  /* Primary scale */
   --color-primary-500: rgb(99, 99, 255);
   --color-primary-400: rgb(122, 115, 255);
   --color-primary-300: rgb(143, 132, 255);
   --color-primary-200: rgb(161, 149, 255);
   --color-primary-100: rgb(179, 166, 255);
 
-  /* Accent */
   --color-accent: var(--color-primary-500);
 
-  /* Semantic */
   --color-success: #47d5a6;
   --color-success-rgb: 71, 213, 166;
   --color-warning: #d7ac61;
@@ -33,14 +26,12 @@
   --color-unavailable: #6b7280;
   --color-unavailable-rgb: 107, 114, 128;
 
-  /* Surface scale */
   --color-surface-500: rgb(28, 26, 38);
   --color-surface-400: rgb(49, 47, 58);
   --color-surface-300: rgb(71, 69, 80);
   --color-surface-200: rgb(95, 93, 103);
   --color-surface-100: rgb(120, 118, 126);
 
-  /* Glass-morphism palette */
   --color-glass: rgba(255, 255, 255, 0.024);
   --color-glass-border: rgba(255, 255, 255, 0.08);
   --color-glass-border-hover: rgba(255, 255, 255, 0.2);
@@ -48,19 +39,15 @@
   --color-glass-active: rgba(255, 255, 255, 0.12);
   --color-glass-divider: rgba(255, 255, 255, 0.06);
 
-  /* Surfaces */
   --color-surface-modal: rgba(255, 255, 255, 0.024);
   --color-surface-thead: rgba(22, 20, 33, 0.88);
 
-  /* Gradient endpoints (body background) */
   --color-bg-start: #000000;
   --color-bg-end: #0f172a;
   --color-bg-glow: rgba(100, 116, 139, 0.2);
 
-  /* Shadows */
   --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.25);
 
-  /* Damage types (semanticized for charts/cards) */
   --color-dmg-impact: #8899aa;
   --color-dmg-puncture: #aabbcc;
   --color-dmg-slash: #cc8866;
@@ -77,14 +64,12 @@
   --color-dmg-void: #cc99ff;
   --color-dmg-true: #ffffff;
 
-  /* Mod rarity colours */
   --color-rarity-common: #90784e;
   --color-rarity-uncommon: #c0c0c0;
   --color-rarity-rare: #d4a017;
   --color-rarity-legendary: #e0e0e0;
   --color-rarity-peculiar: #b565de;
 
-  /* Riven */
   --color-riven: #9880c8;
   --color-riven-light: #c8b0f0;
 }
@@ -123,9 +108,6 @@ html.theme-dark {
   --theme-mode: dark;
 }
 
-/* ==========================================================================
-   BASE
-   ========================================================================== */
 @layer base {
   *,
   *::before,
@@ -170,11 +152,7 @@ html.theme-dark {
   }
 }
 
-/* ==========================================================================
-   COMPONENTS
-   ========================================================================== */
 @layer components {
-  /* Reusable glass primitives */
   .glass-shell,
   .glass-surface,
   .glass-modal-surface,
@@ -190,8 +168,8 @@ html.theme-dark {
       var(--shadow-panel),
       inset 0 1px 0 rgba(255, 255, 255, 0.14),
       inset 0 -1px 0 rgba(0, 0, 0, 0.12);
-    backdrop-filter: blur(12px) saturate(1.2);
     -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    backdrop-filter: blur(12px) saturate(1.2);
   }
 
   .glass-shell::before,
@@ -238,7 +216,6 @@ html.theme-dark {
       inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
-  /* Compatibility aliases */
   .glass-panel {
     border-radius: 1rem;
   }
@@ -249,7 +226,6 @@ html.theme-dark {
       0 0 8px rgba(0, 0, 0, 0.45);
   }
 
-  /* Buttons */
   .btn {
     padding: 0 16px;
     font-size: 14px;
@@ -328,6 +304,7 @@ html.theme-dark {
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
 
@@ -337,7 +314,6 @@ html.theme-dark {
     background: var(--color-glass-hover);
   }
 
-  /* Scrollbars */
   .custom-scroll::-webkit-scrollbar {
     width: 8px;
   }
@@ -352,7 +328,6 @@ html.theme-dark {
     background: rgba(255, 255, 255, 0.15);
   }
 
-  /* Forms */
   .form-input {
     width: 100%;
     padding: 10px 12px;
@@ -375,7 +350,6 @@ html.theme-dark {
     color: var(--color-muted);
   }
 
-  /* Search */
   .search-box {
     padding: 8px 32px 8px 14px;
     font-size: 14px;
@@ -387,6 +361,7 @@ html.theme-dark {
     border: 1px solid var(--color-glass-border);
     border-radius: 1rem;
     outline: none;
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     font-family: inherit;
   }
@@ -399,7 +374,6 @@ html.theme-dark {
     color: var(--color-muted);
   }
 
-  /* Modals */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -422,11 +396,10 @@ html.theme-dark {
     box-shadow:
       var(--shadow-panel),
       inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
   }
 
-  /* Messages */
   .error-msg {
     background: color-mix(in srgb, var(--color-danger) 10%, transparent);
     border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
@@ -445,14 +418,26 @@ html.theme-dark {
     font-size: 14px;
   }
 
-  /* Auth card */
   .auth-card {
     background: var(--color-glass);
     border: 1px solid var(--color-glass-border);
     border-radius: 1rem;
     padding: 32px;
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
   }
+}
+
+html.theme-light .invert-on-light {
+  filter: invert(1);
+}
+
+.archon-shard-filled-bg--tau {
+  filter: sepia(1) saturate(3) brightness(1.1) hue-rotate(10deg);
+}
+
+html.theme-light .archon-shard-filled-bg--tau {
+  filter: invert(1) sepia(1) saturate(3) brightness(1.1) hue-rotate(10deg);
 }
 
 .bg-art {
@@ -489,7 +474,6 @@ html.theme-dark {
   animation: slide-up 0.25s ease-out;
 }
 
-/* Mod slot card — CSS-only center-anchored hover expansion with bounce */
 .mod-slot-card {
   position: relative;
 }
@@ -521,7 +505,6 @@ html.theme-dark {
   -webkit-user-drag: none;
 }
 
-/* Mod selector panel — jaw-open bounce expand on hover */
 @keyframes selector-expand {
   0% {
     transform: translate(-50%, -50%) scaleY(0);

@@ -69,7 +69,7 @@ function ProtectedLayout() {
       try {
         await apiFetch('/api/auth/logout', { method: 'POST' });
       } catch {
-        // ignored
+        // ignore
       } finally {
         clearCsrfToken();
         window.location.href = '/login';

@@ -49,7 +49,6 @@ export function ArcaneCardPreview({
         className="absolute inset-0"
         style={{ transform: `translateY(${L.cardOffsetY * s}px)` }}
       >
-        {/* Background */}
         <img
           src={bgSrc}
           alt="bg"
@@ -65,7 +64,6 @@ export function ArcaneCardPreview({
           draggable={false}
         />
 
-        {/* Art overlay */}
         {arcaneArt && (
           <div
             className="absolute overflow-hidden"
@@ -92,7 +90,6 @@ export function ArcaneCardPreview({
           </div>
         )}
 
-        {/* Name text */}
         <div
           className="absolute left-1/2 -translate-x-1/2 text-center text-foreground"
           style={{
@@ -108,7 +105,6 @@ export function ArcaneCardPreview({
           {arcaneName}
         </div>
 
-        {/* Diamond rank row */}
         <div
           className="absolute flex items-center justify-center"
           style={{
@@ -143,7 +139,6 @@ export function ArcaneCardPreview({
         </div>
       </div>
 
-      {/* Center guides */}
       {showGuides && (
         <>
           <div

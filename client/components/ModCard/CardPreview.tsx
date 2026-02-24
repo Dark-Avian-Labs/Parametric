@@ -59,6 +59,11 @@ export function CardPreview({
   const L = layoutProp ?? DEFAULT_LAYOUT;
   const s = L.scale;
   const h = collapsed ? L.collapsedHeight : L.cardHeight;
+  const isEmptyCard = rarity === 'Empty';
+  const primaryTextColor = isEmptyCard ? 'var(--color-foreground)' : '#ffffff';
+  const secondaryTextColor = isEmptyCard
+    ? 'color-mix(in srgb, var(--color-foreground) 80%, transparent)'
+    : 'rgba(255,255,255,0.8)';
 
   const textBlockRef = useRef<HTMLDivElement>(null);
   const [autoContentY, setAutoContentY] = useState(L.contentAreaY);
@@ -88,12 +93,10 @@ export function CardPreview({
         textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.5)',
       }}
     >
-      {/* Inner wrapper — shifts all content vertically via cardOffsetY */}
       <div
         className="absolute inset-0"
         style={{ transform: `translateY(${L.cardOffsetY * s}px)` }}
       >
-        {/* ===== Z-LAYER 0: Background ===== */}
         {!collapsed && (
           <img
             src={getModAsset(rarity, 'Background')}
@@ -111,7 +114,6 @@ export function CardPreview({
           />
         )}
 
-        {/* ===== Z-LAYER 1: Mod art ===== */}
         {modArt && (
           <div
             className="absolute overflow-hidden"
@@ -152,7 +154,6 @@ export function CardPreview({
           </div>
         )}
 
-        {/* ===== Z-LAYER 2: Badge backgrounds (below frames) ===== */}
         {damageValue && damageType !== 'none' && (
           <div
             className="absolute rounded"
@@ -189,7 +190,6 @@ export function CardPreview({
           </svg>
         )}
 
-        {/* ===== Z-LAYER 3: Frames, side lights, lower tab image ===== */}
         {!collapsed && (
           <>
             <img
@@ -269,9 +269,6 @@ export function CardPreview({
           />
         )}
 
-        {/* ===== Z-LAYER 4: All text, icons, and overlays on TOP ===== */}
-
-        {/* Slot icon (aura/stance/exilus) — top center, natural aspect ratio */}
         {slotIcon && (
           <img
             src={`/icons/icon-${slotIcon}.png`}
@@ -288,7 +285,6 @@ export function CardPreview({
           />
         )}
 
-        {/* Damage badge text */}
         {damageValue && damageType !== 'none' && (
           <div
             className="absolute flex items-center justify-center rounded font-bold"
@@ -309,7 +305,6 @@ export function CardPreview({
           </div>
         )}
 
-        {/* Drain number text */}
         {drain > 0 && (
           <div
             className="absolute font-bold"
@@ -332,7 +327,6 @@ export function CardPreview({
           </div>
         )}
 
-        {/* Polarity icon */}
         {polarity && (
           <img
             src={`/icons/polarity/${polarity}.svg`}
@@ -355,10 +349,9 @@ export function CardPreview({
           />
         )}
 
-        {/* Lower tab type label text */}
         {!collapsed && modType && (
           <div
-            className="absolute left-1/2 flex items-center justify-center font-semibold uppercase tracking-wider text-foreground"
+            className="absolute left-1/2 flex items-center justify-center font-semibold uppercase tracking-wider"
             style={{
               zIndex: 4,
               transform: 'translateX(-50%)',
@@ -367,6 +360,7 @@ export function CardPreview({
               width: L.lowerTabWidth * s,
               height: L.lowerTabHeight * s,
               fontSize: L.typeFontSize * s,
+              color: primaryTextColor,
               textShadow: '0 1px 2px rgba(0,0,0,0.6)',
             }}
           >
@@ -374,17 +368,17 @@ export function CardPreview({
           </div>
         )}
 
-        {/* Text block: name + description */}
         {collapsed ? (
           <>
             <div
-              className="absolute left-1/2 -translate-x-1/2 text-center text-foreground"
+              className="absolute left-1/2 -translate-x-1/2 text-center"
               style={{
                 zIndex: 4,
                 top: L.collapsedNameOffsetY * s,
                 width: (L.cardWidth - L.textPaddingX * 2) * s,
                 fontSize: L.collapsedNameFontSize * s,
                 fontWeight: 400,
+                color: primaryTextColor,
                 textShadow: '0 1px 4px rgba(0,0,0,0.9)',
               }}
             >
@@ -431,10 +425,11 @@ export function CardPreview({
             }}
           >
             <div
-              className="text-center text-foreground"
+              className="text-center"
               style={{
                 fontSize: L.nameFontSize * s,
                 fontWeight: 400,
+                color: primaryTextColor,
                 textShadow: '0 1px 4px rgba(0,0,0,0.9)',
                 marginBottom: 4 * s,
               }}
@@ -448,8 +443,7 @@ export function CardPreview({
                   fontSize: L.descFontSize * s,
                   fontWeight: 400,
                   lineHeight: 1.4,
-                  color:
-                    'color-mix(in srgb, var(--color-foreground) 80%, transparent)',
+                  color: secondaryTextColor,
                   textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                 }}
               >
@@ -503,7 +497,6 @@ export function CardPreview({
           </div>
         )}
 
-        {/* Rank stars */}
         <div
           className="absolute flex items-center justify-center"
           style={{
@@ -530,12 +523,8 @@ export function CardPreview({
                     height: starSize * s,
                     fontSize: starSize * s,
                     lineHeight: 1,
-                    color: active
-                      ? 'var(--color-primary-100)'
-                      : 'color-mix(in srgb, var(--color-foreground) 20%, transparent)',
-                    filter: active
-                      ? 'drop-shadow(0 0 0.1rem var(--color-primary-100))'
-                      : 'none',
+                    color: active ? '#a6e6ff' : 'rgba(255,255,255,0.2)',
+                    filter: active ? 'drop-shadow(0 0 0.1rem #a6e6ff)' : 'none',
                   }}
                 >
                   ★
@@ -551,9 +540,8 @@ export function CardPreview({
                   top: '62.5%',
                   transform: 'translateY(-50%)',
                   height: 1,
-                  background: 'var(--color-primary-100)',
-                  filter:
-                    'drop-shadow(0 0 0.2rem color-mix(in srgb, var(--color-primary-100) 90%, transparent))',
+                  background: '#a6e6ff',
+                  filter: 'drop-shadow(0 0 0.2rem #a6e6ff)',
                   opacity: 0.8,
                   pointerEvents: 'none',
                 }}
@@ -562,9 +550,7 @@ export function CardPreview({
           </div>
         </div>
       </div>
-      {/* End inner wrapper */}
 
-      {/* Center crosshair guide */}
       {showGuides && (
         <>
           <div

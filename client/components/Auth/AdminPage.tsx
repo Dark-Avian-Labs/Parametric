@@ -183,7 +183,6 @@ export function AdminPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
 
-      {/* Create user */}
       <div className="glass-surface p-6">
         <h2 className="mb-4 text-lg font-semibold text-foreground">
           Create User
@@ -243,7 +242,6 @@ export function AdminPage() {
         </form>
       </div>
 
-      {/* User list */}
       <div className="glass-shell overflow-hidden">
         <table className="w-full">
           <thead>
@@ -326,7 +324,6 @@ export function AdminPage() {
         </table>
       </div>
 
-      {/* Archon Shard Management */}
       <ArchonShardAdmin />
     </div>
   );

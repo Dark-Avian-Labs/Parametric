@@ -490,7 +490,6 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
         {weapon.product_category && ` · ${weapon.product_category}`}
       </div>
 
-      {/* Moddable stats with color coding */}
       <div className="mt-3 space-y-1.5">
         {moddedStats.map(
           (stat) =>
@@ -507,7 +506,6 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
         )}
       </div>
 
-      {/* Static stats (not affected by mods) */}
       <div className="space-y-1.5">
         {staticStats.map(
           (stat) =>
@@ -522,7 +520,6 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
         )}
       </div>
 
-      {/* DPS Section */}
       {calc && (
         <div className="mt-3 border-t border-glass-divider pt-2">
           <div className="flex items-center justify-between">

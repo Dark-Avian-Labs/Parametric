@@ -42,7 +42,7 @@ export function AbilityBar({
           .filter(Boolean);
       }
     } catch {
-      /* ignore */
+      // ignore
     }
     return [] as string[];
   }, [warframe.abilities]);
@@ -74,7 +74,7 @@ export function AbilityBar({
         }));
       }
     } catch {
-      // ignored
+      // ignore
     }
     return Array.from({ length: 4 }, (_, i) => ({
       name: `Ability ${i + 1}`,
@@ -179,7 +179,7 @@ export function AbilityBar({
                   <img
                     src={icon}
                     alt=""
-                    className="h-10 w-10 rounded object-cover"
+                    className="invert-on-light h-10 w-10 rounded object-cover"
                     draggable={false}
                   />
                 ) : (
@@ -203,7 +203,6 @@ export function AbilityBar({
           );
         })}
 
-        {/* Remove Helminth button */}
         {helminthConfig && (
           <button
             onClick={handleRemoveHelminth}

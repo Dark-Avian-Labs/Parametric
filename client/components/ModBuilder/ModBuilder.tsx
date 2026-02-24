@@ -658,7 +658,6 @@ export function ModBuilder() {
       className="mx-auto flex max-w-[2000px] gap-6"
       onClick={hasSelection ? handleBackgroundClick : undefined}
     >
-      {/* Left panel: stats + damage output */}
       <div className="w-72 shrink-0 space-y-4">
         {selectedEquipment && (
           <StatsPanel
@@ -698,9 +697,7 @@ export function ModBuilder() {
         )}
       </div>
 
-      {/* Center: mod grid — fixed width to fit 4-col slot grid */}
       <div className="w-[820px] shrink-0 space-y-4">
-        {/* Build header */}
         <div className="glass-panel flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <span className="text-lg font-semibold text-foreground">
@@ -742,7 +739,6 @@ export function ModBuilder() {
           </div>
         </div>
 
-        {/* Capacity bar */}
         <CapacityBar
           capacity={capacity}
           formaCost={formaCost}
@@ -750,7 +746,6 @@ export function ModBuilder() {
           onFormaToggle={() => setFormaMode((p) => !p)}
         />
 
-        {/* Mod slots */}
         {selectedEquipment ? (
           <ModSlotGrid
             slots={slots}
@@ -783,7 +778,6 @@ export function ModBuilder() {
           </div>
         )}
 
-        {/* Arcane slots + Archon Shards in one panel, side by side */}
         {selectedEquipment && (
           <div className="glass-panel flex items-start justify-between overflow-visible p-3">
             <ArcaneSlots
@@ -814,9 +808,7 @@ export function ModBuilder() {
         )}
       </div>
 
-      {/* Right panel: mod filter, helminth, arcane, or shard picker — expands to fill */}
       <div className="min-w-[440px] flex-1">
-        {/* FilterPanel stays mounted, hidden when other panels are active */}
         <div className={rightPanelMode !== 'mods' ? 'hidden' : ''}>
           <FilterPanel
             active={rightPanelMode === 'mods'}
@@ -927,7 +919,6 @@ export function ModBuilder() {
         )}
       </div>
 
-      {/* Save modal */}
       {showSaveModal && (
         <div
           className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60"
@@ -961,7 +952,6 @@ export function ModBuilder() {
         </div>
       )}
 
-      {/* Save toast */}
       {saveToast && (
         <div
           className={`fixed left-1/2 z-[9999] -translate-x-1/2 rounded-lg border border-accent/30 bg-accent-weak/90 px-5 py-2.5 text-sm font-medium text-accent shadow-lg backdrop-blur transition-all ${compareSnapshots.length > 0 ? 'bottom-24' : 'bottom-6'}`}
