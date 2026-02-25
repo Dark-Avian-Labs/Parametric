@@ -4,6 +4,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { EquipmentGridModal } from './EquipmentGridModal';
 import { SearchBar } from './SearchBar';
 import bgArt from '../../assets/background.txt?raw';
+import feathers from '../../assets/feathers.png';
 import { useCompare } from '../../context/CompareContext';
 import { useTheme } from '../../context/ThemeContext';
 import { CompareBar } from '../Compare/CompareBar';
@@ -32,8 +33,13 @@ export function Layout() {
       </div>
       <header className="relative z-10 px-6 py-4">
         <div className="mx-auto flex max-w-[2000px] items-center justify-between gap-4">
-          <h1 className="shrink-0 text-xl font-bold text-foreground">
-            Parametric
+          <h1 className="brand-lockup">
+            <img
+              src={feathers}
+              alt="Dark Avian Labs feather mark"
+              className="brand-lockup__icon"
+            />
+            <span className="brand-lockup__title">Parametric</span>
           </h1>
 
           <div className="flex flex-wrap items-center gap-3">

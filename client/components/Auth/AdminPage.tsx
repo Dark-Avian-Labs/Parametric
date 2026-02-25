@@ -51,7 +51,9 @@ export function AdminPage() {
       if (!res.ok) {
         const serverError =
           typeof data?.error === 'string' ? data.error : 'Failed to load users';
-        if (serverError.includes('User management moved to the Auth application')) {
+        if (
+          serverError.includes('User management moved to the Auth application')
+        ) {
           setUserManagementMoved(true);
           setError(null);
           setUsers([]);
@@ -222,146 +224,150 @@ export function AdminPage() {
 
       {!userManagementMoved && (
         <>
-      <div className="glass-surface p-6">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          Create User
-        </h2>
+          <div className="glass-surface p-6">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">
+              Create User
+            </h2>
 
-        {createError && <div className="error-msg mb-4">{createError}</div>}
-        {createSuccess && (
-          <div className="success-msg mb-4">{createSuccess}</div>
-        )}
+            {createError && <div className="error-msg mb-4">{createError}</div>}
+            {createSuccess && (
+              <div className="success-msg mb-4">{createSuccess}</div>
+            )}
 
-        <form
-          onSubmit={handleCreateUser}
-          className="flex flex-wrap items-end gap-3"
-        >
-          <div className="flex-1" style={{ minWidth: 120 }}>
-            <label className="mb-1 block text-sm text-muted">Username</label>
-            <input
-              type="text"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              className="form-input"
-              required
-            />
+            <form
+              onSubmit={handleCreateUser}
+              className="flex flex-wrap items-end gap-3"
+            >
+              <div className="flex-1" style={{ minWidth: 120 }}>
+                <label className="mb-1 block text-sm text-muted">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div className="flex-1" style={{ minWidth: 120 }}>
+                <label className="mb-1 block text-sm text-muted">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <div className="flex-1" style={{ minWidth: 120 }}>
+                <label className="mb-1 block text-sm text-muted">Confirm</label>
+                <input
+                  type="password"
+                  value={newConfirmPassword}
+                  onChange={(e) => setNewConfirmPassword(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+              <label className="flex items-center gap-2 pb-2.5 text-sm text-muted">
+                <input
+                  type="checkbox"
+                  checked={newIsAdmin}
+                  onChange={(e) => setNewIsAdmin(e.target.checked)}
+                  className="accent-accent"
+                />
+                Admin
+              </label>
+              <button type="submit" className="btn btn-accent">
+                Create
+              </button>
+            </form>
           </div>
-          <div className="flex-1" style={{ minWidth: 120 }}>
-            <label className="mb-1 block text-sm text-muted">Password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="form-input"
-              required
-            />
-          </div>
-          <div className="flex-1" style={{ minWidth: 120 }}>
-            <label className="mb-1 block text-sm text-muted">Confirm</label>
-            <input
-              type="password"
-              value={newConfirmPassword}
-              onChange={(e) => setNewConfirmPassword(e.target.value)}
-              className="form-input"
-              required
-            />
-          </div>
-          <label className="flex items-center gap-2 pb-2.5 text-sm text-muted">
-            <input
-              type="checkbox"
-              checked={newIsAdmin}
-              onChange={(e) => setNewIsAdmin(e.target.checked)}
-              className="accent-accent"
-            />
-            Admin
-          </label>
-          <button type="submit" className="btn btn-accent">
-            Create
-          </button>
-        </form>
-      </div>
 
-      <div className="glass-shell overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-glass-border">
-              <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
-                ID
-              </th>
-              <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
-                Username
-              </th>
-              <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
-                Role
-              </th>
-              {GAME_IDS.map((g) => (
-                <th
-                  key={g}
-                  className="bg-surface-thead px-3 py-3 text-center text-sm font-semibold text-muted"
-                >
-                  {g}
-                </th>
-              ))}
-              <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
-                Created
-              </th>
-              <th className="bg-surface-thead px-4 py-3 text-right text-sm font-semibold text-muted">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-glass-divider">
-                <td className="px-4 py-3 text-sm text-muted">{user.id}</td>
-                <td className="px-4 py-3 text-sm font-medium text-foreground">
-                  {user.username}
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  {user.is_admin ? (
-                    <span className="rounded bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning">
-                      Admin
-                    </span>
-                  ) : (
-                    <span className="text-muted">User</span>
-                  )}
-                </td>
-                {GAME_IDS.map((g) => {
-                  const granted = user.games.includes(g);
-                  return (
-                    <td key={g} className="px-3 py-3 text-center">
+          <div className="glass-shell overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-glass-border">
+                  <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
+                    ID
+                  </th>
+                  <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
+                    Username
+                  </th>
+                  <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
+                    Role
+                  </th>
+                  {GAME_IDS.map((g) => (
+                    <th
+                      key={g}
+                      className="bg-surface-thead px-3 py-3 text-center text-sm font-semibold text-muted"
+                    >
+                      {g}
+                    </th>
+                  ))}
+                  <th className="bg-surface-thead px-4 py-3 text-left text-sm font-semibold text-muted">
+                    Created
+                  </th>
+                  <th className="bg-surface-thead px-4 py-3 text-right text-sm font-semibold text-muted">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id} className="border-b border-glass-divider">
+                    <td className="px-4 py-3 text-sm text-muted">{user.id}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">
+                      {user.username}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {user.is_admin ? (
+                        <span className="rounded bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning">
+                          Admin
+                        </span>
+                      ) : (
+                        <span className="text-muted">User</span>
+                      )}
+                    </td>
+                    {GAME_IDS.map((g) => {
+                      const granted = user.games.includes(g);
+                      return (
+                        <td key={g} className="px-3 py-3 text-center">
+                          <button
+                            onClick={() =>
+                              handleToggleGameAccess(user.id, g, granted)
+                            }
+                            className={`inline-flex h-5 w-5 items-center justify-center rounded text-xs font-bold transition-colors ${
+                              granted
+                                ? 'bg-success/20 text-success hover:bg-success/30'
+                                : 'bg-muted/10 text-muted/40 hover:bg-muted/20'
+                            }`}
+                            title={granted ? `Revoke ${g}` : `Grant ${g}`}
+                          >
+                            {granted ? '\u2713' : '\u2715'}
+                          </button>
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-3 text-sm text-muted">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() =>
-                          handleToggleGameAccess(user.id, g, granted)
-                        }
-                        className={`inline-flex h-5 w-5 items-center justify-center rounded text-xs font-bold transition-colors ${
-                          granted
-                            ? 'bg-success/20 text-success hover:bg-success/30'
-                            : 'bg-muted/10 text-muted/40 hover:bg-muted/20'
-                        }`}
-                        title={granted ? `Revoke ${g}` : `Grant ${g}`}
+                        onClick={() => handleDeleteUser(user.id, user.username)}
+                        className="btn btn-sm btn-danger"
                       >
-                        {granted ? '\u2713' : '\u2715'}
+                        Delete
                       </button>
                     </td>
-                  );
-                })}
-                <td className="px-4 py-3 text-sm text-muted">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => handleDeleteUser(user.id, user.username)}
-                    className="btn btn-sm btn-danger"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 

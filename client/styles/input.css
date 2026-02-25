@@ -226,6 +226,30 @@ html.theme-dark {
       0 0 8px rgba(0, 0, 0, 0.45);
   }
 
+  .brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .brand-lockup__icon {
+    width: clamp(22px, 1.9vw, 30px);
+    height: clamp(22px, 1.9vw, 30px);
+    object-fit: contain;
+    flex: 0 0 auto;
+  }
+
+  .brand-lockup__title {
+    margin: 0;
+    min-width: 0;
+    font-size: clamp(1.2rem, 1.7vw, 1.5rem);
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
   .btn {
     padding: 0 16px;
     font-size: 14px;
