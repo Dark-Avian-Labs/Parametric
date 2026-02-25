@@ -10,6 +10,10 @@ export const RIVEN_PLACEHOLDER_UNIQUE = '__RIVEN_PLACEHOLDER__';
 export const RIVEN_MOD_UNIQUE = '__RIVEN_MOD__';
 
 type BaselineMap = Record<string, number>;
+type RivenRollRule = {
+  positiveMultiplier: number;
+  negativeMultiplier: number;
+};
 
 const PRIMARY_BASELINES: BaselineMap = {
   Damage: 165,
@@ -94,6 +98,13 @@ const BASELINES: Record<RivenWeaponType, BaselineMap> = {
   archgun: ARCHGUN_BASELINES,
 };
 
+const RIVEN_ROLL_RULES: Record<string, RivenRollRule> = {
+  '2-0': { positiveMultiplier: 0.99, negativeMultiplier: 0 },
+  '2-1': { positiveMultiplier: 1.2375, negativeMultiplier: 0.495 },
+  '3-0': { positiveMultiplier: 0.75, negativeMultiplier: 0 },
+  '3-1': { positiveMultiplier: 0.9375, negativeMultiplier: 0.75 },
+};
+
 export function getRivenWeaponType(
   equipmentType: EquipmentType,
 ): RivenWeaponType | null {
@@ -125,6 +136,20 @@ function toOneDecimal(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
+function getRollRule(
+  positiveCount: number,
+  hasNegative: boolean,
+): RivenRollRule | null {
+  const key = `${positiveCount}-${hasNegative ? 1 : 0}`;
+  return RIVEN_ROLL_RULES[key] ?? null;
+}
+
 export function normalizeRivenValue(
   value: number,
   stat: string,
@@ -136,6 +161,67 @@ export function normalizeRivenValue(
   const absNormalized = baseline == null ? absInput : baseline;
   const signed = isNegative ? -absNormalized : absNormalized;
   return toOneDecimal(signed);
+}
+
+export function verifyAndAdjustRivenConfig(
+  config: RivenConfig,
+  weaponType: RivenWeaponType,
+): { config: RivenConfig; adjusted: boolean } {
+  const positives = config.positive.filter((s) => s.stat.trim() !== '');
+  const hasNegative = Boolean(config.negative?.stat);
+  const rollRule = getRollRule(positives.length, hasNegative);
+
+  let adjusted = false;
+  const adjustedPositives = positives.map((stat) => {
+    const baseline = getRivenBaselineValue(stat.stat, weaponType);
+    const originalAbs = Math.abs(stat.value);
+    let nextAbs = originalAbs;
+
+    if (baseline != null && rollRule) {
+      const target = baseline * rollRule.positiveMultiplier;
+      const min = target * 0.9;
+      const max = target * 1.1;
+      nextAbs = clamp(originalAbs, min, max);
+    }
+
+    const nextValue = toOneDecimal(nextAbs);
+    if (nextValue !== toOneDecimal(originalAbs) || stat.value < 0)
+      adjusted = true;
+    return { ...stat, value: nextValue, isNegative: false };
+  });
+
+  let adjustedNegative: RivenStat | undefined = undefined;
+  if (config.negative?.stat) {
+    const baseline = getRivenBaselineValue(config.negative.stat, weaponType);
+    const originalAbs = Math.abs(config.negative.value);
+    let nextAbs = originalAbs;
+
+    if (baseline != null && rollRule && rollRule.negativeMultiplier > 0) {
+      const target = baseline * rollRule.negativeMultiplier;
+      const min = target * 0.9;
+      const max = target * 1.1;
+      nextAbs = clamp(originalAbs, min, max);
+    }
+
+    const nextValue = -toOneDecimal(nextAbs);
+    if (nextValue !== -toOneDecimal(originalAbs) || config.negative.value > 0) {
+      adjusted = true;
+    }
+    adjustedNegative = {
+      ...config.negative,
+      value: nextValue,
+      isNegative: true,
+    };
+  }
+
+  return {
+    config: {
+      ...config,
+      positive: adjustedPositives,
+      negative: adjustedNegative,
+    },
+    adjusted,
+  };
 }
 
 export function validateRivenConfig(config: RivenConfig): string | null {
