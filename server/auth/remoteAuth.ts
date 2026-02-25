@@ -5,6 +5,21 @@ import { GAME_ID } from '../config.js';
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL?.replace(/\/+$/, '') ??
   'https://auth.shark5060.net';
+const DEFAULT_AUTH_SERVICE_URL = 'https://auth.shark5060.net';
+
+function resolveAuthServiceUrl(req?: Request): string {
+  if (!req) return AUTH_SERVICE_URL;
+  try {
+    const configuredHost = new URL(AUTH_SERVICE_URL).host.toLowerCase();
+    const currentHost = getHost(req).toLowerCase();
+    if (configuredHost === currentHost) {
+      return DEFAULT_AUTH_SERVICE_URL;
+    }
+  } catch {
+    return DEFAULT_AUTH_SERVICE_URL;
+  }
+  return AUTH_SERVICE_URL;
+}
 
 export interface RemoteAuthUser {
   id: number;
@@ -43,7 +58,7 @@ export function buildAuthLoginUrl(req: Request, nextPath?: string): string {
   const proto = getProto(req);
   const requested = nextPath || req.originalUrl || '/';
   const next = `${proto}://${host}${requested}`;
-  const loginUrl = new URL(`${AUTH_SERVICE_URL}/login`);
+  const loginUrl = new URL(`${resolveAuthServiceUrl(req)}/login`);
   loginUrl.searchParams.set('next', next);
   return loginUrl.toString();
 }
@@ -52,7 +67,7 @@ export async function fetchRemoteAuthState(
   req: Request,
   gameId = GAME_ID,
 ): Promise<RemoteAuthState> {
-  const meUrl = new URL(`${AUTH_SERVICE_URL}/api/auth/me`);
+  const meUrl = new URL(`${resolveAuthServiceUrl(req)}/api/auth/me`);
   meUrl.searchParams.set('app', gameId);
   try {
     const upstream = await fetch(meUrl, {
@@ -119,7 +134,7 @@ export async function proxyAuthJson(
   res: Response,
   path: string,
 ): Promise<void> {
-  const url = `${AUTH_SERVICE_URL}${path}`;
+  const url = `${resolveAuthServiceUrl(req)}${path}`;
   const method = req.method.toUpperCase();
   try {
     const upstream = await fetch(url, {
@@ -160,7 +175,7 @@ export async function proxyAuthLogout(
   const host = getHost(req);
   const proto = getProto(req);
   const next = `${proto}://${host}/login`;
-  const logoutUrl = new URL(`${AUTH_SERVICE_URL}/logout`);
+  const logoutUrl = new URL(`${resolveAuthServiceUrl(req)}/logout`);
   logoutUrl.searchParams.set('next', next);
 
   try {
