@@ -505,28 +505,34 @@ html.theme-light .archon-shard-filled-bg--tau {
 
 .mod-slot-card {
   position: relative;
+  perspective: 900px;
 }
 
 .mod-slot-card .mod-slot-expanded {
+  --tilt-rotate-x: 0deg;
+  --tilt-rotate-y: 0deg;
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scaleY(0);
+  transform: translate(-50%, -50%) scaleY(0) rotateX(var(--tilt-rotate-x))
+    rotateY(var(--tilt-rotate-y));
   transform-origin: center;
+  transform-style: preserve-3d;
   pointer-events: none;
   z-index: 30;
   opacity: 0;
   transition:
-    transform 0.3s cubic-bezier(0.36, 0, 0.66, -0.56),
+    transform 0.15s ease-out,
     opacity 0s 0.3s;
 }
 
 .mod-slot-card:hover .mod-slot-expanded {
   opacity: 1;
-  transform: translate(-50%, -50%) scaleY(1);
+  transform: translate(-50%, -50%) scaleY(1) rotateX(var(--tilt-rotate-x))
+    rotateY(var(--tilt-rotate-y));
   pointer-events: auto;
   transition:
-    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.15s ease-out,
     opacity 0.12s;
 }
 
@@ -548,4 +554,10 @@ html.theme-light .archon-shard-filled-bg--tau {
 .mod-selector-expand {
   transform-origin: center;
   animation: selector-expand 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  perspective: 900px;
+}
+
+.mod-selector-tilt {
+  transform-style: preserve-3d;
+  transition: transform 0.12s ease-out;
 }

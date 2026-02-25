@@ -49,6 +49,27 @@ const POLARITY_ICONS: Record<string, string> = {
   AP_ANY: 'universal',
 };
 
+const CARD_HOVER_TILT_MAX_DEG = 5;
+
+function applyCardTiltFromMouse(
+  target: HTMLElement,
+  event: React.MouseEvent<HTMLElement>,
+): void {
+  const rect = target.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+  const px = (event.clientX - rect.left) / rect.width;
+  const py = (event.clientY - rect.top) / rect.height;
+  const rotateY = (px - 0.5) * 2 * CARD_HOVER_TILT_MAX_DEG;
+  const rotateX = (0.5 - py) * 2 * CARD_HOVER_TILT_MAX_DEG;
+  target.style.setProperty('--tilt-rotate-x', `${rotateX.toFixed(2)}deg`);
+  target.style.setProperty('--tilt-rotate-y', `${rotateY.toFixed(2)}deg`);
+}
+
+function resetCardTilt(target: HTMLElement): void {
+  target.style.setProperty('--tilt-rotate-x', '0deg');
+  target.style.setProperty('--tilt-rotate-y', '0deg');
+}
+
 interface ModSlotGridProps {
   slots: ModSlot[];
   onDrop: (slotIndex: number, mod: Mod) => void;
@@ -423,6 +444,10 @@ function SlotCell({
               <div
                 className="mod-slot-expanded relative"
                 style={{ width: SLOT_W }}
+                onMouseMove={(event) =>
+                  applyCardTiltFromMouse(event.currentTarget, event)
+                }
+                onMouseLeave={(event) => resetCardTilt(event.currentTarget)}
               >
                 <ModCard
                   mod={slot.mod}

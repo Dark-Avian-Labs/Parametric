@@ -297,6 +297,8 @@ function CollapsedHoverExpand({
   'layout' | 'collapsed' | 'showGuides' | 'showOutlines'
 >) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [tilt, setTilt] = useState<{ rx: number; ry: number }>({ rx: 0, ry: 0 });
+  const TILT_MAX_DEG = 5;
 
   useEffect(() => {
     if (!cardRef.current) {
@@ -307,6 +309,33 @@ function CollapsedHoverExpand({
     setPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
   }, [cardRef]);
 
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node) return undefined;
+
+    const onMove = (event: MouseEvent): void => {
+      const rect = node.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const px = (event.clientX - rect.left) / rect.width;
+      const py = (event.clientY - rect.top) / rect.height;
+      const ry = (px - 0.5) * 2 * TILT_MAX_DEG;
+      const rx = (0.5 - py) * 2 * TILT_MAX_DEG;
+      setTilt({ rx, ry });
+    };
+
+    const onLeave = (): void => {
+      setTilt({ rx: 0, ry: 0 });
+    };
+
+    node.addEventListener('mousemove', onMove);
+    node.addEventListener('mouseleave', onLeave);
+
+    return () => {
+      node.removeEventListener('mousemove', onMove);
+      node.removeEventListener('mouseleave', onLeave);
+    };
+  }, [cardRef]);
+
   if (!pos) return null;
 
   return createPortal(
@@ -314,7 +343,14 @@ function CollapsedHoverExpand({
       className="pointer-events-none fixed z-[9999] mod-selector-expand"
       style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
     >
-      <CardPreview layout={layout} {...previewProps} />
+      <div
+        className="mod-selector-tilt"
+        style={{
+          transform: `rotateX(${tilt.rx.toFixed(2)}deg) rotateY(${tilt.ry.toFixed(2)}deg)`,
+        }}
+      >
+        <CardPreview layout={layout} {...previewProps} />
+      </div>
     </div>,
     document.body,
   );
