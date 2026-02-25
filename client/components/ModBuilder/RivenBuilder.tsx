@@ -11,8 +11,8 @@ import {
 } from '../../types/warframe';
 import {
   buildRivenDescription,
-  normalizeRivenValue,
   validateRivenConfig,
+  verifyAndAdjustRivenConfig,
 } from '../../utils/riven';
 
 interface RivenBuilderProps {
@@ -46,6 +46,7 @@ export function RivenBuilder({
     config?.polarity ?? AP_ATTACK,
   );
   const [error, setError] = useState<string>('');
+  const [adjustNotice, setAdjustNotice] = useState<string>('');
 
   const selectedStats = rows.map((r) => r.stat).filter(Boolean);
 
@@ -66,43 +67,19 @@ export function RivenBuilder({
     setRows(next);
   };
 
-  const normalizeRowValue = (idx: number) => {
-    const row = rows[idx];
-    if (!row || !row.stat) return;
-    const normalized = normalizeRivenValue(
-      row.value,
-      row.stat,
-      weaponType,
-      row.isNegative,
-    );
-    const next = [...rows];
-    next[idx] = { ...row, value: normalized };
-    setRows(next);
-  };
-
   const handleSave = () => {
-    const normalized = rows.map((row) => {
-      if (!row.stat) return row;
-      return {
-        ...row,
-        value: normalizeRivenValue(
-          row.value,
-          row.stat,
-          weaponType,
-          row.isNegative,
-        ),
-      };
-    });
-    setRows(normalized);
-
     const configToSave: RivenConfig = {
       polarity,
-      positive: normalized
+      positive: rows
         .slice(0, 3)
         .filter((r) => r.stat)
-        .map((r) => ({ ...r, isNegative: false })),
-      negative: normalized[3]?.stat
-        ? { ...normalized[3], isNegative: true }
+        .map((r) => ({
+          ...r,
+          value: Math.abs(r.value),
+          isNegative: false,
+        })),
+      negative: rows[3]?.stat
+        ? { ...rows[3], value: -Math.abs(rows[3].value), isNegative: true }
         : undefined,
     };
 
@@ -112,8 +89,36 @@ export function RivenBuilder({
       return;
     }
 
+    const verified = verifyAndAdjustRivenConfig(configToSave, weaponType);
+    setRows([
+      {
+        stat: verified.config.positive[0]?.stat ?? '',
+        value: verified.config.positive[0]?.value ?? 0,
+        isNegative: false,
+      },
+      {
+        stat: verified.config.positive[1]?.stat ?? '',
+        value: verified.config.positive[1]?.value ?? 0,
+        isNegative: false,
+      },
+      {
+        stat: verified.config.positive[2]?.stat ?? '',
+        value: verified.config.positive[2]?.value ?? 0,
+        isNegative: false,
+      },
+      {
+        stat: verified.config.negative?.stat ?? '',
+        value: verified.config.negative?.value ?? 0,
+        isNegative: true,
+      },
+    ]);
     setError('');
-    onSave(configToSave);
+    setAdjustNotice(
+      verified.adjusted
+        ? 'Some values were adjusted to valid roll ranges.'
+        : '',
+    );
+    onSave(verified.config);
   };
 
   return (
@@ -232,7 +237,6 @@ export function RivenBuilder({
                   onChange={(e) =>
                     updateRow(i, 'value', parseFloat(e.target.value) || 0)
                   }
-                  onBlur={() => normalizeRowValue(i)}
                   className="form-input w-20 text-xs"
                   step="0.1"
                 />
@@ -241,6 +245,12 @@ export function RivenBuilder({
           </div>
         </div>
 
+        <p className="mb-2 text-[11px] text-muted">
+          Values will be verified and adjusted on save.
+        </p>
+        {adjustNotice && (
+          <p className="mb-2 text-xs text-muted">{adjustNotice}</p>
+        )}
         {error && <p className="mb-4 text-xs text-danger">{error}</p>}
 
         <div className="flex justify-end gap-2">
