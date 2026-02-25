@@ -20,6 +20,7 @@ export const AUTH_LOCKOUT_FILE = path.join(DATA_DIR, 'auth-lockout.json');
 
 const _port = parseInt(process.env.PORT || '3001', 10);
 export const PORT = Number.isFinite(_port) && _port > 0 ? _port : 3001;
+export const HOST = process.env.HOST || '127.0.0.1';
 const DEFAULT_SESSION_SECRET = 'parametric-dev-secret-change-me';
 export const SESSION_SECRET =
   process.env.SESSION_SECRET || DEFAULT_SESSION_SECRET;

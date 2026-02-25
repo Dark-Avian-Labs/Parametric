@@ -17,6 +17,7 @@ import {
 } from './auth/middleware.js';
 import {
   PORT,
+  HOST,
   SESSION_SECRET,
   NODE_ENV,
   CENTRAL_DB_PATH,
@@ -196,9 +197,9 @@ app.use(
   },
 );
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   console.log(
-    `[${APP_NAME}] Server running on http://localhost:${PORT} (${NODE_ENV})`,
+    `[${APP_NAME}] Server running on http://${HOST}:${PORT} (${NODE_ENV})`,
   );
 
   runStartupPipeline().catch((err) => {
