@@ -297,7 +297,10 @@ function CollapsedHoverExpand({
   'layout' | 'collapsed' | 'showGuides' | 'showOutlines'
 >) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const [tilt, setTilt] = useState<{ rx: number; ry: number }>({ rx: 0, ry: 0 });
+  const [tilt, setTilt] = useState<{ rx: number; ry: number }>({
+    rx: 0,
+    ry: 0,
+  });
   const TILT_MAX_DEG = 5;
 
   useEffect(() => {
