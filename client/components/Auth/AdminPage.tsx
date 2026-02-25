@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 import { useApi } from '../../hooks/useApi';
 import { apiFetch } from '../../utils/api';
@@ -34,6 +35,7 @@ export function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userManagementMoved, setUserManagementMoved] = useState(false);
 
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -47,7 +49,15 @@ export function AdminPage() {
       const res = await apiFetch('/api/auth/users');
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error);
+        const serverError =
+          typeof data?.error === 'string' ? data.error : 'Failed to load users';
+        if (serverError.includes('User management moved to the Auth application')) {
+          setUserManagementMoved(true);
+          setError(null);
+          setUsers([]);
+          return;
+        }
+        setError(serverError);
         return;
       }
       const rawUsers: {
@@ -168,21 +178,50 @@ export function AdminPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="glass-shell p-8">
-        <div className="error-msg">{error}</div>
-        <p className="mt-4 text-sm text-muted">
-          You may need to be logged in as an admin to access this page.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
+        <div className="flex gap-2">
+          <Link to="/builder" className="btn btn-secondary">
+            Back to App
+          </Link>
+          <a
+            href="https://auth.shark5060.net/admin"
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-secondary"
+          >
+            User Management
+          </a>
+        </div>
+      </div>
+      {userManagementMoved && (
+        <div className="glass-surface p-5">
+          <p className="text-sm text-muted">
+            User management moved to the shared Auth application.
+          </p>
+          <a
+            href="https://auth.shark5060.net/admin"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block text-sm text-accent hover:underline"
+          >
+            Open Auth Admin
+          </a>
+        </div>
+      )}
+      {error && !userManagementMoved && (
+        <div className="glass-shell p-6">
+          <div className="error-msg">{error}</div>
+          <p className="mt-3 text-sm text-muted">
+            You may need to be logged in as an admin to access this page.
+          </p>
+        </div>
+      )}
 
+      {!userManagementMoved && (
+        <>
       <div className="glass-surface p-6">
         <h2 className="mb-4 text-lg font-semibold text-foreground">
           Create User
@@ -323,6 +362,8 @@ export function AdminPage() {
           </tbody>
         </table>
       </div>
+        </>
+      )}
 
       <ArchonShardAdmin />
     </div>
