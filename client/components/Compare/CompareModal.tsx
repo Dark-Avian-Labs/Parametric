@@ -141,7 +141,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl rounded-xl border border-glass-border bg-surface-modal p-6 shadow-2xl"
+        className="glass-modal-surface w-full max-w-4xl rounded-xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">
