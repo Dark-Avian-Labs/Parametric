@@ -30,6 +30,13 @@ interface ShardType {
 }
 
 const GAME_IDS = ['parametric', 'warframe', 'epic7'];
+const AUTH_ADMIN_URL_RAW = import.meta.env.VITE_AUTH_ADMIN_URL as
+  | string
+  | undefined;
+const AUTH_ADMIN_URL =
+  typeof AUTH_ADMIN_URL_RAW === 'string' && AUTH_ADMIN_URL_RAW.trim().length > 0
+    ? AUTH_ADMIN_URL_RAW.trim()
+    : 'http://localhost:3010/admin';
 
 export function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -189,7 +196,7 @@ export function AdminPage() {
             Back to App
           </Link>
           <a
-            href="https://auth.shark5060.net/admin"
+            href={AUTH_ADMIN_URL}
             target="_blank"
             rel="noreferrer"
             className="btn btn-secondary"
@@ -204,7 +211,7 @@ export function AdminPage() {
             User management moved to the shared Auth application.
           </p>
           <a
-            href="https://auth.shark5060.net/admin"
+            href={AUTH_ADMIN_URL}
             target="_blank"
             rel="noreferrer"
             className="mt-2 inline-block text-sm text-accent hover:underline"

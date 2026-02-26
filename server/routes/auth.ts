@@ -10,6 +10,9 @@ import {
 import { proxyAuthJson, proxyAuthLogout } from '../auth/remoteAuth.js';
 
 export const authRouter = Router();
+const AUTH_SERVICE_BASE =
+  process.env.AUTH_SERVICE_URL?.trim() || 'http://localhost:3010';
+const AUTH_ADMIN_URL = `${AUTH_SERVICE_BASE.replace(/\/+$/, '')}/admin`;
 
 authRouter.use(
   rateLimit({
@@ -50,8 +53,7 @@ authRouter.post('/change-password', async (req: Request, res: Response) => {
 
 function userMgmtMoved(res: Response): void {
   res.status(410).json({
-    error:
-      'User management moved to the Auth application. Use auth.shark5060.net/admin.',
+    error: `User management moved to the Auth application. Use ${AUTH_ADMIN_URL}.`,
   });
 }
 

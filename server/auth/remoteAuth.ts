@@ -2,10 +2,53 @@ import type { Request, Response } from 'express';
 
 import { GAME_ID } from '../config.js';
 
+const LOCAL_AUTH_SERVICE_FALLBACK = 'http://localhost:3010';
+
+function parseBaseUrl(
+  rawValue: string | undefined,
+  envName: string,
+): string | null {
+  const trimmed = rawValue?.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      console.warn(
+        `[auth.remoteAuth] Ignoring ${envName}: URL must use http/https protocol.`,
+      );
+      return null;
+    }
+    return parsed.toString().replace(/\/+$/, '');
+  } catch {
+    console.warn(`[auth.remoteAuth] Ignoring ${envName}: invalid base URL.`);
+    return null;
+  }
+}
+
+const parsedFallbackAuthServiceUrl = parseBaseUrl(
+  process.env.AUTH_FALLBACK_SERVICE_URL,
+  'AUTH_FALLBACK_SERVICE_URL',
+);
+const parsedPrimaryAuthServiceUrl = parseBaseUrl(
+  process.env.AUTH_SERVICE_URL,
+  'AUTH_SERVICE_URL',
+);
+
+if (
+  process.env.AUTH_FALLBACK_SERVICE_URL?.trim() &&
+  process.env.AUTH_SERVICE_URL?.trim() &&
+  !parsedFallbackAuthServiceUrl &&
+  !parsedPrimaryAuthServiceUrl
+) {
+  console.warn(
+    `[auth.remoteAuth] Both AUTH_FALLBACK_SERVICE_URL and AUTH_SERVICE_URL are invalid; falling back to ${LOCAL_AUTH_SERVICE_FALLBACK}.`,
+  );
+}
+
+const DEFAULT_AUTH_SERVICE_URL =
+  parsedFallbackAuthServiceUrl ?? LOCAL_AUTH_SERVICE_FALLBACK;
 const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL?.replace(/\/+$/, '') ??
-  'https://auth.shark5060.net';
-const DEFAULT_AUTH_SERVICE_URL = 'https://auth.shark5060.net';
+  parsedPrimaryAuthServiceUrl ?? DEFAULT_AUTH_SERVICE_URL;
 const AUTH_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.AUTH_FETCH_TIMEOUT_MS ?? '5000',
   10,
