@@ -20,9 +20,7 @@ function parseBaseUrl(
     }
     return parsed.toString().replace(/\/+$/, '');
   } catch {
-    console.warn(
-      `[auth.remoteAuth] Ignoring ${envName}: invalid base URL.`,
-    );
+    console.warn(`[auth.remoteAuth] Ignoring ${envName}: invalid base URL.`);
     return null;
   }
 }
