@@ -18,7 +18,8 @@ interface ThemeContextValue {
 const THEME_STORAGE_KEY = 'parametric.theme.mode';
 const SHARED_THEME_STORAGE_KEY = 'dal.theme.mode';
 const SHARED_THEME_COOKIE = 'dal.theme.mode';
-const SHARED_THEME_COOKIE_DOMAIN = '.shark5060.net';
+const SHARED_THEME_COOKIE_DOMAIN =
+  import.meta.env.VITE_SHARED_THEME_COOKIE_DOMAIN || '';
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -44,7 +45,9 @@ function writeThemeCookie(mode: ThemeMode): void {
   const secure = window.location.protocol === 'https:' ? '; Secure' : '';
   const base = `${SHARED_THEME_COOKIE}=${mode}; Max-Age=${ONE_YEAR_SECONDS}; Path=/; SameSite=Lax${secure}`;
   document.cookie = base;
-  document.cookie = `${base}; Domain=${SHARED_THEME_COOKIE_DOMAIN}`;
+  if (SHARED_THEME_COOKIE_DOMAIN) {
+    document.cookie = `${base}; Domain=${SHARED_THEME_COOKIE_DOMAIN}`;
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

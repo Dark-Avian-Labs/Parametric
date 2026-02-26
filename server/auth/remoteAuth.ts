@@ -2,10 +2,12 @@ import type { Request, Response } from 'express';
 
 import { GAME_ID } from '../config.js';
 
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL?.replace(/\/+$/, '') ??
-  'https://auth.shark5060.net';
-const DEFAULT_AUTH_SERVICE_URL = 'https://auth.shark5060.net';
+const DEFAULT_AUTH_SERVICE_URL = (
+  process.env.AUTH_FALLBACK_SERVICE_URL ?? 'http://localhost:3010'
+).replace(/\/+$/, '');
+const AUTH_SERVICE_URL = (
+  process.env.AUTH_SERVICE_URL ?? DEFAULT_AUTH_SERVICE_URL
+).replace(/\/+$/, '');
 const AUTH_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.AUTH_FETCH_TIMEOUT_MS ?? '5000',
   10,
