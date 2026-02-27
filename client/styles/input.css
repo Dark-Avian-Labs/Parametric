@@ -479,6 +479,9 @@ html.theme-dark {
     min-width: 180px;
     padding: 6px;
     border-radius: 12px;
+    border: 1px solid var(--color-glass-border);
+    background: var(--color-surface-modal);
+    backdrop-filter: blur(12px);
     z-index: 60;
   }
 

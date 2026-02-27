@@ -201,6 +201,9 @@ app.get('/auth/profile', publicPageLimiter, (_req, res) => {
   }
   res.redirect('/login');
 });
+app.get('/profile', publicPageLimiter, (_req, res) => {
+  res.redirect('/auth/profile');
+});
 app.get('/auth/legal', publicPageLimiter, (_req, res) => {
   if (AUTH_SERVICE_URL) {
     res.redirect(`${AUTH_SERVICE_URL}/legal`);
