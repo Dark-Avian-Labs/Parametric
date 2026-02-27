@@ -198,6 +198,10 @@ if (NODE_ENV === 'production') {
     authLoginRedirect(req, res);
   });
 
+  app.get('/legal', publicPageLimiter, (_req, res) => {
+    res.sendFile(path.join(clientDir, 'index.html'));
+  });
+
   app.get(/.*/, publicPageLimiter, requirePageGameAccess, (_req, res) => {
     res.sendFile(path.join(clientDir, 'index.html'));
   });
