@@ -432,7 +432,8 @@ apiRouter.post(
       if (!parsed.success) {
         res.status(400).json({
           error:
-            parsed.error.issues[0]?.message || 'Invalid archon shard type payload',
+            parsed.error.issues[0]?.message ||
+            'Invalid archon shard type payload',
         });
         return;
       }
@@ -457,13 +458,11 @@ apiRouter.post(
       const db = getDb();
       const parsed = shardBuffCreateSchema.safeParse(req.body);
       if (!parsed.success) {
-        res
-          .status(400)
-          .json({
-            error:
-              parsed.error.issues[0]?.message ||
-              'Invalid archon shard buff payload',
-          });
+        res.status(400).json({
+          error:
+            parsed.error.issues[0]?.message ||
+            'Invalid archon shard buff payload',
+        });
         return;
       }
       const {
@@ -507,13 +506,11 @@ apiRouter.put(
       }
       const parsed = shardBuffUpdateSchema.safeParse(req.body);
       if (!parsed.success) {
-        res
-          .status(400)
-          .json({
-            error:
-              parsed.error.issues[0]?.message ||
-              'Invalid archon shard buff payload',
-          });
+        res.status(400).json({
+          error:
+            parsed.error.issues[0]?.message ||
+            'Invalid archon shard buff payload',
+        });
         return;
       }
       const {
@@ -598,9 +595,9 @@ apiRouter.get('/loadouts/:id', (req: Request, res: Response) => {
       return;
     }
 
-    const loadout = db.prepare('SELECT * FROM loadouts WHERE id = ?').get(id) as
-      | Record<string, unknown>
-      | undefined;
+    const loadout = db
+      .prepare('SELECT * FROM loadouts WHERE id = ?')
+      .get(id) as Record<string, unknown> | undefined;
     if (!loadout) {
       res.status(404).json({ error: 'Loadout not found' });
       return;
@@ -741,8 +738,13 @@ apiRouter.post('/loadouts/:id/copy', (req: Request, res: Response) => {
       const newId = Number(createdLoadout.lastInsertRowid);
 
       const sourceLinks = db
-        .prepare('SELECT build_id, slot_type FROM loadout_builds WHERE loadout_id = ?')
-        .all(sourceLoadout.id) as Array<{ build_id: number; slot_type: string }>;
+        .prepare(
+          'SELECT build_id, slot_type FROM loadout_builds WHERE loadout_id = ?',
+        )
+        .all(sourceLoadout.id) as Array<{
+        build_id: number;
+        slot_type: string;
+      }>;
 
       for (const link of sourceLinks) {
         const sourceBuild = db
@@ -800,20 +802,23 @@ apiRouter.post('/loadouts/:id/builds', (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid loadout build payload' });
       return;
     }
-    const result = db.prepare(
-      'INSERT OR REPLACE INTO loadout_builds (loadout_id, build_id, slot_type) SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM loadouts WHERE id = ? AND user_id = ?) AND EXISTS (SELECT 1 FROM builds WHERE id = ? AND user_id = ?)',
-    ).run(
-      loadoutId,
-      buildId,
-      slot_type,
-      loadoutId,
-      req.session.user_id,
-      buildId,
-      req.session.user_id,
-    );
+    const result = db
+      .prepare(
+        'INSERT OR REPLACE INTO loadout_builds (loadout_id, build_id, slot_type) SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM loadouts WHERE id = ? AND user_id = ?) AND EXISTS (SELECT 1 FROM builds WHERE id = ? AND user_id = ?)',
+      )
+      .run(
+        loadoutId,
+        buildId,
+        slot_type,
+        loadoutId,
+        req.session.user_id,
+        buildId,
+        req.session.user_id,
+      );
     if (result.changes === 0) {
       res.status(404).json({
-        error: 'Loadout or build not found, or you do not have permission to add it',
+        error:
+          'Loadout or build not found, or you do not have permission to add it',
       });
       return;
     }

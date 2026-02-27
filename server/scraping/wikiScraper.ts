@@ -783,7 +783,10 @@ export function mergeWikiData(
         );
         typeIdMap.set(
           st.id,
-          Number((insertResult as { lastInsertRowid: number | bigint }).lastInsertRowid),
+          Number(
+            (insertResult as { lastInsertRowid: number | bigint })
+              .lastInsertRowid,
+          ),
         );
         result.shardTypes++;
       }

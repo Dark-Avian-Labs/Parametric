@@ -313,7 +313,10 @@ export function seedArchonShards(): void {
         st.tauforged_icon_path,
         st.sort_order,
       );
-      typeIdMap.set(st.id, (result as { lastInsertRowid: number }).lastInsertRowid);
+      typeIdMap.set(
+        st.id,
+        (result as { lastInsertRowid: number }).lastInsertRowid,
+      );
     }
     for (const sb of SHARD_BUFFS) {
       const shardTypeId = typeIdMap.get(sb.shard_type_id);

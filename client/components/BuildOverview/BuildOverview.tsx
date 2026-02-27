@@ -67,7 +67,9 @@ export function BuildOverview() {
       setLinkingBuild(null);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to link build to loadout';
+        error instanceof Error
+          ? error.message
+          : 'Failed to link build to loadout';
       console.error('Failed to link build to loadout', error);
       window.alert(message);
     }

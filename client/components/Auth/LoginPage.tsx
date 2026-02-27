@@ -8,6 +8,9 @@ export function LoginPage() {
 
   useEffect(() => {
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    const cleanup = () => {
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
 
     try {
       const nextAuthUrl = buildCentralAuthLoginUrl('/builder');
@@ -17,19 +20,18 @@ export function LoginPage() {
         parsedUrl = new URL(nextAuthUrl, window.location.origin);
       } catch {
         setShowFallback(true);
-        return;
+        return cleanup;
       }
 
       const isHttpUrl =
         parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
       if (!isHttpUrl) {
         setShowFallback(true);
-        return;
+        return cleanup;
       }
 
       setAuthUrl(nextAuthUrl);
 
-      // If navigation is blocked or interrupted, provide manual continuation.
       fallbackTimer = setTimeout(() => setShowFallback(true), 1500);
 
       try {
@@ -41,11 +43,7 @@ export function LoginPage() {
       setShowFallback(true);
     }
 
-    return () => {
-      if (fallbackTimer) {
-        clearTimeout(fallbackTimer);
-      }
-    };
+    return cleanup;
   }, []);
 
   return (

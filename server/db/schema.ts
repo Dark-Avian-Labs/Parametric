@@ -290,8 +290,9 @@ export function createAppSchema(): void {
     }
   }
 
-  // Migrate archon_shard_types from TEXT id to INTEGER AUTOINCREMENT
-  const archonCols = db.prepare('PRAGMA table_info(archon_shard_types)').all() as {
+  const archonCols = db
+    .prepare('PRAGMA table_info(archon_shard_types)')
+    .all() as {
     name: string;
     type: string;
   }[];
@@ -308,23 +309,50 @@ export function createAppSchema(): void {
           sort_order INTEGER DEFAULT 0
         );
       `);
-        const oldTypes = db.prepare(
-          'SELECT id, name, icon_path, tauforged_icon_path, sort_order FROM archon_shard_types ORDER BY sort_order, name',
-        ).all() as { id: string; name: string; icon_path: string; tauforged_icon_path: string; sort_order: number }[];
+        const oldTypes = db
+          .prepare(
+            'SELECT id, name, icon_path, tauforged_icon_path, sort_order FROM archon_shard_types ORDER BY sort_order, name',
+          )
+          .all() as {
+          id: string;
+          name: string;
+          icon_path: string;
+          tauforged_icon_path: string;
+          sort_order: number;
+        }[];
         const insertType = db.prepare(
           'INSERT INTO archon_shard_types_new (name, icon_path, tauforged_icon_path, sort_order) VALUES (?, ?, ?, ?)',
         );
         const typeIdMap = new Map<string, number>();
         for (const row of oldTypes) {
-          const result = insertType.run(row.name, row.icon_path, row.tauforged_icon_path, row.sort_order);
-          typeIdMap.set(row.id, (result as { lastInsertRowid: number }).lastInsertRowid);
+          const result = insertType.run(
+            row.name,
+            row.icon_path,
+            row.tauforged_icon_path,
+            row.sort_order,
+          );
+          typeIdMap.set(
+            row.id,
+            (result as { lastInsertRowid: number }).lastInsertRowid,
+          );
         }
-        const oldBuffs = db.prepare(
-          'SELECT shard_type_id, description, base_value, tauforged_value, value_format, sort_order FROM archon_shard_buffs',
-        ).all() as { shard_type_id: string; description: string; base_value: number; tauforged_value: number; value_format: string; sort_order: number }[];
+        const oldBuffs = db
+          .prepare(
+            'SELECT shard_type_id, description, base_value, tauforged_value, value_format, sort_order FROM archon_shard_buffs',
+          )
+          .all() as {
+          shard_type_id: string;
+          description: string;
+          base_value: number;
+          tauforged_value: number;
+          value_format: string;
+          sort_order: number;
+        }[];
         db.exec(`DROP TABLE archon_shard_buffs`);
         db.exec(`DROP TABLE archon_shard_types`);
-        db.exec(`ALTER TABLE archon_shard_types_new RENAME TO archon_shard_types`);
+        db.exec(
+          `ALTER TABLE archon_shard_types_new RENAME TO archon_shard_types`,
+        );
         db.exec(`
         CREATE TABLE archon_shard_buffs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -347,10 +375,19 @@ export function createAppSchema(): void {
             console.error(`[DB] ${msg}`);
             throw new Error(msg);
           }
-          insertBuff.run(newTypeId, row.description, row.base_value, row.tauforged_value, row.value_format, row.sort_order);
+          insertBuff.run(
+            newTypeId,
+            row.description,
+            row.base_value,
+            row.tauforged_value,
+            row.value_format,
+            row.sort_order,
+          );
         }
       })();
-      console.log('[DB] Migration: archon_shard_types id TEXT -> INTEGER AUTOINCREMENT');
+      console.log(
+        '[DB] Migration: archon_shard_types id TEXT -> INTEGER AUTOINCREMENT',
+      );
     } catch (err) {
       console.error('[DB] Migration failed, rolled back:', err);
       throw err;

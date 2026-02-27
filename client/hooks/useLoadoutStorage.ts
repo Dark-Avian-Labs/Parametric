@@ -55,7 +55,7 @@ async function getApiErrorDetails(response: Response): Promise<string> {
       return `${statusText}: ${body.message}`;
     }
   } catch {
-    // Fall back to text if response is not JSON.
+    // ignore
   }
 
   try {
@@ -64,7 +64,7 @@ async function getApiErrorDetails(response: Response): Promise<string> {
       return `${statusText}: ${text.trim()}`;
     }
   } catch {
-    // Ignore text parse errors and fall through to status only.
+    // ignore
   }
 
   return statusText || 'Unknown API error';
@@ -181,13 +181,16 @@ export function useLoadoutStorage() {
               });
               continue;
             }
-            const linkRes = await apiFetch(`/api/loadouts/${newLoadoutId}/builds`, {
-              method: 'POST',
-              body: JSON.stringify({
-                build_id: mappedBuildId,
-                slot_type: buildLink.slot_type,
-              }),
-            });
+            const linkRes = await apiFetch(
+              `/api/loadouts/${newLoadoutId}/builds`,
+              {
+                method: 'POST',
+                body: JSON.stringify({
+                  build_id: mappedBuildId,
+                  slot_type: buildLink.slot_type,
+                }),
+              },
+            );
             if (!linkRes.ok) {
               const details = await getApiErrorDetails(linkRes);
               const error = `Failed to migrate build ${buildLink.build_id} for loadout ${loadout.id}: ${details}`;
@@ -305,9 +308,12 @@ export function useLoadoutStorage() {
 
   const unlinkBuild = useCallback(
     async (loadoutId: string, slotType: string) => {
-      const response = await apiFetch(`/api/loadouts/${loadoutId}/builds/${slotType}`, {
-        method: 'DELETE',
-      });
+      const response = await apiFetch(
+        `/api/loadouts/${loadoutId}/builds/${slotType}`,
+        {
+          method: 'DELETE',
+        },
+      );
       if (!response.ok) {
         const details = await getApiErrorDetails(response);
         throw new Error(

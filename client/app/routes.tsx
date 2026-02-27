@@ -54,7 +54,11 @@ class ChunkErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    console.error('[ChunkErrorBoundary] Chunk load failed', error, info.componentStack);
+    console.error(
+      '[ChunkErrorBoundary] Chunk load failed',
+      error,
+      info.componentStack,
+    );
   }
 
   private handleRetry = () => {
@@ -112,7 +116,10 @@ export function AppRoutes() {
               </RequireAuth>
             }
           >
-            <Route path="/" element={<Navigate to={APP_PATHS.home} replace />} />
+            <Route
+              path="/"
+              element={<Navigate to={APP_PATHS.home} replace />}
+            />
             <Route path={APP_PATHS.buildOverview} element={<BuildOverview />} />
             <Route path={APP_PATHS.buildNew} element={<ModBuilder />} />
             <Route path={APP_PATHS.buildEdit} element={<ModBuilder />} />

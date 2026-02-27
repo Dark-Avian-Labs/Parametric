@@ -105,7 +105,7 @@ export function useBuildStorage() {
             idMap[legacyBuild.id] = String(body.id);
           }
         } catch {
-          // keep migrating best-effort
+          // ignore
         }
       }
       localStorage.setItem(MIGRATION_MAP_KEY, JSON.stringify(idMap));
@@ -176,7 +176,9 @@ export function useBuildStorage() {
 
   const deleteBuild = useCallback(
     async (id: string) => {
-      const response = await apiFetch(`/api/builds/${id}`, { method: 'DELETE' });
+      const response = await apiFetch(`/api/builds/${id}`, {
+        method: 'DELETE',
+      });
       if (!response.ok) {
         let message = 'Failed to delete build';
         try {
@@ -185,7 +187,7 @@ export function useBuildStorage() {
             message = body.error;
           }
         } catch {
-          // Keep default error message when no JSON body is available.
+          // ignore
         }
         throw new Error(message);
       }

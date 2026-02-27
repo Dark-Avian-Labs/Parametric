@@ -102,9 +102,6 @@ export async function apiFetch(
     method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
 
   const headers = new Headers(init?.headers);
-  // Only auto-set Content-Type for string bodies that look like JSON (start with { or [).
-  // Callers must explicitly set Content-Type for XML, plain text, or other non-JSON string
-  // payloads to avoid mislabeling and surprising server behavior.
   setJsonContentType(headers, init);
 
   if (needsCsrf) {

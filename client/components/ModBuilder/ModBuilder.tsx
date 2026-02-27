@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { buildEditPath } from '../../app/paths';
 import { AbilityBar } from './AbilityBar';
 import { ArcanePickerPanel } from './ArcanePickerPanel';
 import { ArcaneSlots, type ArcaneSlot, type Arcane } from './ArcaneSlots';
@@ -18,6 +17,7 @@ import { ModSlotGrid } from './ModSlotGrid';
 import { RivenBuilder } from './RivenBuilder';
 import { ShardPickerPanel } from './ShardPickerPanel';
 import { StatsPanel } from './StatsPanel';
+import { buildEditPath } from '../../app/paths';
 import { useCompare } from '../../context/CompareContext';
 import { useApi } from '../../hooks/useApi';
 import { useBuildStorage } from '../../hooks/useBuildStorage';
