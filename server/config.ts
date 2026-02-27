@@ -17,8 +17,8 @@ export const CORPUS_DB_PATH = path.join(DATA_DIR, 'corpus.db');
 export const CENTRAL_DB_PATH =
   process.env.CENTRAL_DB_PATH || path.join(DATA_DIR, 'central.db');
 
-const _port = parseInt(process.env.PORT || '3001', 10);
-export const PORT = Number.isFinite(_port) && _port > 0 ? _port : 3001;
+const _port = parseInt(process.env.PORT || '3002', 10);
+export const PORT = Number.isFinite(_port) && _port > 0 ? _port : 3002;
 export const HOST = process.env.HOST || '127.0.0.1';
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 const rawSessionSecret =
@@ -56,10 +56,17 @@ export const REQUIRED_EXPORTS = [
   'ExportWeapons',
 ] as const;
 
-export const TRUST_PROXY =
-  process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true';
+function parseBooleanEnv(value: string | undefined): boolean | undefined {
+  if (value == null) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1') return true;
+  if (normalized === 'false' || normalized === '0') return false;
+  return undefined;
+}
+
+export const TRUST_PROXY = parseBooleanEnv(process.env.TRUST_PROXY) ?? false;
 export const SECURE_COOKIES =
-  process.env.SECURE_COOKIES === '1' || process.env.SECURE_COOKIES === 'true';
+  parseBooleanEnv(process.env.SECURE_COOKIES) ?? NODE_ENV === 'production';
 export const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 export const GAME_ID = 'parametric';
 

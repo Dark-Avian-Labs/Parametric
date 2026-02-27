@@ -95,7 +95,7 @@ const cookieOptions: express.CookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
   httpOnly: true,
   secure: SECURE_COOKIES,
-  sameSite: 'lax',
+  sameSite: SECURE_COOKIES ? 'none' : 'lax',
 };
 if (COOKIE_DOMAIN) cookieOptions.domain = COOKIE_DOMAIN;
 
