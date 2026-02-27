@@ -170,20 +170,6 @@ export function Layout() {
               >
                 Builds
               </NavLink>
-              {isAdmin ? (
-                <NavLink
-                  to={APP_PATHS.admin}
-                  className={({ isActive }) =>
-                    `inline-flex items-center rounded-2xl border px-4 py-2 text-sm transition-all ${
-                      isActive
-                        ? 'border-accent bg-accent-weak text-accent'
-                        : 'border-glass-border text-muted hover:border-glass-border-hover hover:text-foreground'
-                    }`
-                  }
-                >
-                  Admin
-                </NavLink>
-              ) : null}
             </nav>
             <button
               className="btn btn-accent text-sm"
@@ -286,8 +272,16 @@ export function Layout() {
         />
       )}
       <footer className="relative z-10 flex h-[50px] items-center justify-center px-6">
-        <div className="mx-auto w-full max-w-[2000px] text-center text-sm text-muted">
-          ©{currentYear} {LEGAL_ENTITY_NAME}
+        <div className="mx-auto w-full max-w-[2000px] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-muted">
+          <span>
+            ©{currentYear} {LEGAL_ENTITY_NAME}
+          </span>
+          <Link
+            to={APP_PATHS.legal}
+            className="hover:text-foreground transition-colors"
+          >
+            Legal
+          </Link>
         </div>
       </footer>
     </div>

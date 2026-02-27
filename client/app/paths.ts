@@ -7,6 +7,7 @@ export const APP_PATHS = {
   admin: '/admin',
   profile: '/profile',
   login: '/login',
+  legal: '/legal',
 } as const;
 
 export function buildNewPath(

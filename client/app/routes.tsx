@@ -31,6 +31,11 @@ const LoginPage = lazy(() =>
     default: mod.LoginPage,
   })),
 );
+const LegalPage = lazy(() =>
+  import('../features/legal/LegalPage').then((mod) => ({
+    default: mod.LegalPage,
+  })),
+);
 
 type ChunkErrorBoundaryProps = {
   children: React.ReactNode;
@@ -125,6 +130,7 @@ export function AppRoutes() {
             <Route path={APP_PATHS.buildEdit} element={<ModBuilder />} />
             <Route path={APP_PATHS.admin} element={<AdminPage />} />
             <Route path={APP_PATHS.profile} element={<ProfilePage />} />
+            <Route path={APP_PATHS.legal} element={<LegalPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
           <Route path={APP_PATHS.login} element={<LoginPage />} />
