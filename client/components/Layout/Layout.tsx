@@ -150,7 +150,9 @@ export function Layout() {
               alt="Dark Avian Labs feather mark"
               className="brand-lockup__icon"
             />
-            <span className="brand-lockup__title">{APP_DISPLAY_NAME}</span>
+            <span className="brand-lockup__title brand-lockup--fx">
+              {APP_DISPLAY_NAME}
+            </span>
           </Link>
 
           <div className="justify-self-center">
