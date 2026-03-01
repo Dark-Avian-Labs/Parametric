@@ -109,7 +109,10 @@ function clampSetRank(slot: ModSlot, rank: number): number {
   return Math.max(1, Math.min(maxSetRank, rank));
 }
 
-function applySetPieceDelta(prevSlots: ModSlot[], nextSlots: ModSlot[]): ModSlot[] {
+function applySetPieceDelta(
+  prevSlots: ModSlot[],
+  nextSlots: ModSlot[],
+): ModSlot[] {
   const prevCounts = new Map<string, number>();
   const prevRanks = new Map<string, number>();
 
@@ -567,7 +570,9 @@ export function ModBuilder() {
 
         const setName = getSetName(targetSlot);
         if (!setName) {
-          return prev.map((s) => (s.index === slotIndex ? { ...s, setRank } : s));
+          return prev.map((s) =>
+            s.index === slotIndex ? { ...s, setRank } : s,
+          );
         }
 
         const currentRank = targetSlot.setRank ?? 1;

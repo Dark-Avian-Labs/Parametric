@@ -110,7 +110,8 @@ function ArcaneSlotCell({
         return <span key={`t-${segmentIndex}`}>{segment.value}</span>;
       }
       const iconPath = getDamageTypeIconPath(segment.value);
-      if (!iconPath) return <span key={`u-${segmentIndex}`}>{segment.value}</span>;
+      if (!iconPath)
+        return <span key={`u-${segmentIndex}`}>{segment.value}</span>;
       return (
         <img
           key={`i-${segmentIndex}`}

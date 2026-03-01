@@ -101,12 +101,18 @@ export function CardPreview({
       <span key={lineIndex} className="block">
         {splitDisplayTextByDamageTokens(line).map((segment, segmentIndex) => {
           if (segment.kind === 'text') {
-            return <span key={`${lineIndex}-t-${segmentIndex}`}>{segment.value}</span>;
+            return (
+              <span key={`${lineIndex}-t-${segmentIndex}`}>
+                {segment.value}
+              </span>
+            );
           }
           const iconPath = getDamageTypeIconPath(segment.value);
           if (!iconPath) {
             return (
-              <span key={`${lineIndex}-u-${segmentIndex}`}>{segment.value}</span>
+              <span key={`${lineIndex}-u-${segmentIndex}`}>
+                {segment.value}
+              </span>
             );
           }
           return (
@@ -496,7 +502,10 @@ export function CardPreview({
                   textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                 }}
               >
-                {renderTextWithDamageIcons(modDescription, L.descFontSize * s * 1.05)}
+                {renderTextWithDamageIcons(
+                  modDescription,
+                  L.descFontSize * s * 1.05,
+                )}
               </div>
             )}
             {setTotal > 0 && setDescription && (

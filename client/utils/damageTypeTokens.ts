@@ -74,7 +74,10 @@ export function splitDisplayTextByDamageTokens(
   return segments;
 }
 
-export function truncateDamageTokenText(text: string, maxVisibleChars: number): string {
+export function truncateDamageTokenText(
+  text: string,
+  maxVisibleChars: number,
+): string {
   if (maxVisibleChars <= 0 || !text) return '';
 
   let visibleChars = 0;
