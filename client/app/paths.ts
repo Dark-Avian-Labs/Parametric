@@ -1,4 +1,3 @@
-// `home` and `buildOverview` intentionally resolve to the same route.
 export const APP_PATHS = {
   home: '/builder',
   buildOverview: '/builder',

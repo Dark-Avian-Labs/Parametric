@@ -52,7 +52,7 @@ function writeProfileStorage(profiles: Record<string, StoredProfile>): void {
   try {
     window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
   } catch {
-    // Ignore localStorage write failures (quota/privacy mode).
+    // ignore
   }
 }
 
