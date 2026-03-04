@@ -237,9 +237,18 @@ app.use(
     _next: express.NextFunction,
   ) => {
     const message = err.message || '';
-    const isCsrfError =
+    const lowerMessage = message.toLowerCase();
+    const errorCode = (err as { code?: string }).code;
+    const isNamedCsrfError =
       err.name === 'CsrfError' ||
       (err.constructor && err.constructor.name === 'CsrfError');
+    const isForbiddenError =
+      err.name === 'ForbiddenError' ||
+      (err.constructor && err.constructor.name === 'ForbiddenError');
+    const isCsrfError =
+      isNamedCsrfError ||
+      errorCode === 'EBADCSRFTOKEN' ||
+      (isForbiddenError && lowerMessage.includes('csrf'));
     if (isCsrfError) {
       res.setHeader('X-CSRF-Error', '1');
       res

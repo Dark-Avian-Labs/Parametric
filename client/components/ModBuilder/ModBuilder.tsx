@@ -968,7 +968,7 @@ export function ModBuilder() {
           <StatsPanel
             equipment={selectedEquipment as Warframe | Weapon}
             type={equipmentType}
-            slots={equipmentType !== 'warframe' ? slots : undefined}
+            slots={slots}
             abilities={
               equipmentType === 'warframe' ? (
                 <AbilityBar
