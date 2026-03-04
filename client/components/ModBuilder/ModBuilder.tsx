@@ -928,7 +928,9 @@ export function ModBuilder() {
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 2500);
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Failed to save build');
+      setSaveError(
+        error instanceof Error ? error.message : 'Failed to save build',
+      );
     }
   };
 
