@@ -31,7 +31,7 @@ async function getCsrfToken(): Promise<string | null> {
   const ref = { promise: null as Promise<string | null> | null };
   inFlightPromise = ref.promise = (async () => {
     try {
-      const res = await fetch('/api/auth/csrf');
+      const res = await fetch('/api/auth/csrf', { credentials: 'include' });
       if (!res.ok) {
         return null;
       }
@@ -150,7 +150,12 @@ export async function apiFetch(
     requestBody = injectCsrfIntoJsonBody(requestBody, csrfToken);
   }
 
-  const response = await fetch(url, { ...init, headers, body: requestBody });
+  const response = await fetch(url, {
+    ...init,
+    credentials: init?.credentials ?? 'include',
+    headers,
+    body: requestBody,
+  });
   if (response.status === 401) {
     redirectToCentralAuth();
     return response;
@@ -169,5 +174,10 @@ export async function apiFetch(
   setJsonContentType(retryHeaders, init);
   retryHeaders.set('X-CSRF-Token', freshCsrfToken);
   const retryBody = injectCsrfIntoJsonBody(init?.body, freshCsrfToken);
-  return fetch(url, { ...init, headers: retryHeaders, body: retryBody });
+  return fetch(url, {
+    ...init,
+    credentials: init?.credentials ?? 'include',
+    headers: retryHeaders,
+    body: retryBody,
+  });
 }
