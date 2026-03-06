@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
+import {
+  VARIANT_PREFIXES,
+  WEAPON_CATEGORY_TO_MOD_COMPAT,
+} from '../../foo/client/utils/modFiltering.js';
 import { PROJECT_ROOT } from '../config.js';
 import { closeAll, getDb } from '../db/connection.js';
 import { getCorpusDb } from '../db/corpus.js';
@@ -102,27 +106,6 @@ const WEAPON_JUNK_PREFIXES = [
 
 const MOD_JUNK_SEGMENTS = ['/Beginner/', '/Intermediate/', '/Nemesis/'] as const;
 const MOD_JUNK_SUFFIXES = ['SubMod'] as const;
-const VARIANT_PREFIXES = [
-  'Primed',
-  'Archon',
-  'Umbral',
-  'Amalgam',
-  'Necramech',
-  'Enhanced',
-  'Link',
-  'Galvanized',
-  'Spectral',
-] as const;
-
-const WEAPON_CATEGORY_TO_MOD_COMPAT: Record<string, string[]> = {
-  LongGuns: ['Rifle', 'PRIMARY', 'Assault Rifle'],
-  Shotgun: ['Shotgun', 'PRIMARY'],
-  Bow: ['Bow', 'PRIMARY'],
-  Sniper: ['Sniper', 'PRIMARY'],
-  Pistols: ['Pistol'],
-  Thrown: ['Thrown'],
-  Melee: ['Melee'],
-};
 
 const STAT_PATTERNS: Array<{ regex: RegExp; key: keyof StatEffects }> = [
   { regex: /([+-][\d.]+)%\s+Damage(?!\s+to)(?:\s|$)/i, key: 'baseDamage' },
@@ -379,7 +362,7 @@ function isMeleeCompatible(mod: ModRow, weapon: WeaponRow): boolean {
 
   const weaponName = weapon.name.replace(/\s+/g, ' ').toUpperCase();
   if (compat === weaponName) return true;
-  return true;
+  return false;
 }
 
 function isCompatible(mod: ModRow, weapon: WeaponRow, weaponClass: WeaponClass): boolean {
