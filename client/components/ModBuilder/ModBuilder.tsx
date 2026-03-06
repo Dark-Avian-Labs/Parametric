@@ -382,11 +382,11 @@ export function ModBuilder() {
   useEffect(() => {
     if (!selectedEquipment) {
       setSlots([]);
+      setDefaultPolarities([]);
       return;
     }
 
-    if (buildId && slots.length > 0) return;
-    if (buildId) return;
+    const shouldInitializeSlots = !buildId;
 
     const config =
       EQUIPMENT_SLOT_CONFIGS[equipmentType] || EQUIPMENT_SLOT_CONFIGS.warframe;
@@ -458,10 +458,14 @@ export function ModBuilder() {
       newSlots.push({ index: idx++, type: 'exilus', polarity: pol });
     }
 
-    setSlots(newSlots);
     setDefaultPolarities(
       newSlots.map((s) => ({ polarity: s.polarity, type: s.type })),
     );
+    if (!shouldInitializeSlots) {
+      return;
+    }
+
+    setSlots(newSlots);
     setHelminthConfig(undefined);
   }, [selectedEquipment, equipmentType, buildId, slots.length]);
 
