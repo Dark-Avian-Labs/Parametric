@@ -1,11 +1,18 @@
 import type { ScrapedItemData } from './itemScraper.js';
 import { getDb } from '../db/connection.js';
 
+interface AbilityTypeEntry {
+  path?: string;
+  LocalizeTag: string;
+  IsHelminth?: number;
+}
+
 export interface MergeResult {
   warframesUpdated: number;
   weaponsUpdated: number;
   companionsUpdated: number;
   abilitiesUpdated: number;
+  helminthUpdated: number;
 }
 
 export function mergeScrapedData(
@@ -18,6 +25,7 @@ export function mergeScrapedData(
     weaponsUpdated: 0,
     companionsUpdated: 0,
     abilitiesUpdated: 0,
+    helminthUpdated: 0,
   };
 
   const updateWarframe = db.prepare(
@@ -81,9 +89,7 @@ export function mergeScrapedData(
 
       if (item.itemData) {
         const abilityTypes = (item.itemData as Record<string, unknown>)
-          .AbilityTypes as
-          | Array<{ path: string; LocalizeTag: string; IsHelminth?: number }>
-          | undefined;
+          .AbilityTypes as AbilityTypeEntry[] | undefined;
 
         if (abilityTypes) {
           for (let i = 0; i < abilityTypes.length; i++) {
@@ -93,7 +99,11 @@ export function mergeScrapedData(
             if (!abilityPath) continue;
 
             const isHelminth = Number(abilityType.IsHelminth) === 1 ? 1 : 0;
-            updateAbilityHelminth.run(isHelminth, abilityPath);
+            const helminthChanges = updateAbilityHelminth.run(
+              isHelminth,
+              abilityPath,
+            );
+            if (helminthChanges.changes > 0) result.helminthUpdated++;
 
             if (!scrapedAbility) continue;
 

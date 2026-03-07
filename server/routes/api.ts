@@ -52,6 +52,9 @@ const WEAPON_CATEGORY_TO_TYPE: Record<string, string> = {
 const HELMINTH_WIKI_URL = 'https://warframe.fandom.com/wiki/Helminth';
 const HELMINTH_NAME_CACHE_TTL_MS = 30 * 60 * 1000;
 const HELMINTH_MIN_EXPECTED_COUNT = 30;
+const HELMINTH_WIKI_USER_AGENT =
+  process.env.HELMINTH_WIKI_USER_AGENT?.trim() ||
+  'Parametric/2.0 (manual-import; +https://warframe.fandom.com/wiki/Helminth)';
 let helminthNameCache: { names: Set<string>; expiresAt: number } | null = null;
 
 function normalizeAbilityName(value: string): string {
@@ -69,6 +72,9 @@ async function fetchHelminthAbilityNameSet(): Promise<Set<string>> {
   try {
     const response = await fetch(HELMINTH_WIKI_URL, {
       signal: controller.signal,
+      headers: {
+        'User-Agent': HELMINTH_WIKI_USER_AGENT,
+      },
     });
     if (!response.ok) return new Set<string>();
     const html = await response.text();
@@ -583,8 +589,6 @@ apiRouter.get('/helminth-abilities', async (_req: Request, res: Response) => {
       )
       .all() as Array<Record<string, unknown>>;
 
-    // Fallback for datasets where only intrinsic Helminth abilities are flagged
-    // in exports but subsumable warframe abilities are not.
     if (flaggedRows.length >= HELMINTH_MIN_EXPECTED_COUNT) {
       res.json({ items: flaggedRows });
       return;
@@ -596,7 +600,16 @@ apiRouter.get('/helminth-abilities', async (_req: Request, res: Response) => {
       return;
     }
 
-    const allAbilities = db.prepare('SELECT * FROM abilities').all() as Array<
+    const allAbilities = db
+      .prepare(
+        `SELECT unique_name, name, description, image_path, energy_cost, is_helminth_extractable
+         FROM abilities
+         WHERE unique_name IS NOT NULL
+           AND unique_name != ''
+           AND name IS NOT NULL
+           AND name != ''`,
+      )
+      .all() as Array<
       Record<string, unknown> & { name?: string; unique_name?: string }
     >;
     const inferred = allAbilities
