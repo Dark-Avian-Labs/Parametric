@@ -996,6 +996,8 @@ export function ModBuilder() {
             equipment={selectedEquipment as Warframe | Weapon}
             type={equipmentType}
             slots={slots}
+            shardSlots={equipmentType === 'warframe' ? shardSlots : undefined}
+            shardTypes={equipmentType === 'warframe' ? shardTypes : undefined}
             abilities={
               equipmentType === 'warframe' ? (
                 <AbilityBar

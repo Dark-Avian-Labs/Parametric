@@ -1,13 +1,13 @@
 import { GlassTooltip } from '../GlassTooltip';
 
 export interface ShardSlotConfig {
-  shard_type_id?: string;
-  buff_id?: number;
+  shard_type_id?: string | number;
+  buff_id?: number | string;
   tauforged: boolean;
 }
 
 export interface ShardBuff {
-  id: number;
+  id: number | string;
   description: string;
   base_value: number;
   tauforged_value: number;
@@ -15,7 +15,7 @@ export interface ShardBuff {
 }
 
 export interface ShardType {
-  id: string;
+  id: string | number;
   name: string;
   icon_path: string;
   tauforged_icon_path: string;
@@ -41,9 +41,11 @@ export function ArchonShardSlots({
 }: ArchonShardSlotsProps) {
   const getShardInfo = (slot: ShardSlotConfig) => {
     if (!slot.shard_type_id) return null;
-    const shard = shards.find((s) => s.id === slot.shard_type_id);
+    const shard = shards.find(
+      (s) => String(s.id) === String(slot.shard_type_id),
+    );
     if (!shard) return null;
-    const buff = shard.buffs.find((b) => b.id === slot.buff_id);
+    const buff = shard.buffs.find((b) => String(b.id) === String(slot.buff_id));
     return { shard, buff };
   };
 

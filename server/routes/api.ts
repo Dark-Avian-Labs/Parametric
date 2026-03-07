@@ -213,6 +213,14 @@ const archonShardTypeUpdateSchema = z.object({
   sort_order: z.number().int().min(0).max(999).optional(),
 });
 
+const RivenStatSchema = z.object({
+  // Accept empty stat names to support legacy/placeholder riven payloads.
+  // The client/editor handles enforcing meaningful selections.
+  stat: z.string().trim(),
+  value: z.number().finite(),
+  isNegative: z.boolean(),
+});
+
 const EquipmentTypeSchema = z.enum([
   'warframe',
   'primary',
@@ -221,9 +229,11 @@ const EquipmentTypeSchema = z.enum([
   'archgun',
   'archmelee',
   'companion',
+  'beast_claws',
   'archwing',
   'necramech',
   'kdrive',
+  'tektolyst',
 ]);
 
 const ModConfigSchema = z.object({
@@ -246,20 +256,8 @@ const ModConfigSchema = z.object({
             polarity: z
               .enum(['AP_ATTACK', 'AP_TACTIC', 'AP_DEFENSE'])
               .optional(),
-            positive: z.array(
-              z.object({
-                stat: z.string().trim().min(1),
-                value: z.number().finite(),
-                isNegative: z.boolean(),
-              }),
-            ),
-            negative: z
-              .object({
-                stat: z.string().trim().min(1),
-                value: z.number().finite(),
-                isNegative: z.boolean(),
-              })
-              .optional(),
+            positive: z.array(RivenStatSchema),
+            negative: RivenStatSchema.optional(),
           })
           .optional(),
       })

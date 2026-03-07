@@ -30,11 +30,13 @@ export function ShardPickerPanel({
   onClose,
 }: ShardPickerPanelProps) {
   const [selectedType, setSelectedType] = useState<string>(
-    currentSlot.shard_type_id || shards[0]?.id || '',
+    currentSlot.shard_type_id != null
+      ? String(currentSlot.shard_type_id)
+      : (shards[0]?.id != null ? String(shards[0].id) : ''),
   );
   const [tauforged, setTauforged] = useState(currentSlot.tauforged);
 
-  const activeShard = shards.find((s) => s.id === selectedType);
+  const activeShard = shards.find((s) => String(s.id) === selectedType);
 
   return (
     <div className="glass-panel p-4">
@@ -51,12 +53,13 @@ export function ShardPickerPanel({
       <div className="mb-3 flex flex-wrap gap-2">
         {shards.map((shard) => {
           const icon = tauforged ? shard.tauforged_icon_path : shard.icon_path;
+          const shardId = String(shard.id);
           return (
             <button
               key={shard.id}
-              onClick={() => setSelectedType(shard.id)}
+              onClick={() => setSelectedType(shardId)}
               className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-all ${
-                selectedType === shard.id
+                selectedType === shardId
                   ? 'border-accent bg-accent-weak text-accent'
                   : 'border-glass-border text-muted hover:border-glass-border-hover'
               }`}
@@ -95,10 +98,15 @@ export function ShardPickerPanel({
           {activeShard &&
             activeShard.buffs.map((buff) => {
               const formattedValue = formatBuffValue(buff, tauforged);
+              const buffId =
+                typeof buff.id === 'number' ? buff.id : Number(buff.id);
               return (
                 <button
                   key={buff.id}
-                  onClick={() => onSelect(selectedType, buff.id, tauforged)}
+                  onClick={() => {
+                    if (!Number.isFinite(buffId)) return;
+                    onSelect(selectedType, buffId, tauforged);
+                  }}
                   className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
                 >
                   <span>{buff.description}</span>

@@ -308,9 +308,22 @@ function processAbilities(data: Record<string, unknown[]>): number {
   const db = getDb();
 
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO abilities
+    INSERT INTO abilities
     (unique_name, name, description, warframe_unique_name, is_helminth_extractable)
     VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(unique_name) DO UPDATE SET
+      name = excluded.name,
+      description = excluded.description,
+      warframe_unique_name = COALESCE(
+        excluded.warframe_unique_name,
+        abilities.warframe_unique_name
+      ),
+      -- Preserve Helminth eligibility when the same ability is imported
+      -- again from a warframe ability list.
+      is_helminth_extractable = MAX(
+        abilities.is_helminth_extractable,
+        excluded.is_helminth_extractable
+      )
   `);
 
   let count = 0;
