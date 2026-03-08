@@ -275,7 +275,9 @@ export function CompareModal({ onClose }: CompareModalProps) {
                     <span
                       key={i}
                       className={`text-center text-xs font-semibold tabular-nums ${
-                        i === bestTotalIdx ? 'text-green-400' : 'text-foreground'
+                        i === bestTotalIdx
+                          ? 'text-green-400'
+                          : 'text-foreground'
                       }`}
                     >
                       {fmt(s.totalElementDamage)}
