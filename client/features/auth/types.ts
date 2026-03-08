@@ -1,4 +1,9 @@
-export type AuthStatus = 'loading' | 'unauthenticated' | 'forbidden' | 'ok';
+export type AuthStatus =
+  | 'loading'
+  | 'unauthenticated'
+  | 'forbidden'
+  | 'error'
+  | 'ok';
 
 export interface RemoteAuthUser {
   id: number;

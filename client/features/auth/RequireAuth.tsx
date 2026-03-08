@@ -16,7 +16,7 @@ function CentralAuthRedirect({ message }: { message: string }) {
 }
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { status, logout } = useAuth();
+  const { status, logout, refresh } = useAuth();
 
   if (status === 'loading') {
     return (
@@ -51,6 +51,30 @@ export function RequireAuth({ children }: { children: ReactNode }) {
             }}
           >
             Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="glass-panel max-w-md p-6 text-center">
+          <h1 className="mb-2 text-xl font-semibold text-foreground">
+            Auth check failed
+          </h1>
+          <p className="mb-4 text-sm text-muted">
+            We could not verify your session right now. Please try again.
+          </p>
+          <button
+            className="btn btn-accent"
+            type="button"
+            onClick={() => {
+              void refresh();
+            }}
+          >
+            Retry
           </button>
         </div>
       </div>

@@ -73,6 +73,9 @@ export function AuthProvider({
         if (res.status === 401) {
           setAccount({ isAuthenticated: false, profile: null });
           setStatus('unauthenticated');
+        } else {
+          console.error('[AuthContext] refresh failed with status', res.status);
+          setStatus('error');
         }
         return;
       }
@@ -115,7 +118,10 @@ export function AuthProvider({
       if (error instanceof UnauthorizedError) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('unauthenticated');
+        return;
       }
+      console.error('[AuthContext] refresh failed', error);
+      setStatus((prev) => (prev === 'loading' ? 'error' : prev));
     }
   }, []);
 
