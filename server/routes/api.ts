@@ -422,35 +422,26 @@ function sendInternalError(res: Response, context: string, err: unknown): void {
   res.status(500).json({ error: 'Internal server error' });
 }
 
-function parseArcaneCompatTags(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw.filter((value): value is string => typeof value === 'string');
+function getAllowedArcaneTags(
+  equipmentType: string | undefined,
+): Set<string> | null {
+  if (!equipmentType) {
+    return null;
   }
-  if (typeof raw !== 'string' || raw.trim().length === 0) {
-    return [];
-  }
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((value): value is string => typeof value === 'string');
-  } catch {
-    return [];
-  }
-}
-
-function getAllowedArcaneTags(equipmentType: string | undefined): Set<string> {
   switch (equipmentType) {
     case 'warframe':
       return new Set(['warframe']);
     case 'primary':
-      return new Set(['primary', 'weapon']);
+      return new Set(['primary']);
     case 'secondary':
-      return new Set(['secondary', 'weapon', 'kitgun']);
+      return new Set(['secondary']);
     case 'melee':
-      return new Set(['melee', 'weapon', 'zaw']);
+      return new Set(['melee']);
     case 'archgun':
     case 'archmelee':
-      return new Set(['weapon']);
+    case 'archwing':
+    case 'necramech':
+      return new Set();
     default:
       return new Set();
   }
@@ -577,16 +568,13 @@ apiRouter.get('/arcanes', (req: Request, res: Response) => {
 
     const normalized = rows.map((row) => ({
       ...row,
-      compat_tags: (() => {
-        const parsed = parseArcaneCompatTags(row.compat_tags);
-        if (parsed.length > 0) return parsed;
-        return classifyArcaneCompatTags(row.unique_name, row.name);
-      })(),
+      // Recompute from source fields so stale historical tags cannot leak.
+      compat_tags: classifyArcaneCompatTags(row.unique_name, row.name),
     }));
 
     const allowedTags = getAllowedArcaneTags(equipmentType);
     const items =
-      allowedTags.size === 0
+      allowedTags === null
         ? normalized
         : normalized.filter((row) =>
             (row.compat_tags as string[]).some((tag) => allowedTags.has(tag)),

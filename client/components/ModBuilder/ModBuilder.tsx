@@ -271,7 +271,9 @@ export function ModBuilder() {
         equipmentType !== 'primary' &&
         equipmentType !== 'secondary' &&
         equipmentType !== 'melee' &&
-        equipmentType !== 'necramech'
+        equipmentType !== 'necramech' &&
+        equipmentType !== 'archgun' &&
+        equipmentType !== 'archmelee'
       ) {
         return null;
       }
@@ -1043,6 +1045,11 @@ export function ModBuilder() {
   };
 
   const arcaneSlotCount = equipmentType === 'warframe' ? 2 : 1;
+  const supportsArcanes =
+    equipmentType !== 'archgun' &&
+    equipmentType !== 'archmelee' &&
+    equipmentType !== 'archwing' &&
+    equipmentType !== 'necramech';
 
   const hasSelection =
     activeSlotIndex !== undefined ||
@@ -1220,21 +1227,23 @@ export function ModBuilder() {
 
         {selectedEquipment && (
           <div className="glass-panel flex h-[136px] items-start justify-between overflow-visible p-3">
-            <ArcaneSlots
-              slotCount={arcaneSlotCount}
-              slots={arcaneSlots}
-              activeSlot={activeArcaneSlot}
-              onSlotClick={handleArcaneSlotClick}
-              onRankChange={handleArcaneRankChange}
-              onRemove={handleArcaneRemove}
-              onDrop={(slotIndex, arcane) => {
-                setArcaneSlots((prev) => {
-                  const next = [...prev];
-                  next[slotIndex] = { arcane, rank: getMaxRank(arcane) };
-                  return next;
-                });
-              }}
-            />
+            {supportsArcanes && (
+              <ArcaneSlots
+                slotCount={arcaneSlotCount}
+                slots={arcaneSlots}
+                activeSlot={activeArcaneSlot}
+                onSlotClick={handleArcaneSlotClick}
+                onRankChange={handleArcaneRankChange}
+                onRemove={handleArcaneRemove}
+                onDrop={(slotIndex, arcane) => {
+                  setArcaneSlots((prev) => {
+                    const next = [...prev];
+                    next[slotIndex] = { arcane, rank: getMaxRank(arcane) };
+                    return next;
+                  });
+                }}
+              />
+            )}
             {equipmentType === 'warframe' && (
               <ArchonShardSlots
                 slots={shardSlots}
