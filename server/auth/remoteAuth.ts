@@ -47,11 +47,21 @@ const AUTH_FETCH_TIMEOUT_MS =
     : 5000;
 const SESSION_TOUCH_INTERVAL_MS = 5 * 60 * 1000;
 const AUTH_STATE_CACHE_KEY = Symbol('parametricAuthStateCache');
-const AUTH_DEBUG = process.env.AUTH_DEBUG === '1';
 
-function authDebugLog(stage: string, details?: Record<string, unknown>): void {
-  if (!AUTH_DEBUG) return;
-  console.log('[AuthDebug]', stage, details ?? {});
+function parseRetryAfterSeconds(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const asNumber = Number.parseInt(value, 10);
+  if (Number.isFinite(asNumber) && asNumber > 0) {
+    return asNumber;
+  }
+  const asDateMs = Date.parse(value);
+  if (Number.isFinite(asDateMs)) {
+    const deltaMs = asDateMs - Date.now();
+    if (deltaMs > 0) {
+      return Math.ceil(deltaMs / 1000);
+    }
+  }
+  return undefined;
 }
 
 function resolveAuthServiceUrl(_req?: Request): string {
@@ -70,6 +80,8 @@ export interface RemoteAuthState {
   user: RemoteAuthUser | null;
   permissions: string[];
   auth_service_error?: boolean;
+  auth_rate_limited?: boolean;
+  auth_retry_after_sec?: number;
 }
 
 function getAppPublicBaseUrl(): string {
@@ -160,11 +172,21 @@ export async function fetchRemoteAuthState(
         },
         signal: controller.signal,
       });
-      authDebugLog('fetchRemoteAuthState:upstream', {
-        status: upstream.status,
-        meUrl: meUrl.toString(),
-      });
       if (!upstream.ok) {
+        if (upstream.status === 429) {
+          const retryAfterSec = parseRetryAfterSeconds(
+            upstream.headers.get('retry-after'),
+          );
+          return {
+            authenticated: false,
+            has_game_access: false,
+            user: null,
+            permissions: [],
+            auth_service_error: true,
+            auth_rate_limited: true,
+            auth_retry_after_sec: retryAfterSec,
+          };
+        }
         if (upstream.status >= 500) {
           return {
             authenticated: false,
@@ -182,10 +204,6 @@ export async function fetchRemoteAuthState(
         };
       }
       const body = (await upstream.json()) as Partial<RemoteAuthState>;
-      authDebugLog('fetchRemoteAuthState:body', {
-        authenticated: body.authenticated === true,
-        hasGameAccess: body.has_game_access === true,
-      });
       const user = body.user;
       return {
         authenticated: body.authenticated === true,
@@ -202,9 +220,6 @@ export async function fetchRemoteAuthState(
           : [],
       };
     } catch {
-      authDebugLog('fetchRemoteAuthState:error', {
-        meUrl: meUrl.toString(),
-      });
       return {
         authenticated: false,
         has_game_access: false,

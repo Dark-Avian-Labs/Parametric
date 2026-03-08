@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -28,6 +29,7 @@ import { getStoredProfile, mergeStoredProfile } from '../profile/profileStore';
 interface AuthContextValue {
   status: AuthStatus;
   account: AppAccountState;
+  rateLimitedUntilMs: number | null;
   updateProfile: (
     updates: Partial<Pick<AppAccountProfile, 'displayName' | 'email'>>,
   ) => void;
@@ -37,24 +39,30 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function isAuthDebugEnabled(): boolean {
+async function getRetryAfterMs(res: Response): Promise<number | null> {
+  const header = res.headers.get('Retry-After');
+  if (header) {
+    const asSec = Number.parseInt(header, 10);
+    if (Number.isFinite(asSec) && asSec > 0) return asSec * 1000;
+    const asDate = Date.parse(header);
+    if (Number.isFinite(asDate)) {
+      const delta = asDate - Date.now();
+      if (delta > 0) return delta;
+    }
+  }
   try {
-    return (
-      window.localStorage.getItem('parametric:auth-debug') === '1' ||
-      window.sessionStorage.getItem('parametric:auth-debug') === '1'
-    );
+    const body = (await res.clone().json()) as {
+      auth_retry_after_sec?: number;
+      retry_after_sec?: number;
+    };
+    const sec = body.auth_retry_after_sec ?? body.retry_after_sec;
+    if (typeof sec === 'number' && Number.isFinite(sec) && sec > 0) {
+      return sec * 1000;
+    }
   } catch {
-    return false;
+    // ignore parse failure
   }
-}
-
-function debugAuthLog(message: string, details?: unknown): void {
-  if (!isAuthDebugEnabled()) return;
-  if (details !== undefined) {
-    console.info(`[AuthContextDebug] ${message}`, details);
-    return;
-  }
-  console.info(`[AuthContextDebug] ${message}`);
+  return null;
 }
 
 function buildProfile(user: RemoteAuthUser): AppAccountProfile {
@@ -83,23 +91,30 @@ export function AuthProvider({
     isAuthenticated: false,
     profile: null,
   });
+  const [rateLimitedUntilMs, setRateLimitedUntilMs] = useState<number | null>(
+    null,
+  );
+  const rateLimitedUntilMsRef = useRef<number | null>(null);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    debugAuthLog('refresh:start', { hasSignal: Boolean(signal) });
     try {
       const res = await apiFetch('/api/auth/me', { signal });
       if (signal?.aborted) return;
-      debugAuthLog('refresh:response', { status: res.status });
 
       if (!res.ok) {
         if (res.status === 401) {
           setAccount({ isAuthenticated: false, profile: null });
           setStatus('unauthenticated');
-          debugAuthLog('refresh:set unauthenticated from non-ok 401');
+          setRateLimitedUntilMs(null);
+        } else if (res.status === 429) {
+          const retryAfterMs = (await getRetryAfterMs(res)) ?? 30000;
+          const untilMs = Date.now() + retryAfterMs;
+          setRateLimitedUntilMs(untilMs);
+          setStatus('rate_limited');
         } else {
           console.error('[AuthContext] refresh failed with status', res.status);
           setStatus('error');
-          debugAuthLog('refresh:set error from non-ok', { status: res.status });
+          setRateLimitedUntilMs(null);
         }
         return;
       }
@@ -110,13 +125,13 @@ export function AuthProvider({
       if (data.authenticated !== true) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('unauthenticated');
-        debugAuthLog('refresh:set unauthenticated from payload');
+        setRateLimitedUntilMs(null);
         return;
       }
       if (data.has_game_access !== true) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('forbidden');
-        debugAuthLog('refresh:set forbidden');
+        setRateLimitedUntilMs(null);
         return;
       }
 
@@ -134,7 +149,7 @@ export function AuthProvider({
 
       setAccount({ isAuthenticated: true, profile: buildProfile(user) });
       setStatus('ok');
-      debugAuthLog('refresh:set ok');
+      setRateLimitedUntilMs(null);
     } catch (error) {
       if (signal?.aborted) {
         return;
@@ -145,12 +160,11 @@ export function AuthProvider({
       if (error instanceof UnauthorizedError) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('unauthenticated');
-        debugAuthLog('refresh:set unauthenticated from UnauthorizedError');
+        setRateLimitedUntilMs(null);
         return;
       }
       console.error('[AuthContext] refresh failed', error);
       setStatus((prev) => (prev === 'loading' ? 'error' : prev));
-      debugAuthLog('refresh:non-unauthorized error', { error });
     }
   }, []);
 
@@ -163,8 +177,15 @@ export function AuthProvider({
   }, [refresh]);
 
   useEffect(() => {
-    const onUnauthorized = (event: Event & { detail?: { url?: string } }) => {
-      debugAuthLog('unauthorized-event', event.detail);
+    rateLimitedUntilMsRef.current = rateLimitedUntilMs;
+  }, [rateLimitedUntilMs]);
+
+  useEffect(() => {
+    const onUnauthorized = (_event: Event & { detail?: { url?: string } }) => {
+      const currentRateLimitUntilMs = rateLimitedUntilMsRef.current;
+      if (currentRateLimitUntilMs && Date.now() < currentRateLimitUntilMs) {
+        return;
+      }
       void refresh();
     };
     window.addEventListener(
@@ -212,8 +233,15 @@ export function AuthProvider({
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, account, updateProfile, refresh, logout }),
-    [status, account, updateProfile, refresh, logout],
+    () => ({
+      status,
+      account,
+      rateLimitedUntilMs,
+      updateProfile,
+      refresh,
+      logout,
+    }),
+    [status, account, rateLimitedUntilMs, updateProfile, refresh, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

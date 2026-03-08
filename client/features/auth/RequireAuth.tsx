@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { useAuth } from './AuthContext';
 import { buildCentralAuthLoginUrl } from '../../utils/api';
@@ -16,7 +16,33 @@ function CentralAuthRedirect({ message }: { message: string }) {
 }
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { status, logout, refresh } = useAuth();
+  const { status, logout, refresh, rateLimitedUntilMs } = useAuth();
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer =
+      status === 'rate_limited'
+        ? window.setInterval(() => {
+            setNowMs(Date.now());
+          }, 1000)
+        : null;
+    return () => {
+      if (timer !== null) {
+        window.clearInterval(timer);
+      }
+    };
+  }, [status]);
+
+  const secondsRemaining = useMemo(() => {
+    if (!rateLimitedUntilMs) return 0;
+    return Math.max(0, Math.ceil((rateLimitedUntilMs - nowMs) / 1000));
+  }, [rateLimitedUntilMs, nowMs]);
+
+  useEffect(() => {
+    if (status !== 'rate_limited') return;
+    if (secondsRemaining > 0) return;
+    void refresh();
+  }, [status, secondsRemaining, refresh]);
 
   if (status === 'loading') {
     return (
@@ -73,6 +99,35 @@ export function RequireAuth({ children }: { children: ReactNode }) {
             onClick={() => {
               void refresh();
             }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'rate_limited') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="glass-panel max-w-md p-6 text-center">
+          <h1 className="mb-2 text-xl font-semibold text-foreground">
+            Too many requests
+          </h1>
+          <p className="mb-4 text-sm text-muted">
+            Authentication checks are temporarily rate limited. Please wait
+            before trying again.
+          </p>
+          <div className="mb-4 text-2xl font-semibold text-warning">
+            {secondsRemaining}s
+          </div>
+          <button
+            className="btn btn-accent"
+            type="button"
+            onClick={() => {
+              void refresh();
+            }}
+            disabled={secondsRemaining > 0}
           >
             Retry
           </button>

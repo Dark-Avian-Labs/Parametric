@@ -3,6 +3,7 @@ export type AuthStatus =
   | 'unauthenticated'
   | 'forbidden'
   | 'error'
+  | 'rate_limited'
   | 'ok';
 
 export interface RemoteAuthUser {
@@ -18,6 +19,9 @@ export interface RemoteAuthState {
   authenticated: boolean;
   has_game_access?: boolean;
   user?: RemoteAuthUser;
+  auth_service_error?: boolean;
+  auth_rate_limited?: boolean;
+  auth_retry_after_sec?: number;
 }
 
 export interface AppAccountProfile {
