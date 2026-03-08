@@ -48,9 +48,7 @@ import {
   type SlotPolarity,
 } from '../../utils/formaCounter';
 import { isModLockedOut } from '../../utils/modFiltering';
-import {
-  matchesSpecialItemType,
-} from '../../utils/specialItems';
+import { matchesSpecialItemType } from '../../utils/specialItems';
 import {
   createRivenMod,
   getRivenStatsForType,
@@ -203,6 +201,9 @@ export function ModBuilder() {
   const [activeSlotType, setActiveSlotType] = useState<SlotType | undefined>();
   const [activeSlotIndex, setActiveSlotIndex] = useState<number | undefined>();
   const [loaded, setLoaded] = useState(false);
+  const [equipmentLoadError, setEquipmentLoadError] = useState<string | null>(
+    null,
+  );
   const [isOwnBuild, setIsOwnBuild] = useState(true);
   const [arcaneSlots, setArcaneSlots] = useState<ArcaneSlot[]>([
     { rank: 0 },
@@ -250,6 +251,7 @@ export function ModBuilder() {
     setActiveShardSlot(null);
     setEditingRivenSlot(null);
     setDraftRivenSlot(null);
+    setEquipmentLoadError(null);
     if (routeEqType) setEquipmentType(routeEqType as EquipmentType);
   }, [routeKey, buildId, routeEqType]);
 
@@ -367,6 +369,7 @@ export function ModBuilder() {
       if (specialItem) {
         setSelectedEquipment(specialItem);
         setLoaded(true);
+        setEquipmentLoadError(null);
       }
     }
 
@@ -381,8 +384,15 @@ export function ModBuilder() {
         if (item) {
           setSelectedEquipment(item);
           setLoaded(true);
+          setEquipmentLoadError(null);
         } else {
-          void setSpecialItemSelection(targetUniqueName);
+          void setSpecialItemSelection(targetUniqueName).catch((error) => {
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Failed to load special equipment.';
+            setEquipmentLoadError(message);
+          });
         }
       }
     } else if (equipmentId && !loaded) {
@@ -391,8 +401,15 @@ export function ModBuilder() {
       if (item) {
         setSelectedEquipment(item);
         setLoaded(true);
+        setEquipmentLoadError(null);
       } else {
-        void setSpecialItemSelection(decodedId);
+        void setSpecialItemSelection(decodedId).catch((error) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to load special equipment.';
+          setEquipmentLoadError(message);
+        });
       }
     }
   }, [
@@ -405,6 +422,7 @@ export function ModBuilder() {
     targetEquipmentUniqueName,
     resolveSpecialItem,
     selectedEquipment,
+    setEquipmentLoadError,
   ]);
 
   useEffect(() => {
@@ -1173,7 +1191,11 @@ export function ModBuilder() {
           />
         ) : (
           <div className="glass-panel flex h-64 items-center justify-center">
-            <p className="text-muted">Loading equipment...</p>
+            <p className="text-muted">
+              {equipmentLoadError
+                ? `Failed to load equipment: ${equipmentLoadError}`
+                : 'Loading equipment...'}
+            </p>
           </div>
         )}
 

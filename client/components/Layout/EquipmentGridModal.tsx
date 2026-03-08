@@ -49,10 +49,10 @@ const HIDDEN_EMPTY_TABS = new Set<EquipmentType>([
 
 function getSpecialItemSelectionTypeForItem(
   item: EquipmentItem,
-  activeTab: EquipmentType,
+  equipmentType: EquipmentType,
 ): EquipmentType | null {
   if (item.product_category !== 'SpecialItems') return null;
-  return getSpecialItemSelectionTypeByName(item.name, activeTab);
+  return getSpecialItemSelectionTypeByName(item.name, equipmentType);
 }
 
 export function EquipmentGridModal({

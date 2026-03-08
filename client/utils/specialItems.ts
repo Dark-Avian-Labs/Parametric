@@ -43,10 +43,7 @@ const SPECIAL_MELEE_NAMES = new Set([
   'Whipclaw Prime',
 ]);
 
-const SPECIAL_NECRAMECH_SELECTION_TYPE: Record<
-  string,
-  EquipmentType
-> = {
+const SPECIAL_NECRAMECH_SELECTION_TYPE: Record<string, EquipmentType> = {
   Arquebex: 'archgun',
   Ironbride: 'archmelee',
 };
@@ -55,28 +52,40 @@ export function normalizeEquipmentName(name: string): string {
   return name.replace(/^<[^>]+>\s*/i, '').trim();
 }
 
+/**
+ * Returns the equipment type bucket a SpecialItems weapon belongs to for a given EquipmentType context.
+ */
 export function getSpecialItemSelectionType(
   name: string,
-  activeTab: EquipmentType,
+  equipmentType: EquipmentType,
 ): EquipmentType | null {
   const normalized = normalizeEquipmentName(name);
 
-  if (activeTab === 'primary' && SPECIAL_PRIMARY_NAMES.has(normalized)) {
+  if (equipmentType === 'primary' && SPECIAL_PRIMARY_NAMES.has(normalized)) {
     return 'primary';
   }
-  if (activeTab === 'secondary' && SPECIAL_SECONDARY_NAMES.has(normalized)) {
+  if (
+    equipmentType === 'secondary' &&
+    SPECIAL_SECONDARY_NAMES.has(normalized)
+  ) {
     return 'secondary';
   }
-  if (activeTab === 'melee' && SPECIAL_MELEE_NAMES.has(normalized)) {
+  if (equipmentType === 'melee' && SPECIAL_MELEE_NAMES.has(normalized)) {
     return 'melee';
   }
-  if (activeTab === 'necramech' && SPECIAL_NECRAMECH_SELECTION_TYPE[normalized]) {
+  if (
+    equipmentType === 'necramech' &&
+    SPECIAL_NECRAMECH_SELECTION_TYPE[normalized]
+  ) {
     return SPECIAL_NECRAMECH_SELECTION_TYPE[normalized];
   }
 
   return null;
 }
 
+/**
+ * True when the named SpecialItems weapon is valid for the provided EquipmentType.
+ */
 export function matchesSpecialItemType(
   name: string,
   equipmentType: EquipmentType,
