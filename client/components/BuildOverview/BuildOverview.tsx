@@ -15,7 +15,6 @@ import {
   type EquipmentType,
 } from '../../types/warframe';
 import { matchesSpecialItemType } from '../../utils/specialItems';
-import { Modal } from '../ui/Modal';
 
 interface BuildsByCategory {
   type: EquipmentType;
@@ -126,13 +125,6 @@ export function BuildOverview() {
       );
   }, [builds, linkingLoadout]);
 
-  const latestUpdate = useMemo(() => {
-    if (builds.length === 0) return null;
-    return new Date(
-      Math.max(...builds.map((build) => new Date(build.updated_at).getTime())),
-    ).toLocaleDateString();
-  }, [builds]);
-
   const handleLinkBuildToLoadout = async (loadoutId: string) => {
     if (!linkingBuild) return;
 
@@ -149,7 +141,7 @@ export function BuildOverview() {
     }
   };
 
-  const handleLinkBuildClick = async (build: StoredBuild) => {
+  const handleLinkCompatibleBuildClick = async (build: StoredBuild) => {
     if (!linkingLoadout) return;
 
     try {
@@ -181,52 +173,17 @@ export function BuildOverview() {
   }
 
   return (
-    <div className="mx-auto flex max-w-[2000px] flex-col gap-6 xl:flex-row">
-      <div className="min-w-0 flex-1 space-y-6">
-        <section className="glass-shell page-hero">
-          <div className="space-y-3">
-            <div className="page-hero__eyebrow">Build Library</div>
-            <h1 className="page-hero__title">Your arsenal, curated.</h1>
-            <p className="page-hero__body">
-              Keep builds, loadouts, and variants organized in one calmer
-              control surface. The goal here is fast scanning, fast linking, and
-              less clutter between idea and iteration.
-            </p>
-          </div>
-          <div className="page-hero__metrics">
-            <div className="metric-card">
-              <div className="metric-card__label">Builds</div>
-              <div className="metric-card__value">{builds.length}</div>
-              <div className="metric-card__detail">Saved configurations</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-card__label">Loadouts</div>
-              <div className="metric-card__value">{loadouts.length}</div>
-              <div className="metric-card__detail">Grouped setups</div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-card__label">Categories</div>
-              <div className="metric-card__value">{grouped.length}</div>
-              <div className="metric-card__detail">
-                Equipment classes in use
-              </div>
-            </div>
-            <div className="metric-card">
-              <div className="metric-card__label">Latest activity</div>
-              <div className="metric-card__value">{latestUpdate ?? 'None'}</div>
-              <div className="metric-card__detail">Last saved build</div>
-            </div>
-          </div>
-        </section>
-
+    <div className="mx-auto flex max-w-[2000px] gap-6">
+      <div className="min-w-0 flex-1 space-y-4">
         {loadouts.length > 0 && (
           <div className="glass-shell overflow-hidden">
-            <div className="panel-header">
-              <div className="panel-header__copy">
-                <p className="panel-header__meta">Collection</p>
-                <h2 className="panel-header__title">Loadouts</h2>
-              </div>
-              <span className="status-pill">{loadouts.length} saved</span>
+            <div className="flex items-center justify-between border-b border-glass-divider bg-glass-hover/50 px-4 py-2.5">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+                Loadouts
+                <span className="ml-2 text-xs font-normal text-muted/60">
+                  ({loadouts.length})
+                </span>
+              </h2>
             </div>
             <div className="divide-y divide-glass-divider">
               {loadouts.map((loadout) => (
@@ -275,23 +232,22 @@ export function BuildOverview() {
         )}
 
         {builds.length === 0 ? (
-          <div className="glass-shell empty-state">
-            <h2 className="empty-state__title">No builds yet</h2>
-            <p className="empty-state__body">
+          <div className="glass-shell flex h-64 flex-col items-center justify-center gap-4">
+            <p className="text-lg text-muted">No builds yet</p>
+            <p className="text-sm text-muted">
               Click "Add Build" in the header to create your first build.
             </p>
           </div>
         ) : (
           grouped.map((group) => (
             <div key={group.type} className="glass-shell overflow-hidden">
-              <div className="panel-header">
-                <div className="panel-header__copy">
-                  <p className="panel-header__meta">Equipment Group</p>
-                  <h2 className="panel-header__title">{group.label}</h2>
-                </div>
-                <span className="status-pill">
-                  {group.builds.length} builds
-                </span>
+              <div className="border-b border-glass-divider bg-glass-hover/50 px-4 py-2.5">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+                  {group.label}
+                  <span className="ml-2 text-xs font-normal text-muted/60">
+                    ({group.builds.length})
+                  </span>
+                </h2>
               </div>
               <div className="divide-y divide-glass-divider">
                 {group.builds.map((build) => (
@@ -313,20 +269,16 @@ export function BuildOverview() {
         )}
       </div>
 
-      <div className="w-full shrink-0 space-y-4 xl:w-[24rem]">
-        <div className="glass-surface p-5">
-          <div className="panel-header panel-header--soft px-0 pt-0">
-            <div className="panel-header__copy">
-              <p className="panel-header__meta">Quick Actions</p>
-              <h3 className="panel-header__title">Loadout Studio</h3>
-            </div>
-          </div>
-          <p className="surface-note mb-4">
-            Group builds into complete character setups with cleaner slot
-            control.
+      <div className="hidden w-80 shrink-0 space-y-4 lg:block">
+        <div className="glass-surface p-4">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">
+            Loadouts
+          </h3>
+          <p className="mb-3 text-xs text-muted">
+            Group builds into complete character setups.
           </p>
           {showNewLoadout ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -336,7 +288,7 @@ export function BuildOverview() {
                     if (newLoadoutError) setNewLoadoutError(null);
                   }}
                   placeholder="Loadout name..."
-                  className="form-input flex-1 text-sm"
+                  className="form-input flex-1 text-xs"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -363,12 +315,12 @@ export function BuildOverview() {
                 </button>
               </div>
               {newLoadoutError ? (
-                <p className="error-msg">{newLoadoutError}</p>
+                <p className="text-xs text-danger">{newLoadoutError}</p>
               ) : null}
             </div>
           ) : (
             <button
-              className="btn btn-accent w-full text-sm"
+              className="btn btn-accent w-full text-xs"
               onClick={() => {
                 setShowNewLoadout(true);
                 setNewLoadoutError(null);
@@ -379,135 +331,106 @@ export function BuildOverview() {
           )}
         </div>
 
-        <div className="glass-surface p-5">
-          <div className="panel-header panel-header--soft px-0 pt-0">
-            <div className="panel-header__copy">
-              <p className="panel-header__meta">Overview</p>
-              <h3 className="panel-header__title">Library posture</h3>
-            </div>
-          </div>
-          <div className="space-y-3 text-sm text-muted">
-            <p className="m-0">
-              Use loadouts for complete setups and individual builds for
-              experimentation or sidegrades.
-            </p>
-            <div className="metric-card min-h-0">
-              <div className="metric-card__label">Most recent save</div>
-              <div className="metric-card__value text-[1.2rem]">
-                {latestUpdate ?? 'No builds'}
-              </div>
-              <div className="metric-card__detail">
-                Keeping variants grouped makes comparison easier later.
-              </div>
-            </div>
-          </div>
+        <div className="glass-surface flex h-48 items-center justify-center">
+          <p className="text-sm text-muted/50">
+            Select a build to view details
+          </p>
         </div>
       </div>
 
       {linkingBuild && loadouts.length > 0 && (
-        <Modal
-          open
-          onClose={() => setLinkingBuild(null)}
-          ariaLabelledBy="link-build-title"
-          className="max-w-lg"
-        >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="panel-header__meta">Loadouts</p>
-              <h3
-                id="link-build-title"
-                className="text-lg font-semibold text-foreground"
-              >
-                Link "{linkingBuild.name}" to a loadout
+        <div className="modal-overlay" onClick={() => setLinkingBuild(null)}>
+          <div
+            className="glass-modal-surface w-[90%] max-w-lg max-h-[90vh] overflow-y-auto p-6"
+            tabIndex={0}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setLinkingBuild(null);
+              }
+            }}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">
+                Link "{linkingBuild.name}" to Loadout
               </h3>
-            </div>
-            <button
-              className="icon-toggle-btn h-10 w-10 text-lg"
-              onClick={() => setLinkingBuild(null)}
-              type="button"
-              aria-label="Close link build dialog"
-            >
-              &times;
-            </button>
-          </div>
-          <div className="space-y-2">
-            {loadouts.map((loadout) => (
               <button
-                key={loadout.id}
-                onClick={() => {
-                  void handleLinkBuildToLoadout(loadout.id);
-                }}
-                className="flex w-full items-center justify-between rounded-2xl border border-glass-border px-4 py-3 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
-                type="button"
+                className="text-lg text-muted hover:text-foreground"
+                onClick={() => setLinkingBuild(null)}
               >
-                <span>{loadout.name}</span>
-                <span className="text-xs uppercase tracking-[0.18em] text-muted/50">
-                  {loadout.builds.length} builds
-                </span>
+                &times;
               </button>
-            ))}
-          </div>
-        </Modal>
-      )}
-
-      {linkingLoadout && (
-        <Modal
-          open
-          onClose={() => setLinkingLoadout(null)}
-          ariaLabelledBy="link-loadout-title"
-          className="max-w-lg"
-        >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="panel-header__meta">Loadout Slotting</p>
-              <h3
-                id="link-loadout-title"
-                className="text-lg font-semibold text-foreground"
-              >
-                Add build to "{linkingLoadout.name}"
-              </h3>
             </div>
-            <button
-              className="icon-toggle-btn h-10 w-10 text-lg"
-              onClick={() => setLinkingLoadout(null)}
-              aria-label="Close add build dialog"
-              type="button"
-            >
-              &times;
-            </button>
-          </div>
-          {loadoutCompatibleBuilds.length === 0 ? (
-            <p className="surface-note">
-              No compatible builds available. This loadout already has all
-              supported categories filled.
-            </p>
-          ) : (
             <div className="space-y-2">
-              {loadoutCompatibleBuilds.map((build) => (
+              {loadouts.map((loadout) => (
                 <button
-                  key={build.id}
+                  key={loadout.id}
                   onClick={() => {
-                    void handleLinkBuildClick(build);
+                    void handleLinkBuildToLoadout(loadout.id);
                   }}
-                  className="flex w-full items-center justify-between rounded-2xl border border-glass-border px-4 py-3 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
-                  type="button"
+                  className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-foreground">
-                      {build.name}
-                    </div>
-                    <div className="truncate text-xs text-muted">
-                      {build.equipment_name}
-                    </div>
-                  </div>
-                  <span className="ml-3 shrink-0 text-[10px] uppercase tracking-[0.18em] text-muted/50">
-                    {getSlotLabel(getSlotTypeForBuild(build) ?? '')}
+                  <span>{loadout.name}</span>
+                  <span className="text-xs text-muted/50">
+                    {loadout.builds.length} builds
                   </span>
                 </button>
               ))}
             </div>
-          )}
-        </Modal>
+          </div>
+        </div>
+      )}
+
+      {linkingLoadout && (
+        <div className="modal-overlay" onClick={() => setLinkingLoadout(null)}>
+          <div
+            className="glass-modal-surface w-[90%] max-w-lg max-h-[90vh] overflow-y-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">
+                Add Build to "{linkingLoadout.name}"
+              </h3>
+              <button
+                className="text-lg text-muted hover:text-foreground"
+                onClick={() => setLinkingLoadout(null)}
+                aria-label="Close add build dialog"
+              >
+                &times;
+              </button>
+            </div>
+            {loadoutCompatibleBuilds.length === 0 ? (
+              <p className="text-sm text-muted">
+                No compatible builds available. This loadout already has all
+                supported categories filled.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {loadoutCompatibleBuilds.map((build) => (
+                  <button
+                    key={build.id}
+                    onClick={() => {
+                      void handleLinkCompatibleBuildClick(build);
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {build.name}
+                      </div>
+                      <div className="truncate text-xs text-muted">
+                        {build.equipment_name}
+                      </div>
+                    </div>
+                    <span className="ml-3 shrink-0 text-[10px] text-muted/50">
+                      {getSlotLabel(getSlotTypeForBuild(build) ?? '')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
@@ -528,7 +451,7 @@ function BuildRow({
 }) {
   return (
     <div
-      className="group flex cursor-pointer items-center gap-3 px-4 py-4 transition-all hover:bg-glass-hover/90"
+      className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-all hover:bg-glass-hover"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -539,7 +462,7 @@ function BuildRow({
         }
       }}
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-glass-border bg-glass">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-glass">
         {build.equipment_image ? (
           <img
             src={build.equipment_image}
@@ -554,15 +477,15 @@ function BuildRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-[0.95rem] font-semibold text-foreground">
+          <span className="truncate text-sm font-medium text-foreground">
             {build.name}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm text-muted">
+          <span className="truncate text-xs text-muted">
             {build.equipment_name}
           </span>
-          <span className="status-pill px-2 py-0 text-[10px] text-muted/80">
+          <span className="text-[10px] text-muted/40">
             {new Date(build.updated_at).toLocaleDateString()}
           </span>
         </div>
@@ -571,7 +494,7 @@ function BuildRow({
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
         {hasLoadouts && (
           <button
-            className="rounded-full p-2 text-xs text-muted/60 transition-colors hover:bg-accent/10 hover:text-accent"
+            className="rounded-lg p-1.5 text-xs text-muted/60 hover:bg-accent/10 hover:text-accent"
             onClick={(e) => {
               e.stopPropagation();
               onLink();
@@ -583,7 +506,7 @@ function BuildRow({
           </button>
         )}
         <button
-          className="rounded-full p-2 text-xs text-muted/40 transition-colors hover:bg-danger/10 hover:text-danger"
+          className="rounded-lg p-1.5 text-xs text-muted/40 hover:bg-danger/10 hover:text-danger"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -634,7 +557,7 @@ function LoadoutRow({
   return (
     <div>
       <div
-        className="group flex cursor-pointer items-center gap-3 px-4 py-4 transition-all hover:bg-glass-hover/90"
+        className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-all hover:bg-glass-hover"
         onClick={() => setExpanded(!expanded)}
         role="button"
         aria-expanded={expanded}
@@ -648,15 +571,15 @@ function LoadoutRow({
       >
         <span className="text-xs text-muted/50">{expanded ? '▼' : '▶'}</span>
         <div className="min-w-0 flex-1">
-          <span className="text-[0.95rem] font-semibold text-foreground">
+          <span className="text-sm font-medium text-foreground">
             {loadout.name}
           </span>
-          <span className="ml-2 text-xs uppercase tracking-[0.18em] text-muted/50">
+          <span className="ml-2 text-xs text-muted/50">
             {loadout.builds.length} builds
           </span>
         </div>
         <button
-          className="shrink-0 rounded-full p-2 text-xs text-muted/40 opacity-0 transition-all hover:bg-danger/10 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100"
+          className="shrink-0 rounded-lg p-1.5 text-xs text-muted/40 opacity-0 hover:bg-danger/10 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -668,7 +591,7 @@ function LoadoutRow({
       </div>
 
       {expanded && (
-        <div className="border-t border-glass-divider bg-glass/30 px-6 py-3">
+        <div className="border-t border-glass-divider bg-glass/30 px-6 py-2">
           {linkedBuildRows.length === 0 ? (
             <div className="py-2 text-xs text-muted/40">
               No builds added yet.
@@ -677,13 +600,13 @@ function LoadoutRow({
             linkedBuildRows.map(({ build, slotType }) => (
               <div
                 key={`${slotType}:${build.id}`}
-                className="group flex items-center gap-3 rounded-2xl px-3 py-3 transition-all hover:bg-glass-hover"
+                className="group flex items-center gap-3 rounded px-2 py-2 transition-all hover:bg-glass-hover"
               >
                 <button
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   onClick={() => onNavigate(build.id)}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-glass-border bg-glass">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded bg-glass">
                     {build.equipment_image ? (
                       <img
                         src={build.equipment_image}
@@ -696,7 +619,7 @@ function LoadoutRow({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-foreground">
+                    <div className="truncate text-xs font-medium text-foreground">
                       {build.name}
                     </div>
                     <div className="truncate text-[11px] text-muted">
@@ -704,12 +627,12 @@ function LoadoutRow({
                     </div>
                   </div>
                 </button>
-                <span className="status-pill shrink-0 px-2 py-0 text-[10px] text-muted/80">
+                <span className="shrink-0 rounded border border-glass-border px-1.5 py-0.5 text-[10px] text-muted/60">
                   {getSlotLabel(slotType)}
                 </span>
                 <button
                   onClick={() => onUnlink(slotType)}
-                  className="rounded-full p-1 text-muted/40 opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+                  className="text-muted/40 opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
                   aria-label={`Unlink ${getSlotLabel(slotType)}`}
                 >
                   &times;
@@ -718,7 +641,10 @@ function LoadoutRow({
             ))
           )}
           <div className="pt-2">
-            <button onClick={onAddBuild} className="btn btn-secondary btn-sm">
+            <button
+              onClick={onAddBuild}
+              className="rounded px-2 py-1 text-xs text-accent hover:bg-accent/10"
+            >
               + Add Build
             </button>
           </div>

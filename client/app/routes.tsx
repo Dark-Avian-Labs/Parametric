@@ -79,18 +79,14 @@ class ChunkErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <div className="flex min-h-screen items-center justify-center p-6">
-          <div className="glass-shell page-hero w-full max-w-xl text-center">
-            <div className="page-hero__eyebrow">Routing</div>
-            <h2 className="page-hero__title text-[2rem]">
-              This page did not arrive cleanly.
-            </h2>
+          <div className="space-y-4 text-center">
             <p className="text-sm text-muted" role="alert">
               We could not load this page. Please try again.
             </p>
             <button
               type="button"
               onClick={this.handleRetry}
-              className="btn btn-accent mx-auto"
+              className="btn btn-accent inline-flex items-center justify-center text-sm"
             >
               Retry
             </button>
@@ -105,16 +101,10 @@ class ChunkErrorBoundary extends Component<
 
 function RouteFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="glass-shell page-hero w-full max-w-lg text-center">
-        <div className="page-hero__eyebrow">Loading</div>
-        <h2 className="page-hero__title text-[1.9rem]">
-          Preparing the next view
-        </h2>
-        <p className="text-sm text-muted" role="status" aria-live="polite">
-          Loading...
-        </p>
-      </div>
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="text-sm text-muted" role="status" aria-live="polite">
+        Loading...
+      </p>
     </div>
   );
 }
