@@ -51,7 +51,7 @@ import {
   type FormaCount,
   type SlotPolarity,
 } from '../../utils/formaCounter';
-import { isModLockedOut } from '../../utils/modFiltering';
+import { isModLockedOut, isPostureMod } from '../../utils/modFiltering';
 import {
   createRivenMod,
   getRivenStatsForType,
@@ -579,9 +579,17 @@ export function ModBuilder() {
   const canPlaceModInSlot = (mod: Mod, slotType: ModSlot['type']): boolean => {
     const modType = (mod.type || '').toUpperCase();
     if (slotType === 'aura' && modType !== 'AURA') return false;
-    if (slotType === 'stance' && modType !== 'STANCE') return false;
+    if (slotType === 'stance' && (modType !== 'STANCE' || isPostureMod(mod))) {
+      return false;
+    }
+    if (
+      slotType === 'posture' &&
+      (modType !== 'STANCE' || !isPostureMod(mod))
+    ) {
+      return false;
+    }
     if (slotType === 'exilus' && mod.is_utility !== 1) return false;
-    if (slotType === 'general' || slotType === 'posture') {
+    if (slotType === 'general') {
       if (modType === 'AURA' || modType === 'STANCE') return false;
     }
     return true;
@@ -1082,7 +1090,6 @@ export function ModBuilder() {
       : null;
   const selectedIsCompanionWeapon =
     selectedWeapon != null && isCompanionWeapon(selectedWeapon);
-  const totalCapacity = capacity.baseCapacity + capacity.capacityBonus;
   const supportsArcanes =
     !selectedIsCompanionWeapon &&
     equipmentType !== 'archgun' &&
@@ -1126,56 +1133,6 @@ export function ModBuilder() {
       className="mx-auto max-w-[2000px] space-y-6"
       onClick={hasSelection ? handleBackgroundClick : undefined}
     >
-      <section className="glass-shell page-hero">
-        <div className="space-y-3">
-          <div className="page-hero__eyebrow">Builder</div>
-          <h1 className="page-hero__title">
-            Shape the build with less friction.
-          </h1>
-          <p className="page-hero__body">
-            Stronger hierarchy up top, calmer detail density through the middle,
-            and a cleaner selector experience on the right. The goal is faster
-            decision-making without losing the tactical feel.
-          </p>
-        </div>
-        <div className="page-hero__metrics">
-          <div className="metric-card">
-            <div className="metric-card__label">Equipment</div>
-            <div className="metric-card__value text-[1.2rem]">
-              {selectedEquipment?.name ?? 'Loading'}
-            </div>
-            <div className="metric-card__detail">{equipmentType}</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-card__label">Panel focus</div>
-            <div className="metric-card__value text-[1.2rem]">
-              {activePanelLabel}
-            </div>
-            <div className="metric-card__detail">
-              {hasSelection ? 'Selection pinned' : 'Browsing freely'}
-            </div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-card__label">Capacity</div>
-            <div className="metric-card__value">
-              {capacity.totalDrain}/{totalCapacity}
-            </div>
-            <div className="metric-card__detail">
-              {formaMode ? 'Forma edit mode enabled' : 'Live capacity view'}
-            </div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-card__label">Compare</div>
-            <div className="metric-card__value">
-              {compareSnapshots.length}/3
-            </div>
-            <div className="metric-card__detail">
-              Snapshots ready for side-by-side review
-            </div>
-          </div>
-        </div>
-      </section>
-
       <div className="flex flex-col gap-6 2xl:flex-row">
         <div className="w-full shrink-0 space-y-4 2xl:w-72">
           {selectedEquipment && (
@@ -1434,8 +1391,11 @@ export function ModBuilder() {
                         (s) => !s.mod && s.type === 'aura',
                       );
                     } else if (modType === 'STANCE') {
+                      const stanceSlotType = isPostureMod(mod)
+                        ? 'posture'
+                        : 'stance';
                       emptySlot = slots.find(
-                        (s) => !s.mod && s.type === 'stance',
+                        (s) => !s.mod && s.type === stanceSlotType,
                       );
                     } else if (mod.is_utility === 1) {
                       emptySlot = slots.find(

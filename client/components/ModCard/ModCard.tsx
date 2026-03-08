@@ -10,6 +10,7 @@ import { CardPreview } from './CardPreview';
 import type { Mod, SlotType } from '../../types/warframe';
 import { sanitizeDisplayTextKeepDamageTokens } from '../../utils/damageTypeTokens';
 import { calculateEffectiveDrain } from '../../utils/drain';
+import { isPostureMod } from '../../utils/modFiltering';
 
 interface ModCardProps {
   mod: Mod;
@@ -95,7 +96,9 @@ export function ModCard({
     modTypeUpper === 'AURA'
       ? 'aura'
       : modTypeUpper === 'STANCE'
-        ? 'stance'
+        ? isPostureMod(mod)
+          ? 'posture'
+          : 'stance'
         : mod.is_utility === 1
           ? 'exilus'
           : '';

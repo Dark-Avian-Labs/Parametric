@@ -61,6 +61,13 @@ export function filterCompatibleMods(
   return mods.filter((mod) => isModCompatible(mod, equipmentType, equipment));
 }
 
+export function isPostureMod(mod: Mod): boolean {
+  return (
+    (mod.type || '').toUpperCase() === 'STANCE' &&
+    mod.unique_name.includes('/BeastWeapons/Stances/')
+  );
+}
+
 function isModCompatible(
   mod: Mod,
   equipmentType: EquipmentType,
@@ -85,7 +92,7 @@ function isModCompatible(
       return isMeleeModCompatible(mod, modType, compat, equipment);
 
     case 'beast_claws':
-      return isBeastClawModCompatible(modType, compat);
+      return isBeastClawModCompatible(mod, modType, compat);
 
     case 'companion':
       return isCompanionModCompatible(mod, modType, compat, equipment);
@@ -198,7 +205,7 @@ function isMeleeModCompatible(
   const compatUpper = compat.toUpperCase();
 
   if (modType === 'STANCE') {
-    return true;
+    return !isPostureMod(mod);
   }
 
   if (modType !== 'MELEE') return false;
@@ -233,11 +240,15 @@ function isCompanionModCompatible(
   return false;
 }
 
-function isBeastClawModCompatible(modType: string, compat: string): boolean {
+function isBeastClawModCompatible(
+  mod: Mod,
+  modType: string,
+  compat: string,
+): boolean {
   const compatUpper = compat.toUpperCase();
 
   if (modType === 'STANCE') {
-    return compatUpper === 'CLAWS';
+    return isPostureMod(mod);
   }
 
   if (modType !== 'MELEE') return false;

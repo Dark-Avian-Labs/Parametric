@@ -10,7 +10,11 @@ import {
 
 import { useApi } from '../../hooks/useApi';
 import type { Mod, ModRarity, EquipmentType } from '../../types/warframe';
-import { filterCompatibleMods, isModLockedOut } from '../../utils/modFiltering';
+import {
+  filterCompatibleMods,
+  isModLockedOut,
+  isPostureMod,
+} from '../../utils/modFiltering';
 import {
   createRivenPlaceholderMod,
   getRivenWeaponType,
@@ -175,7 +179,11 @@ export function FilterPanel({
       );
     } else if (targetSlotType === 'stance') {
       slotFiltered = compatMods.filter(
-        (m) => (m.type || '').toUpperCase() === 'STANCE',
+        (m) => (m.type || '').toUpperCase() === 'STANCE' && !isPostureMod(m),
+      );
+    } else if (targetSlotType === 'posture') {
+      slotFiltered = compatMods.filter(
+        (m) => (m.type || '').toUpperCase() === 'STANCE' && isPostureMod(m),
       );
     } else if (targetSlotType === 'exilus') {
       slotFiltered = compatMods.filter(

@@ -362,9 +362,11 @@ function SlotCell({
       ? 'aura'
       : slot.type === 'stance'
         ? 'stance'
-        : slot.type === 'exilus'
-          ? 'exilus'
-          : '';
+        : slot.type === 'posture'
+          ? 'posture'
+          : slot.type === 'exilus'
+            ? 'exilus'
+            : '';
 
   const canDrag = !!slot.mod && !formaMode;
 

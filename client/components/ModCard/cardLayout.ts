@@ -10,7 +10,7 @@ export const RARITIES = [
   'Riven',
 ] as const;
 
-export const SLOT_ICONS = ['', 'aura', 'stance', 'exilus'] as const;
+export const SLOT_ICONS = ['', 'aura', 'stance', 'posture', 'exilus'] as const;
 export type SlotIcon = (typeof SLOT_ICONS)[number];
 export type Rarity = (typeof RARITIES)[number];
 export const ARCANE_RARITIES = [

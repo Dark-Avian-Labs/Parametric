@@ -1,6 +1,7 @@
 import { getDb } from '../db/connection.js';
 
 const OVERFRAME_BASE_URL = 'https://overframe.gg';
+const BEAST_CLAWS_ICON_PATH = '/icons/beast-claws.png';
 
 const HIDDEN_BEAST_CLAW_BUILD_PAGES = [
   '/build/new/7150/sly-claws/',
@@ -175,7 +176,7 @@ export async function syncHiddenCompanionWeaponsFromOverframe(
       critical_multiplier = excluded.critical_multiplier,
       proc_chance = excluded.proc_chance,
       sentinel = excluded.sentinel,
-      image_path = COALESCE(weapons.image_path, excluded.image_path),
+      image_path = excluded.image_path,
       artifact_slots = COALESCE(excluded.artifact_slots, weapons.artifact_slots),
       fire_behaviors = COALESCE(excluded.fire_behaviors, weapons.fire_behaviors)
   `);
@@ -199,7 +200,7 @@ export async function syncHiddenCompanionWeaponsFromOverframe(
       weapon.criticalMultiplier ?? null,
       weapon.procChance ?? null,
       1,
-      weapon.iconPath ?? null,
+      BEAST_CLAWS_ICON_PATH,
       weapon.artifactSlots ? JSON.stringify(weapon.artifactSlots) : null,
       weapon.behaviors ? JSON.stringify(weapon.behaviors) : null,
     );
