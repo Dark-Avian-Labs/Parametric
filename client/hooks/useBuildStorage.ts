@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import type { StoredBuild, BuildConfig } from '../types/warframe';
-import { apiFetch } from '../utils/api';
+import { apiFetch, UnauthorizedError } from '../utils/api';
 import { normalizeRivenConfigMembership } from '../utils/riven';
 
 const LEGACY_STORAGE_KEY = 'parametric_builds';
@@ -67,7 +67,14 @@ export function useBuildStorage() {
       setBuilds(mapped);
       return mapped;
     } catch (error) {
-      console.error('Failed to refresh builds', error);
+      if (error instanceof UnauthorizedError) {
+        console.error('Failed to refresh builds (unauthorized)', {
+          url: error.url,
+          status: error.response.status,
+        });
+      } else {
+        console.error('Failed to refresh builds', error);
+      }
       setBuilds([]);
       return [];
     } finally {

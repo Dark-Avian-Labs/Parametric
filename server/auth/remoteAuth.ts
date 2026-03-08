@@ -47,6 +47,12 @@ const AUTH_FETCH_TIMEOUT_MS =
     : 5000;
 const SESSION_TOUCH_INTERVAL_MS = 5 * 60 * 1000;
 const AUTH_STATE_CACHE_KEY = Symbol('parametricAuthStateCache');
+const AUTH_DEBUG = process.env.AUTH_DEBUG === '1';
+
+function authDebugLog(stage: string, details?: Record<string, unknown>): void {
+  if (!AUTH_DEBUG) return;
+  console.log('[AuthDebug]', stage, details ?? {});
+}
 
 function resolveAuthServiceUrl(_req?: Request): string {
   return AUTH_SERVICE_URL;
@@ -154,6 +160,10 @@ export async function fetchRemoteAuthState(
         },
         signal: controller.signal,
       });
+      authDebugLog('fetchRemoteAuthState:upstream', {
+        status: upstream.status,
+        meUrl: meUrl.toString(),
+      });
       if (!upstream.ok) {
         if (upstream.status >= 500) {
           return {
@@ -172,6 +182,10 @@ export async function fetchRemoteAuthState(
         };
       }
       const body = (await upstream.json()) as Partial<RemoteAuthState>;
+      authDebugLog('fetchRemoteAuthState:body', {
+        authenticated: body.authenticated === true,
+        hasGameAccess: body.has_game_access === true,
+      });
       const user = body.user;
       return {
         authenticated: body.authenticated === true,
@@ -188,6 +202,9 @@ export async function fetchRemoteAuthState(
           : [],
       };
     } catch {
+      authDebugLog('fetchRemoteAuthState:error', {
+        meUrl: meUrl.toString(),
+      });
       return {
         authenticated: false,
         has_game_access: false,

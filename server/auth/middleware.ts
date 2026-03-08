@@ -6,11 +6,27 @@ import {
   syncSessionFromAuth,
 } from './remoteAuth.js';
 
+const AUTH_DEBUG = process.env.AUTH_DEBUG === '1';
+
 function wantsJson(req: Request): boolean {
   const accept = req.get('accept');
   if (!accept) return false;
   if (!accept.toLowerCase().includes('json')) return false;
   return req.accepts(['json', 'html']) === 'json';
+}
+
+function authDebugLog(
+  req: Request,
+  stage: string,
+  details?: Record<string, unknown>,
+): void {
+  if (!AUTH_DEBUG) return;
+  console.log('[AuthDebug]', stage, {
+    method: req.method,
+    path: req.originalUrl,
+    sessionUser: req.session?.user_id ?? null,
+    ...details,
+  });
 }
 
 function touchSessionFromState(
@@ -35,6 +51,11 @@ export async function requireAuth(
   next: NextFunction,
 ): Promise<void> {
   const state = await syncSessionFromAuth(req);
+  authDebugLog(req, 'requireAuth:state', {
+    authenticated: state.authenticated,
+    hasGameAccess: state.has_game_access,
+    authServiceError: state.auth_service_error === true,
+  });
   if (state.auth_service_error) {
     if (wantsJson(req)) {
       res.status(503).json({ error: 'Auth service unavailable' });
@@ -78,6 +99,11 @@ export function requireGameAccess(gameId: string) {
     next: NextFunction,
   ): Promise<void> => {
     const state = await fetchRemoteAuthState(req, gameId);
+    authDebugLog(req, 'requireGameAccess:state', {
+      authenticated: state.authenticated,
+      hasGameAccess: state.has_game_access,
+      authServiceError: state.auth_service_error === true,
+    });
     if (state.auth_service_error) {
       res.status(503).json({ error: 'Auth service unavailable' });
       return;
@@ -103,6 +129,11 @@ export async function requirePageGameAccess(
   next: NextFunction,
 ): Promise<void> {
   const state = await fetchRemoteAuthState(req);
+  authDebugLog(req, 'requirePageGameAccess:state', {
+    authenticated: state.authenticated,
+    hasGameAccess: state.has_game_access,
+    authServiceError: state.auth_service_error === true,
+  });
   if (state.auth_service_error) {
     res.status(503).send('Authentication service unavailable');
     return;
@@ -138,6 +169,11 @@ export function authLoginRedirect(req: Request, res: Response): void {
 
 export async function authStatus(req: Request, res: Response): Promise<void> {
   const state = await fetchRemoteAuthState(req);
+  authDebugLog(req, 'authStatus:state', {
+    authenticated: state.authenticated,
+    hasGameAccess: state.has_game_access,
+    authServiceError: state.auth_service_error === true,
+  });
   if (state.auth_service_error) {
     res.status(503).json({
       authenticated: false,
@@ -164,6 +200,11 @@ export async function requireAuthApiJson(
   next: NextFunction,
 ): Promise<void> {
   const state = await syncSessionFromAuth(req);
+  authDebugLog(req, 'requireAuthApiJson:state', {
+    authenticated: state.authenticated,
+    hasGameAccess: state.has_game_access,
+    authServiceError: state.auth_service_error === true,
+  });
   if (state.auth_service_error) {
     res.status(503).json({ error: 'Auth service unavailable' });
     return;
