@@ -37,6 +37,26 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function isAuthDebugEnabled(): boolean {
+  try {
+    return (
+      window.localStorage.getItem('parametric:auth-debug') === '1' ||
+      window.sessionStorage.getItem('parametric:auth-debug') === '1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function debugAuthLog(message: string, details?: unknown): void {
+  if (!isAuthDebugEnabled()) return;
+  if (details !== undefined) {
+    console.info(`[AuthContextDebug] ${message}`, details);
+    return;
+  }
+  console.info(`[AuthContextDebug] ${message}`);
+}
+
 function buildProfile(user: RemoteAuthUser): AppAccountProfile {
   const stored = getStoredProfile(user.id);
   return {
@@ -65,17 +85,21 @@ export function AuthProvider({
   });
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
+    debugAuthLog('refresh:start', { hasSignal: Boolean(signal) });
     try {
       const res = await apiFetch('/api/auth/me', { signal });
       if (signal?.aborted) return;
+      debugAuthLog('refresh:response', { status: res.status });
 
       if (!res.ok) {
         if (res.status === 401) {
           setAccount({ isAuthenticated: false, profile: null });
           setStatus('unauthenticated');
+          debugAuthLog('refresh:set unauthenticated from non-ok 401');
         } else {
           console.error('[AuthContext] refresh failed with status', res.status);
           setStatus('error');
+          debugAuthLog('refresh:set error from non-ok', { status: res.status });
         }
         return;
       }
@@ -86,11 +110,13 @@ export function AuthProvider({
       if (data.authenticated !== true) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('unauthenticated');
+        debugAuthLog('refresh:set unauthenticated from payload');
         return;
       }
       if (data.has_game_access !== true) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('forbidden');
+        debugAuthLog('refresh:set forbidden');
         return;
       }
 
@@ -108,6 +134,7 @@ export function AuthProvider({
 
       setAccount({ isAuthenticated: true, profile: buildProfile(user) });
       setStatus('ok');
+      debugAuthLog('refresh:set ok');
     } catch (error) {
       if (signal?.aborted) {
         return;
@@ -118,10 +145,12 @@ export function AuthProvider({
       if (error instanceof UnauthorizedError) {
         setAccount({ isAuthenticated: false, profile: null });
         setStatus('unauthenticated');
+        debugAuthLog('refresh:set unauthenticated from UnauthorizedError');
         return;
       }
       console.error('[AuthContext] refresh failed', error);
       setStatus((prev) => (prev === 'loading' ? 'error' : prev));
+      debugAuthLog('refresh:non-unauthorized error', { error });
     }
   }, []);
 
@@ -134,12 +163,19 @@ export function AuthProvider({
   }, [refresh]);
 
   useEffect(() => {
-    const onUnauthorized = () => {
+    const onUnauthorized = (event: Event & { detail?: { url?: string } }) => {
+      debugAuthLog('unauthorized-event', event.detail);
       void refresh();
     };
-    window.addEventListener(API_UNAUTHORIZED_EVENT, onUnauthorized);
+    window.addEventListener(
+      API_UNAUTHORIZED_EVENT,
+      onUnauthorized as EventListener,
+    );
     return () => {
-      window.removeEventListener(API_UNAUTHORIZED_EVENT, onUnauthorized);
+      window.removeEventListener(
+        API_UNAUTHORIZED_EVENT,
+        onUnauthorized as EventListener,
+      );
     };
   }, [refresh]);
 

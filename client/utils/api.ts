@@ -2,11 +2,32 @@ let cachedToken: string | null = null;
 let inFlightPromise: Promise<string | null> | null = null;
 let csrfTokenGeneration = 0;
 let authRedirectPending = false;
+let apiRequestSeq = 0;
 export const API_UNAUTHORIZED_EVENT = 'parametric:api-unauthorized';
 
 function currentAppPath(): string {
   const { pathname, search, hash } = window.location;
   return `${pathname}${search}${hash}`;
+}
+
+function isAuthDebugEnabled(): boolean {
+  try {
+    return (
+      window.localStorage.getItem('parametric:auth-debug') === '1' ||
+      window.sessionStorage.getItem('parametric:auth-debug') === '1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function debugAuthLog(message: string, details?: unknown): void {
+  if (!isAuthDebugEnabled()) return;
+  if (details !== undefined) {
+    console.info(`[AuthDebug] ${message}`, details);
+    return;
+  }
+  console.info(`[AuthDebug] ${message}`);
 }
 
 export function buildCentralAuthLoginUrl(nextPath?: string): string {
@@ -17,10 +38,12 @@ export function buildCentralAuthLoginUrl(nextPath?: string): string {
 export function redirectToCentralAuth(nextPath?: string): void {
   if (authRedirectPending) return;
   authRedirectPending = true;
+  debugAuthLog('redirectToCentralAuth', { nextPath });
   window.location.href = buildCentralAuthLoginUrl(nextPath);
 }
 
 function emitUnauthorized(url: string): void {
+  debugAuthLog('emitUnauthorized', { url });
   window.dispatchEvent(
     new CustomEvent(API_UNAUTHORIZED_EVENT, {
       detail: { url },
@@ -163,9 +186,11 @@ export async function apiFetch(
   url: string,
   init?: RequestInit,
 ): Promise<Response> {
+  const requestId = ++apiRequestSeq;
   const method = (init?.method ?? 'GET').toUpperCase();
   const needsCsrf =
     method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
+  debugAuthLog(`apiFetch#${requestId} start`, { method, url, needsCsrf });
 
   const headers = new Headers(init?.headers);
   setJsonContentType(headers, init);
@@ -180,11 +205,21 @@ export async function apiFetch(
     requestBody = injectCsrfIntoJsonBody(requestBody, csrfToken);
   }
 
-  const response = await fetch(url, {
-    ...init,
-    credentials: init?.credentials ?? 'include',
-    headers,
-    body: requestBody,
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      credentials: init?.credentials ?? 'include',
+      headers,
+      body: requestBody,
+    });
+  } catch (error) {
+    debugAuthLog(`apiFetch#${requestId} network-failure`, { url, error });
+    throw error;
+  }
+  debugAuthLog(`apiFetch#${requestId} response`, {
+    url,
+    status: response.status,
   });
   if (response.status === 401) {
     emitUnauthorized(url);
@@ -204,10 +239,20 @@ export async function apiFetch(
   setJsonContentType(retryHeaders, init);
   retryHeaders.set('X-CSRF-Token', freshCsrfToken);
   const retryBody = injectCsrfIntoJsonBody(init?.body, freshCsrfToken);
-  return fetch(url, {
+  debugAuthLog(`apiFetch#${requestId} csrf-retry`, { url });
+  const retryResponse = await fetch(url, {
     ...init,
     credentials: init?.credentials ?? 'include',
     headers: retryHeaders,
     body: retryBody,
   });
+  debugAuthLog(`apiFetch#${requestId} csrf-retry-response`, {
+    url,
+    status: retryResponse.status,
+  });
+  if (retryResponse.status === 401) {
+    emitUnauthorized(url);
+    throw new UnauthorizedError(url, retryResponse);
+  }
+  return retryResponse;
 }
