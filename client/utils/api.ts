@@ -217,7 +217,10 @@ export async function apiFetch(
     debugAuthLog(`apiFetch#${requestId} network-failure`, { url, error });
     throw error;
   }
-  debugAuthLog(`apiFetch#${requestId} response`, { url, status: response.status });
+  debugAuthLog(`apiFetch#${requestId} response`, {
+    url,
+    status: response.status,
+  });
   if (response.status === 401) {
     emitUnauthorized(url);
     throw new UnauthorizedError(url, response);

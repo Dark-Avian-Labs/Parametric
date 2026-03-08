@@ -163,9 +163,7 @@ export function AuthProvider({
   }, [refresh]);
 
   useEffect(() => {
-    const onUnauthorized = (
-      event: Event & { detail?: { url?: string } },
-    ) => {
+    const onUnauthorized = (event: Event & { detail?: { url?: string } }) => {
       debugAuthLog('unauthorized-event', event.detail);
       void refresh();
     };
