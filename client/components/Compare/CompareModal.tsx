@@ -270,12 +270,12 @@ export function CompareModal({ onClose }: CompareModalProps) {
                 <span className="text-xs font-semibold text-muted">Total</span>
                 {(() => {
                   const vals = snapshots.map((ss) => ss.totalElementDamage);
-                  const best = bestIndex(vals, 'high');
+                  const bestTotalIdx = bestIndex(vals, 'high');
                   return snapshots.map((s, i) => (
                     <span
                       key={i}
                       className={`text-center text-xs font-semibold tabular-nums ${
-                        i === best ? 'text-green-400' : 'text-foreground'
+                        i === bestTotalIdx ? 'text-green-400' : 'text-foreground'
                       }`}
                     >
                       {fmt(s.totalElementDamage)}

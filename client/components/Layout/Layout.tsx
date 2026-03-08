@@ -240,7 +240,7 @@ export function Layout() {
                       </Link>
                     ) : null}
                     <Link
-                      to="/auth/profile"
+                      to={APP_PATHS.profile}
                       className="user-menu-item"
                       role="menuitem"
                       onClick={() => setUserMenuOpen(false)}
@@ -268,7 +268,7 @@ export function Layout() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`relative z-10 flex-1 px-6 pb-6 ${compareBarVisible ? 'pb-24' : ''}`}
+        className={`relative z-10 flex-1 px-6 ${compareBarVisible ? 'pb-24' : 'pb-6'}`}
       >
         <Outlet />
       </main>

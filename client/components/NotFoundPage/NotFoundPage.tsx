@@ -19,7 +19,7 @@ export function NotFoundPage() {
         </p>
         <Link
           to={APP_PATHS.home}
-          className="inline-block rounded-md bg-white px-4 py-2 text-sm text-black transition hover:opacity-90"
+          className="btn btn-accent inline-flex items-center justify-center text-sm"
         >
           Go home
         </Link>

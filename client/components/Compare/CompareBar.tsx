@@ -40,10 +40,7 @@ export function CompareBar() {
                   />
                 )}
                 <div className="min-w-0">
-                  <div
-                    className="truncate text-xs font-medium text-foreground"
-                    style={{ maxWidth: 140 }}
-                  >
+                  <div className="max-w-[140px] truncate text-xs font-medium text-foreground">
                     {snap.label}
                   </div>
                   <div className="text-[10px] text-muted">

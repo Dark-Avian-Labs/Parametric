@@ -141,6 +141,27 @@ export function BuildOverview() {
     }
   };
 
+  const handleLinkCompatibleBuildClick = async (build: StoredBuild) => {
+    if (!linkingLoadout) return;
+
+    try {
+      const slotType = getSlotTypeForBuild(build);
+      if (!slotType) {
+        window.alert('This build type is not supported in loadouts yet.');
+        return;
+      }
+      await linkBuild(linkingLoadout.id, build.id, slotType);
+      setLinkingLoadout(null);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to link build to loadout slot';
+      console.error('Failed to link build to loadout slot', error);
+      window.alert(message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-[2000px]">
@@ -321,7 +342,13 @@ export function BuildOverview() {
         <div className="modal-overlay" onClick={() => setLinkingBuild(null)}>
           <div
             className="glass-modal-surface w-[90%] max-w-lg max-h-[90vh] overflow-y-auto p-6"
+            tabIndex={0}
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setLinkingBuild(null);
+              }
+            }}
           >
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">
@@ -383,33 +410,7 @@ export function BuildOverview() {
                   <button
                     key={build.id}
                     onClick={() => {
-                      void (async () => {
-                        try {
-                          const slotType = getSlotTypeForBuild(build);
-                          if (!slotType) {
-                            window.alert(
-                              'This build type is not supported in loadouts yet.',
-                            );
-                            return;
-                          }
-                          await linkBuild(
-                            linkingLoadout.id,
-                            build.id,
-                            slotType,
-                          );
-                          setLinkingLoadout(null);
-                        } catch (error) {
-                          const message =
-                            error instanceof Error
-                              ? error.message
-                              : 'Failed to link build to loadout slot';
-                          console.error(
-                            'Failed to link build to loadout slot',
-                            error,
-                          );
-                          window.alert(message);
-                        }
-                      })();
+                      void handleLinkCompatibleBuildClick(build);
                     }}
                     className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
                   >

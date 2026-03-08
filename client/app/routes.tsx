@@ -86,7 +86,7 @@ class ChunkErrorBoundary extends Component<
             <button
               type="button"
               onClick={this.handleRetry}
-              className="rounded-md bg-white px-4 py-2 text-sm text-black transition hover:opacity-90"
+              className="btn btn-accent inline-flex items-center justify-center text-sm"
             >
               Retry
             </button>
