@@ -57,6 +57,7 @@ export function getSpecialItemSelectionType(
   equipmentType: EquipmentType,
 ): EquipmentType | null {
   const normalized = normalizeEquipmentName(name);
+  const necramechMappedType = SPECIAL_NECRAMECH_SELECTION_TYPE[normalized];
 
   if (equipmentType === 'primary' && SPECIAL_PRIMARY_NAMES.has(normalized)) {
     return 'primary';
@@ -70,11 +71,14 @@ export function getSpecialItemSelectionType(
   if (equipmentType === 'melee' && SPECIAL_MELEE_NAMES.has(normalized)) {
     return 'melee';
   }
+  if (equipmentType === 'necramech' && necramechMappedType) {
+    return necramechMappedType;
+  }
   if (
-    equipmentType === 'necramech' &&
-    SPECIAL_NECRAMECH_SELECTION_TYPE[normalized]
+    (equipmentType === 'archgun' || equipmentType === 'archmelee') &&
+    necramechMappedType === equipmentType
   ) {
-    return SPECIAL_NECRAMECH_SELECTION_TYPE[normalized];
+    return equipmentType;
   }
 
   return null;

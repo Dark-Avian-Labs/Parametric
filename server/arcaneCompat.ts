@@ -20,7 +20,13 @@ export function classifyArcaneCompatTags(
   if (uniqueName.includes('/operatoramps/') || name.startsWith('virtuos ')) {
     tags.add('amp');
   }
-  if (uniqueName.includes('/operatorarmour/') || name.startsWith('magus ')) {
+  if (
+    uniqueName.includes('/operatorarmour/') ||
+    (uniqueName.includes('/operator') &&
+      !uniqueName.includes('/operatoramps/')) ||
+    name.startsWith('magus ') ||
+    name.includes(' operator ')
+  ) {
     tags.add('operator');
   }
   if (name.startsWith('pax ')) {
@@ -33,24 +39,45 @@ export function classifyArcaneCompatTags(
     tags.add('melee');
     tags.add('weapon');
   }
-  if (name.startsWith('primary ') || name.includes(' primary ')) {
+  if (
+    name.startsWith('primary ') ||
+    name.includes(' primary ') ||
+    uniqueName.includes('primary') ||
+    uniqueName.includes('rifle') ||
+    uniqueName.includes('shotgun')
+  ) {
     tags.add('primary');
-    tags.add('weapon');
   }
-  if (name.startsWith('secondary ') || name.includes(' secondary ')) {
+  if (
+    name.startsWith('secondary ') ||
+    name.includes(' secondary ') ||
+    uniqueName.includes('secondary') ||
+    uniqueName.includes('pistol')
+  ) {
     tags.add('secondary');
-    tags.add('weapon');
   }
-  if (name.startsWith('melee ') || name.includes(' melee ')) {
+  if (
+    name.startsWith('melee ') ||
+    name.includes(' melee ') ||
+    uniqueName.includes('melee')
+  ) {
     tags.add('melee');
-    tags.add('weapon');
   }
   if (
     name.startsWith('residual ') ||
     name.startsWith('theorem ') ||
-    name.includes('merciless') ||
-    name.includes('dexterity') ||
-    name.includes('deadhead')
+    (name.includes('merciless') &&
+      !tags.has('primary') &&
+      !tags.has('secondary') &&
+      !tags.has('melee')) ||
+    (name.includes('dexterity') &&
+      !tags.has('primary') &&
+      !tags.has('secondary') &&
+      !tags.has('melee')) ||
+    (name.includes('deadhead') &&
+      !tags.has('primary') &&
+      !tags.has('secondary') &&
+      !tags.has('melee'))
   ) {
     tags.add('weapon');
   }
@@ -73,16 +100,6 @@ export function classifyArcaneCompatTags(
     !tags.has('melee')
   ) {
     tags.add('warframe');
-  }
-
-  if (
-    tags.has('primary') ||
-    tags.has('secondary') ||
-    tags.has('melee') ||
-    tags.has('kitgun') ||
-    tags.has('zaw')
-  ) {
-    tags.add('weapon');
   }
 
   return Array.from(tags).sort();
