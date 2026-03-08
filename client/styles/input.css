@@ -93,8 +93,8 @@
   --font-display:
     'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', 'Times New Roman',
     serif;
-  /* stylelint-disable-next-line value-keyword-case */
   --font-ui:
+    /* stylelint-disable-next-line value-keyword-case */
     'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto,
     Arial, sans-serif;
 }
