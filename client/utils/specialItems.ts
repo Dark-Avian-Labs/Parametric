@@ -1,0 +1,94 @@
+import type { EquipmentType } from '../types/warframe';
+
+const SPECIAL_PRIMARY_NAMES = new Set([
+  'Artemis Bow',
+  'Artemis Bow Prime',
+  'Neutralizer',
+]);
+
+const SPECIAL_SECONDARY_NAMES = new Set([
+  'Balefire Charger',
+  'Balefire Charger Prime',
+  'Dex Pixia',
+  'Dex Pixia Prime',
+  'Glory',
+  'Noctua',
+  'Regulators',
+  'Regulators Prime',
+]);
+
+const SPECIAL_MELEE_NAMES = new Set([
+  'Desert Wind',
+  'Desert Wind Prime',
+  'Diwata',
+  'Diwata Prime',
+  'Exalted Blade',
+  'Exalted Prime Blade',
+  'Exalted Umbra Blade',
+  'Garuda Talons',
+  'Garuda Prime Talons',
+  'Iron Staff',
+  'Iron Staff Prime',
+  'Landslide Fists',
+  'Landslide Fists Prime',
+  'Shadow Claws',
+  'Shadow Claws Prime',
+  'Shadow Clones',
+  'Shadow Clones Prime',
+  'Shattered Lash',
+  'Shattered Lash Prime',
+  'Valkyr Talons',
+  'Valkyr Prime Talons',
+  'Whipclaw',
+  'Whipclaw Prime',
+]);
+
+const SPECIAL_NECRAMECH_SELECTION_TYPE: Record<string, EquipmentType> = {
+  Arquebex: 'archgun',
+  Ironbride: 'archmelee',
+};
+
+export function normalizeEquipmentName(name: string): string {
+  return name.replace(/^<[^>]+>\s*/i, '').trim();
+}
+
+/**
+ * Returns the equipment type bucket a SpecialItems weapon belongs to for a given EquipmentType context.
+ */
+export function getSpecialItemSelectionType(
+  name: string,
+  equipmentType: EquipmentType,
+): EquipmentType | null {
+  const normalized = normalizeEquipmentName(name);
+
+  if (equipmentType === 'primary' && SPECIAL_PRIMARY_NAMES.has(normalized)) {
+    return 'primary';
+  }
+  if (
+    equipmentType === 'secondary' &&
+    SPECIAL_SECONDARY_NAMES.has(normalized)
+  ) {
+    return 'secondary';
+  }
+  if (equipmentType === 'melee' && SPECIAL_MELEE_NAMES.has(normalized)) {
+    return 'melee';
+  }
+  if (
+    equipmentType === 'necramech' &&
+    SPECIAL_NECRAMECH_SELECTION_TYPE[normalized]
+  ) {
+    return SPECIAL_NECRAMECH_SELECTION_TYPE[normalized];
+  }
+
+  return null;
+}
+
+/**
+ * True when the named SpecialItems weapon is valid for the provided EquipmentType.
+ */
+export function matchesSpecialItemType(
+  name: string,
+  equipmentType: EquipmentType,
+): boolean {
+  return getSpecialItemSelectionType(name, equipmentType) !== null;
+}

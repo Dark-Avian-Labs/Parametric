@@ -48,6 +48,7 @@ import {
   type SlotPolarity,
 } from '../../utils/formaCounter';
 import { isModLockedOut } from '../../utils/modFiltering';
+import { matchesSpecialItemType } from '../../utils/specialItems';
 import {
   createRivenMod,
   getRivenStatsForType,
@@ -200,6 +201,9 @@ export function ModBuilder() {
   const [activeSlotType, setActiveSlotType] = useState<SlotType | undefined>();
   const [activeSlotIndex, setActiveSlotIndex] = useState<number | undefined>();
   const [loaded, setLoaded] = useState(false);
+  const [equipmentLoadError, setEquipmentLoadError] = useState<string | null>(
+    null,
+  );
   const [isOwnBuild, setIsOwnBuild] = useState(true);
   const [arcaneSlots, setArcaneSlots] = useState<ArcaneSlot[]>([
     { rank: 0 },
@@ -247,6 +251,7 @@ export function ModBuilder() {
     setActiveShardSlot(null);
     setEditingRivenSlot(null);
     setDraftRivenSlot(null);
+    setEquipmentLoadError(null);
     if (routeEqType) setEquipmentType(routeEqType as EquipmentType);
   }, [routeKey, buildId, routeEqType]);
 
@@ -259,6 +264,30 @@ export function ModBuilder() {
   const shardTypes = shardData?.shards || [];
 
   const { addSnapshot, snapshots: compareSnapshots } = useCompare();
+
+  const resolveSpecialItem = useCallback(
+    async (targetUniqueName: string): Promise<Equipment | null> => {
+      if (
+        equipmentType !== 'primary' &&
+        equipmentType !== 'secondary' &&
+        equipmentType !== 'melee' &&
+        equipmentType !== 'necramech'
+      ) {
+        return null;
+      }
+
+      const response = await apiFetch('/api/weapons?type=SpecialItems');
+      if (!response.ok) return null;
+      const data = (await response.json()) as { items?: Weapon[] };
+      const specialItem = (data.items ?? []).find(
+        (item) =>
+          item.unique_name === targetUniqueName &&
+          matchesSpecialItemType(item.name, equipmentType),
+      );
+      return specialItem ?? null;
+    },
+    [equipmentType],
+  );
 
   useEffect(() => {
     if (loaded) return;
@@ -332,6 +361,18 @@ export function ModBuilder() {
   useEffect(() => {
     if (!equipmentData?.items?.length) return;
 
+    async function setSpecialItemSelection(
+      targetUniqueName: string,
+    ): Promise<void> {
+      if (selectedEquipment || loaded) return;
+      const specialItem = await resolveSpecialItem(targetUniqueName);
+      if (specialItem) {
+        setSelectedEquipment(specialItem);
+        setLoaded(true);
+        setEquipmentLoadError(null);
+      }
+    }
+
     if (buildId && !loaded) {
       const targetUniqueName =
         targetEquipmentUniqueName ??
@@ -343,6 +384,15 @@ export function ModBuilder() {
         if (item) {
           setSelectedEquipment(item);
           setLoaded(true);
+          setEquipmentLoadError(null);
+        } else {
+          void setSpecialItemSelection(targetUniqueName).catch((error) => {
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Failed to load special equipment.';
+            setEquipmentLoadError(message);
+          });
         }
       }
     } else if (equipmentId && !loaded) {
@@ -351,6 +401,15 @@ export function ModBuilder() {
       if (item) {
         setSelectedEquipment(item);
         setLoaded(true);
+        setEquipmentLoadError(null);
+      } else {
+        void setSpecialItemSelection(decodedId).catch((error) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to load special equipment.';
+          setEquipmentLoadError(message);
+        });
       }
     }
   }, [
@@ -361,6 +420,9 @@ export function ModBuilder() {
     isOwnBuild,
     loaded,
     targetEquipmentUniqueName,
+    resolveSpecialItem,
+    selectedEquipment,
+    setEquipmentLoadError,
   ]);
 
   useEffect(() => {
@@ -1129,7 +1191,11 @@ export function ModBuilder() {
           />
         ) : (
           <div className="glass-panel flex h-64 items-center justify-center">
-            <p className="text-muted">Loading equipment...</p>
+            <p className="text-muted">
+              {equipmentLoadError
+                ? `Failed to load equipment: ${equipmentLoadError}`
+                : 'Loading equipment...'}
+            </p>
           </div>
         )}
 
