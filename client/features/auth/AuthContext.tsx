@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -93,6 +94,7 @@ export function AuthProvider({
   const [rateLimitedUntilMs, setRateLimitedUntilMs] = useState<number | null>(
     null,
   );
+  const rateLimitedUntilMsRef = useRef<number | null>(null);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -175,8 +177,13 @@ export function AuthProvider({
   }, [refresh]);
 
   useEffect(() => {
+    rateLimitedUntilMsRef.current = rateLimitedUntilMs;
+  }, [rateLimitedUntilMs]);
+
+  useEffect(() => {
     const onUnauthorized = (_event: Event & { detail?: { url?: string } }) => {
-      if (rateLimitedUntilMs && Date.now() < rateLimitedUntilMs) {
+      const currentRateLimitUntilMs = rateLimitedUntilMsRef.current;
+      if (currentRateLimitUntilMs && Date.now() < currentRateLimitUntilMs) {
         return;
       }
       void refresh();
@@ -191,7 +198,7 @@ export function AuthProvider({
         onUnauthorized as EventListener,
       );
     };
-  }, [refresh, rateLimitedUntilMs]);
+  }, [refresh]);
 
   const updateProfile = useCallback<AuthContextValue['updateProfile']>(
     (updates) => {
