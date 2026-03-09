@@ -688,7 +688,6 @@ export function ModBuilder() {
     selectedEquipment?.unique_name,
     selectedRequiredExaltedStanceName,
     autoInstallStanceMod,
-    slots.length,
   ]);
 
   const canPlaceModInSlot = (mod: Mod, slotType: ModSlot['type']): boolean => {
