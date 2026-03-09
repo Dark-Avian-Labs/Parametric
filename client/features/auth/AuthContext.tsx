@@ -60,7 +60,7 @@ async function getRetryAfterMs(res: Response): Promise<number | null> {
       return sec * 1000;
     }
   } catch {
-    // ignore parse failure
+    // ignore
   }
   return null;
 }

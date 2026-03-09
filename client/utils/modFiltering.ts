@@ -313,7 +313,6 @@ function isCompanionModCompatible(
       );
     }
 
-    // Sentinel-typed mods include both robotic precepts and generic companion/bond mods.
     if (companionSubtype === 'sentinel') {
       return (
         compatUpper === 'COMPANION' ||
