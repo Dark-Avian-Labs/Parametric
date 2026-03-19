@@ -1,5 +1,5 @@
-import { isRivenMod } from './riven';
 import type { Mod, ModSlot } from '../types/warframe';
+import { isRivenMod } from './riven';
 
 export interface StatEffects {
   baseDamage: number;
@@ -130,10 +130,7 @@ interface AggregateOptions {
   rivenDispositionMultiplier?: number;
 }
 
-export function aggregateAllMods(
-  slots: ModSlot[],
-  options?: AggregateOptions,
-): StatEffects {
+export function aggregateAllMods(slots: ModSlot[], options?: AggregateOptions): StatEffects {
   const total = emptyEffects();
   const rivenDispositionMultiplier = options?.rivenDispositionMultiplier ?? 1;
 

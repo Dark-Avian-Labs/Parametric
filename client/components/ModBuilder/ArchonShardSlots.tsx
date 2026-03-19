@@ -41,9 +41,7 @@ export function ArchonShardSlots({
 }: ArchonShardSlotsProps) {
   const getShardInfo = (slot: ShardSlotConfig) => {
     if (!slot.shard_type_id) return null;
-    const shard = shards.find(
-      (s) => String(s.id) === String(slot.shard_type_id),
-    );
+    const shard = shards.find((s) => String(s.id) === String(slot.shard_type_id));
     if (!shard) return null;
     const buff = shard.buffs.find((b) => String(b.id) === String(slot.buff_id));
     return { shard, buff };
@@ -51,7 +49,7 @@ export function ArchonShardSlots({
 
   return (
     <div className="overflow-visible">
-      <h3 className="mb-2 text-right text-xs font-semibold uppercase tracking-wider text-muted">
+      <h3 className="text-muted mb-2 text-right text-xs font-semibold tracking-wider uppercase">
         Archon Shards
       </h3>
       <div className="flex items-start justify-end gap-0.5">
@@ -62,12 +60,8 @@ export function ArchonShardSlots({
           const vOffset = V_OFFSETS[i];
 
           if (info) {
-            const iconPath = slot.tauforged
-              ? info.shard.tauforged_icon_path
-              : info.shard.icon_path;
-            const shardLabel = slot.tauforged
-              ? `${info.shard.name} (Tauforged)`
-              : info.shard.name;
+            const iconPath = slot.tauforged ? info.shard.tauforged_icon_path : info.shard.icon_path;
+            const shardLabel = slot.tauforged ? `${info.shard.name} (Tauforged)` : info.shard.name;
             const buffText = formatBuffDescription(info.buff, slot.tauforged);
 
             return (
@@ -80,14 +74,8 @@ export function ArchonShardSlots({
                   width="w-48"
                   content={
                     <>
-                      <div className="text-xs font-semibold text-foreground">
-                        {shardLabel}
-                      </div>
-                      {buffText && (
-                        <div className="mt-0.5 text-[10px] text-muted">
-                          {buffText}
-                        </div>
-                      )}
+                      <div className="text-foreground text-xs font-semibold">{shardLabel}</div>
+                      {buffText && <div className="text-muted mt-0.5 text-[10px]">{buffText}</div>}
                     </>
                   }
                 >
@@ -98,7 +86,7 @@ export function ArchonShardSlots({
                       onRemove(i);
                     }}
                     className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg transition-all ${
-                      isActive ? 'ring-1 ring-accent' : ''
+                      isActive ? 'ring-accent ring-1' : ''
                     }`}
                   >
                     <img
@@ -120,7 +108,7 @@ export function ArchonShardSlots({
                     e.stopPropagation();
                     onRemove(i);
                   }}
-                  className="absolute -bottom-1 -right-1 flex h-3.25 w-3.25 items-center justify-center rounded-full border border-muted/30 text-[7px] text-muted/30 transition-colors hover:border-danger/50 hover:text-danger"
+                  className="border-muted/30 text-muted/30 hover:border-danger/50 hover:text-danger absolute -right-1 -bottom-1 flex h-3.25 w-3.25 items-center justify-center rounded-full border text-[7px] transition-colors"
                   title="Remove"
                 >
                   ✕
@@ -134,7 +122,7 @@ export function ArchonShardSlots({
               key={i}
               onClick={() => onSlotClick(i)}
               className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg transition-all ${
-                isActive ? 'ring-1 ring-accent' : ''
+                isActive ? 'ring-accent ring-1' : ''
               }`}
               style={{ marginTop: vOffset }}
             >
@@ -152,13 +140,9 @@ export function ArchonShardSlots({
   );
 }
 
-function formatBuffDescription(
-  buff: ShardBuff | undefined,
-  tauforged: boolean,
-): string {
+function formatBuffDescription(buff: ShardBuff | undefined, tauforged: boolean): string {
   if (!buff) return '';
-  return buff.description.replace(
-    /([+-]?\d+\.?\d*%?)\s*\(([+-]?\d+\.?\d*%?)\)/g,
-    (_, base, tau) => (tauforged ? tau : base),
+  return buff.description.replace(/([+-]?\d+\.?\d*%?)\s*\(([+-]?\d+\.?\d*%?)\)/g, (_, base, tau) =>
+    tauforged ? tau : base,
   );
 }

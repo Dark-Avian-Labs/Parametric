@@ -107,16 +107,11 @@ async function fetchHelminthAbilityNameSet(): Promise<Set<string>> {
 apiRouter.get('/weapons', (req: Request, res: Response) => {
   try {
     const db = getDb();
-    const type =
-      typeof req.query.type === 'string' ? req.query.type : undefined;
+    const type = typeof req.query.type === 'string' ? req.query.type : undefined;
 
     let rows;
     if (type) {
-      rows = db
-        .prepare(
-          'SELECT * FROM weapons WHERE product_category = ? ORDER BY name',
-        )
-        .all(type);
+      rows = db.prepare('SELECT * FROM weapons WHERE product_category = ? ORDER BY name').all(type);
     } else {
       rows = db.prepare('SELECT * FROM weapons ORDER BY name').all();
     }
@@ -148,9 +143,7 @@ apiRouter.get('/search', (req: Request, res: Response) => {
       .trim()
       .toLowerCase();
     const limitRaw = Number(req.query.limit ?? 20);
-    const limit = Number.isFinite(limitRaw)
-      ? Math.min(Math.max(Math.trunc(limitRaw), 1), 50)
-      : 20;
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(Math.trunc(limitRaw), 1), 50) : 20;
     if (term.length < 2) {
       res.json({ items: [] });
       return;
@@ -215,8 +208,7 @@ apiRouter.get('/search', (req: Request, res: Response) => {
         name: item.name,
         unique_name: item.unique_name,
         image_path: item.image_path ?? undefined,
-        equipment_type:
-          WEAPON_CATEGORY_TO_TYPE[item.product_category ?? ''] ?? 'primary',
+        equipment_type: WEAPON_CATEGORY_TO_TYPE[item.product_category ?? ''] ?? 'primary',
       })),
       ...companions.map((item) => ({
         category: 'Companions',
@@ -402,9 +394,7 @@ type BuildRow = {
 function parseBuildConfig(raw: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === 'object'
-      ? (parsed as Record<string, unknown>)
-      : null;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
   } catch {
     return null;
   }
@@ -422,9 +412,7 @@ function sendInternalError(res: Response, context: string, err: unknown): void {
   res.status(500).json({ error: 'Internal server error' });
 }
 
-function getAllowedArcaneTags(
-  equipmentType: string | undefined,
-): Set<string> | null {
+function getAllowedArcaneTags(equipmentType: string | undefined): Set<string> | null {
   if (!equipmentType) {
     return null;
   }
@@ -450,14 +438,10 @@ function getAllowedArcaneTags(
 apiRouter.get('/mods', (req: Request, res: Response) => {
   try {
     const db = getDb();
-    const typesRaw =
-      typeof req.query.types === 'string' ? req.query.types : undefined;
-    const typeRaw =
-      typeof req.query.type === 'string' ? req.query.type : undefined;
-    const rarity =
-      typeof req.query.rarity === 'string' ? req.query.rarity : undefined;
-    const search =
-      typeof req.query.search === 'string' ? req.query.search : undefined;
+    const typesRaw = typeof req.query.types === 'string' ? req.query.types : undefined;
+    const typeRaw = typeof req.query.type === 'string' ? req.query.type : undefined;
+    const rarity = typeof req.query.rarity === 'string' ? req.query.rarity : undefined;
+    const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
     let sql = `SELECT m.*, ms.num_in_set AS set_num_in_set, ms.stats AS set_stats
       FROM mods m
@@ -501,10 +485,8 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
     }>;
 
     const cleaned = rows.filter((r) => {
-      if (MOD_JUNK_SEGMENTS.some((seg) => r.unique_name.includes(seg)))
-        return false;
-      if (MOD_JUNK_SUFFIXES.some((suf) => r.unique_name.endsWith(suf)))
-        return false;
+      if (MOD_JUNK_SEGMENTS.some((seg) => r.unique_name.includes(seg))) return false;
+      if (MOD_JUNK_SUFFIXES.some((suf) => r.unique_name.endsWith(suf))) return false;
       return true;
     });
 
@@ -533,18 +515,14 @@ apiRouter.get('/mods/:uniqueName', (req: Request, res: Response) => {
   try {
     const db = getDb();
     const uniqueName = String(req.params.uniqueName);
-    const mod = db
-      .prepare('SELECT * FROM mods WHERE unique_name = ?')
-      .get(uniqueName);
+    const mod = db.prepare('SELECT * FROM mods WHERE unique_name = ?').get(uniqueName);
     if (!mod) {
       res.status(404).json({ error: 'Mod not found' });
       return;
     }
 
     const levelStats = db
-      .prepare(
-        'SELECT * FROM mod_level_stats WHERE mod_unique_name = ? ORDER BY rank',
-      )
+      .prepare('SELECT * FROM mod_level_stats WHERE mod_unique_name = ? ORDER BY rank')
       .all(uniqueName);
 
     res.json({ mod, levelStats });
@@ -557,13 +535,9 @@ apiRouter.get('/arcanes', (req: Request, res: Response) => {
   try {
     const db = getDb();
     const equipmentType =
-      typeof req.query.equipment_type === 'string'
-        ? req.query.equipment_type
-        : undefined;
+      typeof req.query.equipment_type === 'string' ? req.query.equipment_type : undefined;
     const rows = db
-      .prepare(
-        "SELECT * FROM arcanes WHERE unique_name NOT LIKE '%Sub' ORDER BY name",
-      )
+      .prepare("SELECT * FROM arcanes WHERE unique_name NOT LIKE '%Sub' ORDER BY name")
       .all() as Array<Record<string, unknown>>;
 
     const normalized = rows.map((row) => ({
@@ -588,8 +562,7 @@ apiRouter.get('/arcanes', (req: Request, res: Response) => {
 apiRouter.get('/abilities', (req: Request, res: Response) => {
   try {
     const db = getDb();
-    const warframe =
-      typeof req.query.warframe === 'string' ? req.query.warframe : undefined;
+    const warframe = typeof req.query.warframe === 'string' ? req.query.warframe : undefined;
     const abilityNames =
       typeof req.query.ability_names === 'string'
         ? req.query.ability_names.split(',').filter(Boolean)
@@ -604,15 +577,11 @@ apiRouter.get('/abilities', (req: Request, res: Response) => {
         params.push(warframe);
       }
       if (abilityNames.length > 0) {
-        conditions.push(
-          `unique_name IN (${abilityNames.map(() => '?').join(',')})`,
-        );
+        conditions.push(`unique_name IN (${abilityNames.map(() => '?').join(',')})`);
         params.push(...abilityNames);
       }
       rows = db
-        .prepare(
-          `SELECT * FROM abilities WHERE ${conditions.join(' OR ')} ORDER BY name`,
-        )
+        .prepare(`SELECT * FROM abilities WHERE ${conditions.join(' OR ')} ORDER BY name`)
         .all(...params);
     } else {
       rows = db.prepare('SELECT * FROM abilities ORDER BY name').all();
@@ -627,9 +596,7 @@ apiRouter.get('/helminth-abilities', async (_req: Request, res: Response) => {
   try {
     const db = getDb();
     const flaggedRows = db
-      .prepare(
-        'SELECT * FROM abilities WHERE is_helminth_extractable = 1 ORDER BY name',
-      )
+      .prepare('SELECT * FROM abilities WHERE is_helminth_extractable = 1 ORDER BY name')
       .all() as Array<Record<string, unknown>>;
 
     const wikiNames = await fetchHelminthAbilityNameSet();
@@ -647,13 +614,10 @@ apiRouter.get('/helminth-abilities', async (_req: Request, res: Response) => {
            AND name IS NOT NULL
            AND name != ''`,
       )
-      .all() as Array<
-      Record<string, unknown> & { name?: string; unique_name?: string }
-    >;
+      .all() as Array<Record<string, unknown> & { name?: string; unique_name?: string }>;
     const inferred = allAbilities
       .filter((row) => {
-        const name =
-          typeof row.name === 'string' ? normalizeAbilityName(row.name) : '';
+        const name = typeof row.name === 'string' ? normalizeAbilityName(row.name) : '';
         return !!name && wikiNames.has(name);
       })
       .map((row) => ({ ...row, is_helminth_extractable: 1 }));
@@ -681,9 +645,7 @@ apiRouter.get('/riven-stats', (req: Request, res: Response) => {
   try {
     const db = getDb();
     const weaponType =
-      typeof req.query.weapon_type === 'string'
-        ? req.query.weapon_type
-        : undefined;
+      typeof req.query.weapon_type === 'string' ? req.query.weapon_type : undefined;
 
     let sql =
       "SELECT unique_name, name, compat_name, upgrade_entries FROM mods WHERE upgrade_entries IS NOT NULL AND upgrade_entries != ''";
@@ -705,12 +667,12 @@ apiRouter.get('/riven-stats', (req: Request, res: Response) => {
 apiRouter.get('/archon-shards', (_req: Request, res: Response) => {
   try {
     const db = getDb();
-    const types = db
-      .prepare('SELECT * FROM archon_shard_types ORDER BY sort_order')
-      .all() as Array<Record<string, unknown>>;
-    const buffs = db
-      .prepare('SELECT * FROM archon_shard_buffs ORDER BY sort_order')
-      .all() as Array<Record<string, unknown>>;
+    const types = db.prepare('SELECT * FROM archon_shard_types ORDER BY sort_order').all() as Array<
+      Record<string, unknown>
+    >;
+    const buffs = db.prepare('SELECT * FROM archon_shard_buffs ORDER BY sort_order').all() as Array<
+      Record<string, unknown>
+    >;
 
     const result = types.map((t) => ({
       ...t,
@@ -723,172 +685,113 @@ apiRouter.get('/archon-shards', (_req: Request, res: Response) => {
   }
 });
 
-apiRouter.put(
-  '/archon-shards/types/:id',
-  requireAdmin,
-  (req: Request, res: Response) => {
-    try {
-      const typeId = parseNumericId(req.params.id);
-      if (typeId === null) {
-        res.status(400).json({ error: 'Invalid type id' });
-        return;
-      }
-      const parsed = archonShardTypeUpdateSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({
-          error:
-            parsed.error.issues[0]?.message ||
-            'Invalid archon shard type payload',
-        });
-        return;
-      }
-      const {
-        name,
-        icon_path = null,
-        tauforged_icon_path = null,
-        sort_order = 0,
-      } = parsed.data;
-      const db = getDb();
-      db.prepare(
-        'UPDATE archon_shard_types SET name = ?, icon_path = ?, tauforged_icon_path = ?, sort_order = ? WHERE id = ?',
-      ).run(name, icon_path, tauforged_icon_path, sort_order, typeId);
-      res.json({ success: true });
-    } catch (err) {
-      sendInternalError(res, 'archonShards.types.update', err);
+apiRouter.put('/archon-shards/types/:id', requireAdmin, (req: Request, res: Response) => {
+  try {
+    const typeId = parseNumericId(req.params.id);
+    if (typeId === null) {
+      res.status(400).json({ error: 'Invalid type id' });
+      return;
     }
-  },
-);
+    const parsed = archonShardTypeUpdateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: parsed.error.issues[0]?.message || 'Invalid archon shard type payload',
+      });
+      return;
+    }
+    const { name, icon_path = null, tauforged_icon_path = null, sort_order = 0 } = parsed.data;
+    const db = getDb();
+    db.prepare(
+      'UPDATE archon_shard_types SET name = ?, icon_path = ?, tauforged_icon_path = ?, sort_order = ? WHERE id = ?',
+    ).run(name, icon_path, tauforged_icon_path, sort_order, typeId);
+    res.json({ success: true });
+  } catch (err) {
+    sendInternalError(res, 'archonShards.types.update', err);
+  }
+});
 
-apiRouter.post(
-  '/archon-shards/types',
-  requireAdmin,
-  (req: Request, res: Response) => {
-    try {
-      const parsed = archonShardTypeSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({
-          error:
-            parsed.error.issues[0]?.message ||
-            'Invalid archon shard type payload',
-        });
-        return;
-      }
-      const { name, icon_path, tauforged_icon_path, sort_order } = parsed.data;
-      const db = getDb();
-      db.prepare(
-        'INSERT INTO archon_shard_types (name, icon_path, tauforged_icon_path, sort_order) VALUES (?, ?, ?, ?)',
-      ).run(name, icon_path, tauforged_icon_path, sort_order);
-      res.json({ success: true });
-    } catch (err) {
-      sendInternalError(res, 'archonShards.types.create', err);
+apiRouter.post('/archon-shards/types', requireAdmin, (req: Request, res: Response) => {
+  try {
+    const parsed = archonShardTypeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: parsed.error.issues[0]?.message || 'Invalid archon shard type payload',
+      });
+      return;
     }
-  },
-);
+    const { name, icon_path, tauforged_icon_path, sort_order } = parsed.data;
+    const db = getDb();
+    db.prepare(
+      'INSERT INTO archon_shard_types (name, icon_path, tauforged_icon_path, sort_order) VALUES (?, ?, ?, ?)',
+    ).run(name, icon_path, tauforged_icon_path, sort_order);
+    res.json({ success: true });
+  } catch (err) {
+    sendInternalError(res, 'archonShards.types.create', err);
+  }
+});
 
-apiRouter.post(
-  '/archon-shards/buffs',
-  requireAdmin,
-  (req: Request, res: Response) => {
-    try {
-      const db = getDb();
-      const parsed = shardBuffCreateSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({
-          error:
-            parsed.error.issues[0]?.message ||
-            'Invalid archon shard buff payload',
-        });
-        return;
-      }
-      const {
-        shard_type_id,
-        description,
-        base_value,
-        tauforged_value,
-        value_format,
-        sort_order,
-      } = parsed.data;
-      const result = db
-        .prepare(
-          'INSERT INTO archon_shard_buffs (shard_type_id, description, base_value, tauforged_value, value_format, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
-        )
-        .run(
-          shard_type_id,
-          description,
-          base_value,
-          tauforged_value,
-          value_format,
-          sort_order,
-        );
-      res.json({ success: true, id: result.lastInsertRowid });
-    } catch (err) {
-      sendInternalError(res, 'archonShards.buffs.create', err);
+apiRouter.post('/archon-shards/buffs', requireAdmin, (req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    const parsed = shardBuffCreateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: parsed.error.issues[0]?.message || 'Invalid archon shard buff payload',
+      });
+      return;
     }
-  },
-);
+    const { shard_type_id, description, base_value, tauforged_value, value_format, sort_order } =
+      parsed.data;
+    const result = db
+      .prepare(
+        'INSERT INTO archon_shard_buffs (shard_type_id, description, base_value, tauforged_value, value_format, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+      .run(shard_type_id, description, base_value, tauforged_value, value_format, sort_order);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (err) {
+    sendInternalError(res, 'archonShards.buffs.create', err);
+  }
+});
 
-apiRouter.put(
-  '/archon-shards/buffs/:id',
-  requireAdmin,
-  (req: Request, res: Response) => {
-    try {
-      const db = getDb();
-      const buffId = parseNumericId(req.params.id);
-      if (buffId === null) {
-        res.status(400).json({ error: 'Invalid buff id' });
-        return;
-      }
-      const parsed = shardBuffUpdateSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({
-          error:
-            parsed.error.issues[0]?.message ||
-            'Invalid archon shard buff payload',
-        });
-        return;
-      }
-      const {
-        description,
-        base_value,
-        tauforged_value,
-        value_format,
-        sort_order,
-      } = parsed.data;
-      db.prepare(
-        'UPDATE archon_shard_buffs SET description = ?, base_value = ?, tauforged_value = ?, value_format = ?, sort_order = ? WHERE id = ?',
-      ).run(
-        description,
-        base_value,
-        tauforged_value,
-        value_format,
-        sort_order,
-        buffId,
-      );
-      res.json({ success: true });
-    } catch (err) {
-      sendInternalError(res, 'archonShards.buffs.update', err);
+apiRouter.put('/archon-shards/buffs/:id', requireAdmin, (req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    const buffId = parseNumericId(req.params.id);
+    if (buffId === null) {
+      res.status(400).json({ error: 'Invalid buff id' });
+      return;
     }
-  },
-);
+    const parsed = shardBuffUpdateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: parsed.error.issues[0]?.message || 'Invalid archon shard buff payload',
+      });
+      return;
+    }
+    const { description, base_value, tauforged_value, value_format, sort_order } = parsed.data;
+    db.prepare(
+      'UPDATE archon_shard_buffs SET description = ?, base_value = ?, tauforged_value = ?, value_format = ?, sort_order = ? WHERE id = ?',
+    ).run(description, base_value, tauforged_value, value_format, sort_order, buffId);
+    res.json({ success: true });
+  } catch (err) {
+    sendInternalError(res, 'archonShards.buffs.update', err);
+  }
+});
 
-apiRouter.delete(
-  '/archon-shards/buffs/:id',
-  requireAdmin,
-  (req: Request, res: Response) => {
-    try {
-      const db = getDb();
-      const buffId = parseNumericId(req.params.id);
-      if (buffId === null) {
-        res.status(400).json({ error: 'Invalid buff id' });
-        return;
-      }
-      db.prepare('DELETE FROM archon_shard_buffs WHERE id = ?').run(buffId);
-      res.json({ success: true });
-    } catch (err) {
-      sendInternalError(res, 'archonShards.buffs.delete', err);
+apiRouter.delete('/archon-shards/buffs/:id', requireAdmin, (req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    const buffId = parseNumericId(req.params.id);
+    if (buffId === null) {
+      res.status(400).json({ error: 'Invalid buff id' });
+      return;
     }
-  },
-);
+    db.prepare('DELETE FROM archon_shard_buffs WHERE id = ?').run(buffId);
+    res.json({ success: true });
+  } catch (err) {
+    sendInternalError(res, 'archonShards.buffs.delete', err);
+  }
+});
 
 apiRouter.get('/loadouts', (req: Request, res: Response) => {
   try {
@@ -898,9 +801,7 @@ apiRouter.get('/loadouts', (req: Request, res: Response) => {
       return;
     }
     const loadouts = db
-      .prepare(
-        'SELECT * FROM loadouts WHERE user_id = ? ORDER BY updated_at DESC',
-      )
+      .prepare('SELECT * FROM loadouts WHERE user_id = ? ORDER BY updated_at DESC')
       .all(req.session.user_id) as Array<Record<string, unknown>>;
     for (const l of loadouts) {
       (l as Record<string, unknown>).builds = db
@@ -926,9 +827,9 @@ apiRouter.get('/loadouts/:id', (req: Request, res: Response) => {
       return;
     }
 
-    const loadout = db
-      .prepare('SELECT * FROM loadouts WHERE id = ?')
-      .get(id) as Record<string, unknown> | undefined;
+    const loadout = db.prepare('SELECT * FROM loadouts WHERE id = ?').get(id) as
+      | Record<string, unknown>
+      | undefined;
     if (!loadout) {
       res.status(404).json({ error: 'Loadout not found' });
       return;
@@ -937,9 +838,9 @@ apiRouter.get('/loadouts/:id', (req: Request, res: Response) => {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
-    const links = db
-      .prepare('SELECT * FROM loadout_builds WHERE loadout_id = ?')
-      .all(id) as Array<Record<string, unknown>>;
+    const links = db.prepare('SELECT * FROM loadout_builds WHERE loadout_id = ?').all(id) as Array<
+      Record<string, unknown>
+    >;
 
     res.json({
       loadout: {
@@ -1032,10 +933,7 @@ apiRouter.delete('/loadouts/:id', (req: Request, res: Response) => {
     }
     db.transaction(() => {
       db.prepare('DELETE FROM loadout_builds WHERE loadout_id = ?').run(id);
-      db.prepare('DELETE FROM loadouts WHERE id = ? AND user_id = ?').run(
-        id,
-        req.session.user_id,
-      );
+      db.prepare('DELETE FROM loadouts WHERE id = ? AND user_id = ?').run(id, req.session.user_id);
     })();
     res.json({ success: true });
   } catch (err) {
@@ -1056,9 +954,9 @@ apiRouter.post('/loadouts/:id/copy', (req: Request, res: Response) => {
       return;
     }
 
-    const sourceLoadout = db
-      .prepare('SELECT * FROM loadouts WHERE id = ?')
-      .get(id) as { id: number; user_id: number; name: string } | undefined;
+    const sourceLoadout = db.prepare('SELECT * FROM loadouts WHERE id = ?').get(id) as
+      | { id: number; user_id: number; name: string }
+      | undefined;
     if (!sourceLoadout) {
       res.status(404).json({ error: 'Loadout not found' });
       return;
@@ -1068,8 +966,7 @@ apiRouter.post('/loadouts/:id/copy', (req: Request, res: Response) => {
       return;
     }
 
-    const requestedName =
-      typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const requestedName = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
     const requestedNameTruncated = requestedName.slice(0, MAX_NAME_LENGTH);
     const copyName =
       requestedNameTruncated.length > 0
@@ -1083,18 +980,16 @@ apiRouter.post('/loadouts/:id/copy', (req: Request, res: Response) => {
       const newId = Number(createdLoadout.lastInsertRowid);
 
       const sourceLinks = db
-        .prepare(
-          'SELECT build_id, slot_type FROM loadout_builds WHERE loadout_id = ?',
-        )
+        .prepare('SELECT build_id, slot_type FROM loadout_builds WHERE loadout_id = ?')
         .all(sourceLoadout.id) as Array<{
         build_id: number;
         slot_type: string;
       }>;
 
       for (const link of sourceLinks) {
-        const sourceBuild = db
-          .prepare('SELECT * FROM builds WHERE id = ?')
-          .get(link.build_id) as BuildRow | undefined;
+        const sourceBuild = db.prepare('SELECT * FROM builds WHERE id = ?').get(link.build_id) as
+          | BuildRow
+          | undefined;
         if (!sourceBuild) {
           continue;
         }
@@ -1138,11 +1033,7 @@ apiRouter.post('/loadouts/:id/builds', (req: Request, res: Response) => {
     }
     const { build_id, slot_type } = req.body;
     const buildId = Number.parseInt(String(build_id), 10);
-    if (
-      !Number.isFinite(buildId) ||
-      buildId <= 0 ||
-      typeof slot_type !== 'string'
-    ) {
+    if (!Number.isFinite(buildId) || buildId <= 0 || typeof slot_type !== 'string') {
       res.status(400).json({ error: 'Invalid loadout build payload' });
       return;
     }
@@ -1161,8 +1052,7 @@ apiRouter.post('/loadouts/:id/builds', (req: Request, res: Response) => {
       );
     if (result.changes === 0) {
       res.status(404).json({
-        error:
-          'Loadout or build not found, or you do not have permission to add it',
+        error: 'Loadout or build not found, or you do not have permission to add it',
       });
       return;
     }
@@ -1172,29 +1062,26 @@ apiRouter.post('/loadouts/:id/builds', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete(
-  '/loadouts/:id/builds/:slotType',
-  (req: Request, res: Response) => {
-    try {
-      const db = getDb();
-      if (!req.session.user_id) {
-        res.status(401).json({ error: 'Not authenticated' });
-        return;
-      }
-      const loadoutId = parseNumericId(req.params.id);
-      if (loadoutId === null) {
-        res.status(400).json({ error: 'Invalid loadout id' });
-        return;
-      }
-      db.prepare(
-        'DELETE FROM loadout_builds WHERE loadout_id = ? AND slot_type = ? AND EXISTS (SELECT 1 FROM loadouts WHERE id = ? AND user_id = ?)',
-      ).run(loadoutId, req.params.slotType, loadoutId, req.session.user_id);
-      res.json({ success: true });
-    } catch (err) {
-      sendInternalError(res, 'loadouts.removeBuild', err);
+apiRouter.delete('/loadouts/:id/builds/:slotType', (req: Request, res: Response) => {
+  try {
+    const db = getDb();
+    if (!req.session.user_id) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
     }
-  },
-);
+    const loadoutId = parseNumericId(req.params.id);
+    if (loadoutId === null) {
+      res.status(400).json({ error: 'Invalid loadout id' });
+      return;
+    }
+    db.prepare(
+      'DELETE FROM loadout_builds WHERE loadout_id = ? AND slot_type = ? AND EXISTS (SELECT 1 FROM loadouts WHERE id = ? AND user_id = ?)',
+    ).run(loadoutId, req.params.slotType, loadoutId, req.session.user_id);
+    res.json({ success: true });
+  } catch (err) {
+    sendInternalError(res, 'loadouts.removeBuild', err);
+  }
+});
 
 apiRouter.get('/builds', (req: Request, res: Response) => {
   try {
@@ -1205,9 +1092,7 @@ apiRouter.get('/builds', (req: Request, res: Response) => {
     }
 
     const rows = db
-      .prepare(
-        'SELECT * FROM builds WHERE user_id = ? ORDER BY updated_at DESC',
-      )
+      .prepare('SELECT * FROM builds WHERE user_id = ? ORDER BY updated_at DESC')
       .all(req.session.user_id) as BuildRow[];
 
     const builds = rows.map((row) => toBuildResponse(row));
@@ -1231,9 +1116,7 @@ apiRouter.get('/builds/:id', (req: Request, res: Response) => {
       return;
     }
 
-    const row = db.prepare('SELECT * FROM builds WHERE id = ?').get(id) as
-      | BuildRow
-      | undefined;
+    const row = db.prepare('SELECT * FROM builds WHERE id = ?').get(id) as BuildRow | undefined;
     if (!row) {
       res.status(404).json({ error: 'Build not found' });
       return;
@@ -1260,8 +1143,7 @@ apiRouter.post('/builds', (req: Request, res: Response) => {
       return;
     }
 
-    const { name, equipment_type, equipment_unique_name, mod_config } =
-      req.body;
+    const { name, equipment_type, equipment_unique_name, mod_config } = req.body;
 
     const modConfigResult = ModConfigSchema.safeParse(mod_config);
     if (
@@ -1345,10 +1227,7 @@ apiRouter.delete('/builds/:id', (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid build id' });
       return;
     }
-    db.prepare('DELETE FROM builds WHERE id = ? AND user_id = ?').run(
-      id,
-      req.session.user_id,
-    );
+    db.prepare('DELETE FROM builds WHERE id = ? AND user_id = ?').run(id, req.session.user_id);
     res.json({ success: true });
   } catch (err) {
     sendInternalError(res, 'builds.delete', err);
@@ -1367,9 +1246,7 @@ apiRouter.post('/builds/:id/copy', (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid build id' });
       return;
     }
-    const source = db.prepare('SELECT * FROM builds WHERE id = ?').get(id) as
-      | BuildRow
-      | undefined;
+    const source = db.prepare('SELECT * FROM builds WHERE id = ?').get(id) as BuildRow | undefined;
     if (!source) {
       res.status(404).json({ error: 'Build not found' });
       return;
@@ -1379,8 +1256,7 @@ apiRouter.post('/builds/:id/copy', (req: Request, res: Response) => {
       return;
     }
 
-    const requestedName =
-      typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const requestedName = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
     const requestedNameTruncated = requestedName.slice(0, MAX_NAME_LENGTH);
     const copyName =
       requestedNameTruncated.length > 0

@@ -68,9 +68,7 @@ interface OverframeStanceData {
   texturePath: string | null;
 }
 
-function extractOverframeStanceData(
-  nextData: unknown,
-): OverframeStanceData | null {
+function extractOverframeStanceData(nextData: unknown): OverframeStanceData | null {
   if (!nextData || typeof nextData !== 'object') return null;
   const root = nextData as Record<string, unknown>;
   const item = (
@@ -84,24 +82,16 @@ function extractOverframeStanceData(
   const name = String(item.name ?? '').trim();
   const imagePathRaw = item.texture_new ?? item.texture;
   const texturePath =
-    typeof imagePathRaw === 'string' && imagePathRaw.trim().length > 0
-      ? imagePathRaw.trim()
-      : null;
+    typeof imagePathRaw === 'string' && imagePathRaw.trim().length > 0 ? imagePathRaw.trim() : null;
 
   if (!uniqueName || !name) return null;
   return { uniqueName, name, texturePath };
 }
 
-async function ensureOverframeTextureInDataImages(
-  texturePath: string,
-): Promise<string | null> {
-  const normalized = texturePath.startsWith('/')
-    ? texturePath
-    : `/${texturePath}`;
+async function ensureOverframeTextureInDataImages(texturePath: string): Promise<string | null> {
+  const normalized = texturePath.startsWith('/') ? texturePath : `/${texturePath}`;
   const dbImagePath = `${normalized}.webp`;
-  const localRelativePath = dbImagePath
-    .replace(/^\/+/, '')
-    .replace(/\//g, path.sep);
+  const localRelativePath = dbImagePath.replace(/^\/+/, '').replace(/\//g, path.sep);
   const localFilePath = path.join(IMAGES_DIR, localRelativePath);
 
   if (fs.existsSync(localFilePath)) {
@@ -118,9 +108,7 @@ async function ensureOverframeTextureInDataImages(
   return dbImagePath;
 }
 
-async function fetchOverframeStance(
-  seed: ExaltedStanceSeed,
-): Promise<OverframeStanceData | null> {
+async function fetchOverframeStance(seed: ExaltedStanceSeed): Promise<OverframeStanceData | null> {
   const url = `${OVERFRAME_BASE_URL}/items/arsenal/${seed.id}/${seed.slug}/`;
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -219,9 +207,7 @@ export async function syncExaltedStanceModsFromOverframe(
   let insertedOrUpdated = 0;
 
   for (const seed of EXALTED_STANCE_SEEDS) {
-    onProgress?.(
-      `Overframe exalted stance sync: fetching ${seed.name} (${seed.id})`,
-    );
+    onProgress?.(`Overframe exalted stance sync: fetching ${seed.name} (${seed.id})`);
     const scraped = await fetchOverframeStance(seed);
     if (!scraped) continue;
 
@@ -229,9 +215,7 @@ export async function syncExaltedStanceModsFromOverframe(
     let imagePath: string | null = null;
     if (scraped.texturePath) {
       try {
-        imagePath = await ensureOverframeTextureInDataImages(
-          scraped.texturePath,
-        );
+        imagePath = await ensureOverframeTextureInDataImages(scraped.texturePath);
       } catch (error) {
         console.warn(
           `[exaltedStanceMods] failed to cache image for ${seed.id}/${seed.slug}:`,

@@ -1,12 +1,13 @@
+import { createRequire } from 'module';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 import cookieParser from 'cookie-parser';
 import { csrfSync } from 'csrf-sync';
 import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import session from 'express-session';
 import helmet from 'helmet';
-import { createRequire } from 'module';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import {
   authLoginRedirect,
@@ -60,9 +61,7 @@ const app = express();
 
 if (TRUST_PROXY) app.set('trust proxy', 1);
 if (NODE_ENV === 'production' && SECURE_COOKIES && !TRUST_PROXY) {
-  throw new Error(
-    'TRUST_PROXY must be enabled in production when SECURE_COOKIES is enabled.',
-  );
+  throw new Error('TRUST_PROXY must be enabled in production when SECURE_COOKIES is enabled.');
 }
 
 app.use(helmet());
@@ -81,9 +80,7 @@ const baselineLimiter = rateLimit({
     req.path === '/favicon.ico' ||
     req.path.startsWith('/images/') ||
     req.path.startsWith('/icons/') ||
-    /^\/assets\/.+\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?)$/i.test(
-      req.path,
-    ),
+    /^\/assets\/.+\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?)$/i.test(req.path),
 });
 app.use(baselineLimiter);
 
@@ -159,13 +156,7 @@ const publicPageLimiter = rateLimit({
 });
 
 app.use('/api/auth', authRouter);
-app.use(
-  '/api',
-  appApiLimiter,
-  requireAuthApiJson,
-  requireGameAccess(GAME_ID),
-  apiRouter,
-);
+app.use('/api', appApiLimiter, requireAuthApiJson, requireGameAccess(GAME_ID), apiRouter);
 
 app.use('/images', express.static(IMAGES_DIR));
 
@@ -191,10 +182,7 @@ app.get('/readyz', (_req, res) => {
   }
 });
 
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL?.trim().replace(
-  /\/+$/,
-  '',
-);
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL?.trim().replace(/\/+$/, '');
 app.get('/auth/profile', publicPageLimiter, (_req, res) => {
   if (AUTH_SERVICE_URL) {
     res.redirect(`${AUTH_SERVICE_URL}/profile`);
@@ -230,42 +218,29 @@ if (NODE_ENV === 'production') {
   });
 }
 
-app.use(
-  (
-    err: Error,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction,
-  ) => {
-    const message = err.message || '';
-    const lowerMessage = message.toLowerCase();
-    const errorCode = (err as { code?: string }).code;
-    const isNamedCsrfError =
-      err.name === 'CsrfError' ||
-      (err.constructor && err.constructor.name === 'CsrfError');
-    const isForbiddenError =
-      err.name === 'ForbiddenError' ||
-      (err.constructor && err.constructor.name === 'ForbiddenError');
-    const isCsrfError =
-      isNamedCsrfError ||
-      errorCode === 'EBADCSRFTOKEN' ||
-      (isForbiddenError && lowerMessage.includes('csrf'));
-    if (isCsrfError) {
-      res.setHeader('X-CSRF-Error', '1');
-      res
-        .status(403)
-        .json({ error: 'Invalid CSRF token', code: 'CSRF_INVALID' });
-      return;
-    }
-    console.error('[Error]', err.stack ?? message);
-    res.status(500).json({ error: 'Internal server error' });
-  },
-);
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const message = err.message || '';
+  const lowerMessage = message.toLowerCase();
+  const errorCode = (err as { code?: string }).code;
+  const isNamedCsrfError =
+    err.name === 'CsrfError' || (err.constructor && err.constructor.name === 'CsrfError');
+  const isForbiddenError =
+    err.name === 'ForbiddenError' || (err.constructor && err.constructor.name === 'ForbiddenError');
+  const isCsrfError =
+    isNamedCsrfError ||
+    errorCode === 'EBADCSRFTOKEN' ||
+    (isForbiddenError && lowerMessage.includes('csrf'));
+  if (isCsrfError) {
+    res.setHeader('X-CSRF-Error', '1');
+    res.status(403).json({ error: 'Invalid CSRF token', code: 'CSRF_INVALID' });
+    return;
+  }
+  console.error('[Error]', err.stack ?? message);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 const server = app.listen(PORT, HOST, () => {
-  console.log(
-    `[${APP_NAME}] Server running on http://${HOST}:${PORT} (${NODE_ENV})`,
-  );
+  console.log(`[${APP_NAME}] Server running on http://${HOST}:${PORT} (${NODE_ENV})`);
 
   runStartupPipeline().catch((err: unknown) => {
     console.error('[Startup] Pipeline failed:', err);

@@ -47,11 +47,7 @@ const CATEGORY_API: Record<EquipmentPickerTab, string> = {
   tektolyst: '',
 };
 
-const HIDDEN_EMPTY_TABS = new Set<EquipmentType>([
-  'beast_claws',
-  'kdrive',
-  'tektolyst',
-]);
+const HIDDEN_EMPTY_TABS = new Set<EquipmentType>(['beast_claws', 'kdrive', 'tektolyst']);
 
 const TAB_ORDER: EquipmentPickerTab[] = (() => {
   const INSERT_INDEX = 5;
@@ -81,10 +77,7 @@ function getSpecialItemSelectionTypeForItem(
   return getSpecialItemSelectionTypeByName(item.name, equipmentType);
 }
 
-export function EquipmentGridModal({
-  onSelect,
-  onClose,
-}: EquipmentGridModalProps) {
+export function EquipmentGridModal({ onSelect, onClose }: EquipmentGridModalProps) {
   const [activeTab, setActiveTab] = useState<EquipmentPickerTab>('warframe');
   const [items, setItems] = useState<EquipmentItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -129,10 +122,7 @@ export function EquipmentGridModal({
 
           const mappedSpecials: EquipmentItem[] = [];
           for (const item of specialData.items || []) {
-            const selectionType = getSpecialItemSelectionTypeForItem(
-              item,
-              activeTab,
-            );
+            const selectionType = getSpecialItemSelectionTypeForItem(item, activeTab);
             if (!selectionType) continue;
             mappedSpecials.push({ ...item, selection_type: selectionType });
           }
@@ -158,30 +148,23 @@ export function EquipmentGridModal({
           list = list
             .map((item) => ({
               ...item,
-              selection_type:
-                getCompanionWeaponSelectionType(item) ?? undefined,
+              selection_type: getCompanionWeaponSelectionType(item) ?? undefined,
             }))
             .filter((item) => item.selection_type != null);
         } else if (activeTab === 'archwing') {
           list = list.filter((i) => i.product_category === 'SpaceSuits');
         } else if (activeTab === 'necramech') {
-          list = list.filter(
-            (i) =>
-              i.product_category === 'MechSuits' || i.selection_type != null,
-          );
+          list = list.filter((i) => i.product_category === 'MechSuits' || i.selection_type != null);
         }
 
         list = list.sort((a, b) =>
-          normalizeEquipmentName(a.name).localeCompare(
-            normalizeEquipmentName(b.name),
-          ),
+          normalizeEquipmentName(a.name).localeCompare(normalizeEquipmentName(b.name)),
         );
 
         setItems(list);
         setError(null);
       } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to load equipment data.';
+        const message = err instanceof Error ? err.message : 'Failed to load equipment data.';
         setError(message);
       } finally {
         setLoading(false);
@@ -207,10 +190,7 @@ export function EquipmentGridModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2
-              id="equipment-grid-title"
-              className="text-lg font-semibold text-foreground"
-            >
+            <h2 id="equipment-grid-title" className="text-foreground text-lg font-semibold">
               Select equipment
             </h2>
           </div>
@@ -224,7 +204,7 @@ export function EquipmentGridModal({
           </button>
         </div>
 
-        <div className="mb-3 rounded-2xl border border-glass-border bg-glass p-1.5">
+        <div className="border-glass-border bg-glass mb-3 rounded-2xl border p-1.5">
           <div className="flex flex-wrap gap-1">
             {visibleTabs.map((t) => (
               <button
@@ -233,10 +213,10 @@ export function EquipmentGridModal({
                 onClick={() => {
                   setActiveTab(t);
                 }}
-                className={`rounded-full border px-3 py-2 text-xs font-medium uppercase tracking-[0.18em] transition-all ${
+                className={`rounded-full border px-3 py-2 text-xs font-medium tracking-[0.18em] uppercase transition-all ${
                   activeTab === t
                     ? 'border-accent/40 bg-accent/10 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
-                    : 'border-transparent text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground'
+                    : 'text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground border-transparent'
                 }`}
               >
                 {TAB_LABELS[t]}
@@ -254,23 +234,19 @@ export function EquipmentGridModal({
           autoFocus
         />
 
-        <div className="max-h-[55vh] overflow-y-auto custom-scroll">
+        <div className="custom-scroll max-h-[55vh] overflow-y-auto">
           {loading ? (
             <div className="flex h-32 items-center justify-center">
-              <p className="text-sm text-muted">Loading...</p>
+              <p className="text-muted text-sm">Loading...</p>
             </div>
           ) : error ? (
             <div className="flex h-32 items-center justify-center">
-              <p className="text-sm text-danger">
-                Failed to load equipment: {error}
-              </p>
+              <p className="text-danger text-sm">Failed to load equipment: {error}</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex h-32 items-center justify-center">
-              <p className="text-sm text-muted">
-                {items.length === 0
-                  ? 'No data. Import data first.'
-                  : 'No results.'}
+              <p className="text-muted text-sm">
+                {items.length === 0 ? 'No data. Import data first.' : 'No results.'}
               </p>
             </div>
           ) : (
@@ -279,13 +255,11 @@ export function EquipmentGridModal({
                 <button
                   key={item.unique_name}
                   type="button"
-                  onClick={() =>
-                    onSelect(item.selection_type ?? activeTab, item.unique_name)
-                  }
-                  className="group relative overflow-hidden rounded-2xl border border-glass-border bg-glass/40 p-0 text-center transition-all hover:-translate-y-0.5 hover:border-glass-border-hover hover:bg-glass-hover"
+                  onClick={() => onSelect(item.selection_type ?? activeTab, item.unique_name)}
+                  className="group border-glass-border bg-glass/40 hover:border-glass-border-hover hover:bg-glass-hover relative overflow-hidden rounded-2xl border p-0 text-center transition-all hover:-translate-y-0.5"
                   aria-label={`Select ${normalizeEquipmentName(item.name)}`}
                 >
-                  <div className="relative flex h-24 w-full items-center justify-center overflow-hidden bg-glass">
+                  <div className="bg-glass relative flex h-24 w-full items-center justify-center overflow-hidden">
                     {item.image_path ? (
                       <img
                         src={`/images${item.image_path}`}
@@ -296,9 +270,9 @@ export function EquipmentGridModal({
                         }}
                       />
                     ) : (
-                      <span className="text-[10px] text-muted/50">?</span>
+                      <span className="text-muted/50 text-[10px]">?</span>
                     )}
-                    <span className="text-shadow-soft absolute inset-x-0 bottom-0 truncate bg-black/35 px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-white">
+                    <span className="text-shadow-soft absolute inset-x-0 bottom-0 truncate bg-black/35 px-3 py-2 text-[11px] tracking-[0.12em] text-white uppercase">
                       {normalizeEquipmentName(item.name)}
                     </span>
                   </div>

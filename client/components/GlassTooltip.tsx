@@ -8,12 +8,7 @@ interface GlassTooltipProps {
   disabled?: boolean;
 }
 
-export function GlassTooltip({
-  children,
-  content,
-  width = 'w-56',
-  disabled,
-}: GlassTooltipProps) {
+export function GlassTooltip({ children, content, width = 'w-56', disabled }: GlassTooltipProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -41,11 +36,7 @@ export function GlassTooltip({
   }, [hovered, disabled]);
 
   return (
-    <div
-      ref={ref}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div ref={ref} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       {children}
       {hovered &&
         pos &&
@@ -59,11 +50,7 @@ export function GlassTooltip({
               transform: 'translate(-50%, -100%)',
             }}
           >
-            <div
-              className={`glass-tooltip-surface mb-1 ${width} rounded-lg p-2`}
-            >
-              {content}
-            </div>
+            <div className={`glass-tooltip-surface mb-1 ${width} rounded-lg p-2`}>{content}</div>
           </div>,
           document.body,
         )}

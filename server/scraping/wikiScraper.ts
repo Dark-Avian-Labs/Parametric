@@ -243,17 +243,13 @@ async function resolveAbilityUrls(
     try {
       const res = await fetchWithTimeout(url);
       if (!res.ok) {
-        onProgress?.(
-          `  Could not fetch ${cleanName}/Abilities (${res.status})`,
-        );
+        onProgress?.(`  Could not fetch ${cleanName}/Abilities (${res.status})`);
         continue;
       }
       const html = await res.text();
       const $ = cheerio.load(html);
 
-      const abilityNames = abilities
-        .filter((a) => a.wf_name === rawName)
-        .map((a) => a.name);
+      const abilityNames = abilities.filter((a) => a.wf_name === rawName).map((a) => a.name);
 
       for (const name of abilityNames) {
         const normName = normalizeText(name);
@@ -263,11 +259,7 @@ async function resolveAbilityUrls(
           const title = normalizeText($(el).attr('title') || '');
           const href = $(el).attr('href') || '';
           if (href.includes('/Abilities')) return;
-          if (
-            linkText === normName ||
-            title === normName ||
-            title.startsWith(`${normName} (`)
-          ) {
+          if (linkText === normName || title === normName || title.startsWith(`${normName} (`)) {
             resolved.set(name, `${WIKI_BASE}${href}`);
           }
         });
@@ -278,9 +270,7 @@ async function resolveAbilityUrls(
     }
   }
 
-  const helminthAbilities = abilities
-    .filter((a) => !a.wf_name)
-    .map((a) => a.name);
+  const helminthAbilities = abilities.filter((a) => !a.wf_name).map((a) => a.name);
   if (helminthAbilities.length > 0) {
     try {
       const res = await fetchWithTimeout(`${WIKI_BASE}/w/Helminth`);
@@ -294,11 +284,7 @@ async function resolveAbilityUrls(
             const linkText = normalizeText($(el).text());
             const title = normalizeText($(el).attr('title') || '');
             const href = $(el).attr('href') || '';
-            if (
-              linkText === normName ||
-              title === normName ||
-              title.startsWith(`${normName} (`)
-            ) {
+            if (linkText === normName || title === normName || title.startsWith(`${normName} (`)) {
               resolved.set(name, `${WIKI_BASE}${href}`);
             }
           });
@@ -311,10 +297,7 @@ async function resolveAbilityUrls(
       onProgress?.(`  Error resolving Helminth abilities: ${message}`);
       console.error('[wikiScraper] resolveAbilityUrls Helminth scrape failed', {
         url: helminthUrl,
-        error:
-          err instanceof Error
-            ? { message: err.message, stack: err.stack }
-            : err,
+        error: err instanceof Error ? { message: err.message, stack: err.stack } : err,
       });
     }
   }
@@ -341,17 +324,11 @@ async function scrapeAbilityWithFallbacks(
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join('_');
   if (titleCased !== slug) {
-    const r = await scrapeAbilityPage(
-      name,
-      `${WIKI_BASE}/w/${wikiSlug(titleCased)}`,
-    );
+    const r = await scrapeAbilityPage(name, `${WIKI_BASE}/w/${wikiSlug(titleCased)}`);
     if (r) return r;
   }
 
-  const r2 = await scrapeAbilityPage(
-    name,
-    `${WIKI_BASE}/w/${wikiSlug(`${slug}_(Ability)`)}`,
-  );
+  const r2 = await scrapeAbilityPage(name, `${WIKI_BASE}/w/${wikiSlug(`${slug}_(Ability)`)}`);
   if (r2) return r2;
 
   return null;
@@ -376,9 +353,7 @@ export async function scrapeAbilities(
     .all() as { unique_name: string; name: string; wf_name: string | null }[];
 
   if (onlyMissing) {
-    const total = (
-      db.prepare('SELECT COUNT(*) as c FROM abilities').get() as { c: number }
-    ).c;
+    const total = (db.prepare('SELECT COUNT(*) as c FROM abilities').get() as { c: number }).c;
     onProgress?.(
       `${abilities.length} abilities need scraping (${total - abilities.length} already have data)`,
     );
@@ -393,18 +368,14 @@ export async function scrapeAbilities(
 
   onProgress?.('Resolving ability URLs from warframe pages...');
   const urlMap = await resolveAbilityUrls(abilities, onProgress);
-  onProgress?.(
-    `Resolved ${urlMap.size}/${abilities.length} ability URLs from warframe pages`,
-  );
+  onProgress?.(`Resolved ${urlMap.size}/${abilities.length} ability URLs from warframe pages`);
 
   const results: WikiAbilityResult[] = [];
 
   for (let i = 0; i < abilities.length; i++) {
     const ab = abilities[i];
     const resolvedUrl = urlMap.get(ab.name);
-    onProgress?.(
-      `[${i + 1}/${abilities.length}] ${ab.name}${resolvedUrl ? '' : ' (fallbacks)'}`,
-    );
+    onProgress?.(`[${i + 1}/${abilities.length}] ${ab.name}${resolvedUrl ? '' : ' (fallbacks)'}`);
 
     try {
       const stats = await scrapeAbilityWithFallbacks(ab.name, resolvedUrl);
@@ -445,23 +416,17 @@ async function scrapeWarframePage(wfName: string): Promise<string | null> {
       .first();
 
     if (passiveGroup.length > 0) {
-      const caption = normalizeText(
-        passiveGroup.find('.row .value.caption').first().text(),
-      );
+      const caption = normalizeText(passiveGroup.find('.row .value.caption').first().text());
       if (caption.length > 0) {
         return caption;
       }
 
-      const value = normalizeText(
-        passiveGroup.find('.row .value').first().text(),
-      );
+      const value = normalizeText(passiveGroup.find('.row .value').first().text());
       if (value.length > 0) {
         return value;
       }
 
-      const fallbackGroupText = normalizeText(
-        passiveGroup.text().replace(/^Passive\s*/i, ''),
-      );
+      const fallbackGroupText = normalizeText(passiveGroup.text().replace(/^Passive\s*/i, ''));
       if (fallbackGroupText.length > 0) {
         return fallbackGroupText;
       }
@@ -516,9 +481,7 @@ export async function scrapePassives(
 
   if (onlyMissing) {
     const total = (
-      db
-        .prepare(`SELECT COUNT(*) as c FROM warframes WHERE ${baseFilter}`)
-        .get() as { c: number }
+      db.prepare(`SELECT COUNT(*) as c FROM warframes WHERE ${baseFilter}`).get() as { c: number }
     ).c;
     onProgress?.(
       `${warframes.length} warframes need passive scraping (${total - warframes.length} already have data)`,
@@ -568,8 +531,7 @@ function extractBraceBlock(lua: string, startIdx: number): string {
 async function fetchAugmentMappings(): Promise<WikiAugmentMapping[]> {
   const url = `${WIKI_BASE}/w/Module:Ability/data?action=raw`;
   const res = await fetchWithTimeout(url);
-  if (!res.ok)
-    throw new Error(`Failed to fetch Module:Ability/data: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch Module:Ability/data: ${res.status}`);
 
   const lua = await res.text();
   const mappings: WikiAugmentMapping[] = [];
@@ -619,9 +581,7 @@ function parseBuffValues(text: string): {
   tauforged: number;
   isPercent: boolean;
 } | null {
-  const m = text.match(
-    /\+?(\d+(?:\.\d+)?)(%?)\s*\((?:\+?(\d+(?:\.\d+)?))(%?)\)/,
-  );
+  const m = text.match(/\+?(\d+(?:\.\d+)?)(%?)\s*\((?:\+?(\d+(?:\.\d+)?))(%?)\)/);
   if (!m) return null;
   return {
     base: parseFloat(m[1]),
@@ -642,8 +602,7 @@ export async function scrapeArchonShards(
   onProgress?.('Fetching Archon Shard wiki page...');
   const url = `${WIKI_BASE}/w/Archon_Shard`;
   const res = await fetchWithTimeout(url);
-  if (!res.ok)
-    throw new Error(`Failed to fetch Archon Shard page: ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch Archon Shard page: ${res.status}`);
 
   const html = await res.text();
   const $ = cheerio.load(html);
@@ -666,11 +625,8 @@ export async function scrapeArchonShards(
 
     const rowspanCell = cells.filter('[rowspan]').first();
     if (rowspanCell.length > 0) {
-      const paramSpan = rowspanCell
-        .find('span.tooltip[data-param-name]')
-        .first();
-      const shardName =
-        paramSpan.attr('data-param-name') || rowspanCell.text().trim();
+      const paramSpan = rowspanCell.find('span.tooltip[data-param-name]').first();
+      const shardName = paramSpan.attr('data-param-name') || rowspanCell.text().trim();
       const color = shardName
         .replace(/\s*Archon Shard.*/, '')
         .replace('Tauforged ', '')
@@ -698,9 +654,7 @@ export async function scrapeArchonShards(
 
     const parsedValues = parseBuffValues(buffText);
     if (!parsedValues) {
-      console.warn(
-        `[WikiScraper] Skipping unparsable shard buff text: "${buffText}"`,
-      );
+      console.warn(`[WikiScraper] Skipping unparsable shard buff text: "${buffText}"`);
       return;
     }
 
@@ -745,10 +699,7 @@ export async function scrapeRivenDispositions(
     if (!headers.some((h) => h.includes('weapon'))) return;
     if (
       !headers.some(
-        (h) =>
-          h.includes('disposition') ||
-          h.includes('attenuation') ||
-          h.includes('multiplier'),
+        (h) => h.includes('disposition') || h.includes('attenuation') || h.includes('multiplier'),
       )
     ) {
       return;
@@ -760,10 +711,7 @@ export async function scrapeRivenDispositions(
       .each((__, row) => {
         const cells = $(row).find('td');
         if (cells.length < 2) return;
-        const weaponName = normalizeText(cells.eq(0).text()).replace(
-          /\s+/g,
-          ' ',
-        );
+        const weaponName = normalizeText(cells.eq(0).text()).replace(/\s+/g, ' ');
         const rowText = normalizeText($(row).text());
         const multMatch = rowText.match(/(\d+(?:\.\d+)?)\s*x/i);
         if (!weaponName || !multMatch) return;
@@ -832,11 +780,7 @@ export function mergeWikiData(
   const mergeAll = db.transaction(() => {
     for (const ab of data.abilities) {
       const statsJson = JSON.stringify(ab.stats);
-      const changes = updateAbility.run(
-        statsJson,
-        ab.stats.energy_cost,
-        ab.uniqueName,
-      );
+      const changes = updateAbility.run(statsJson, ab.stats.energy_cost, ab.uniqueName);
       if (changes.changes > 0) result.abilitiesUpdated++;
     }
 
@@ -875,9 +819,7 @@ export function mergeWikiData(
 
       const typeIdMap = new Map<string, number>();
       for (const st of data.shards.types) {
-        const existingType = getTypeByName.get(st.name) as
-          | { id: number }
-          | undefined;
+        const existingType = getTypeByName.get(st.name) as { id: number } | undefined;
         if (existingType) {
           updateType.run(
             st.name,
@@ -895,8 +837,7 @@ export function mergeWikiData(
             st.sort_order,
           );
           const insertedTypeId = Number(
-            (insertResult as { lastInsertRowid: number | bigint })
-              .lastInsertRowid,
+            (insertResult as { lastInsertRowid: number | bigint }).lastInsertRowid,
           );
           typeIdMap.set(st.id, insertedTypeId);
         }
@@ -912,10 +853,9 @@ export function mergeWikiData(
           continue;
         }
 
-        const existingBuff = getBuffByTypeAndOrder.get(
-          shardTypeId,
-          sb.sort_order,
-        ) as { id: number } | undefined;
+        const existingBuff = getBuffByTypeAndOrder.get(shardTypeId, sb.sort_order) as
+          | { id: number }
+          | undefined;
         if (existingBuff) {
           updateBuff.run(
             sb.description,
@@ -940,8 +880,7 @@ export function mergeWikiData(
 
     for (const d of data.dispositions) {
       const changes = updateRivenDisposition.run(d.disposition, d.weapon_name);
-      if (changes.changes > 0)
-        result.rivenDispositionsUpdated += changes.changes;
+      if (changes.changes > 0) result.rivenDispositionsUpdated += changes.changes;
     }
     const fallback = fallbackRivenDisposition.run();
     result.rivenDispositionsFallbackFromOmega = fallback.changes;
@@ -993,9 +932,7 @@ export async function runWikiScrape(
     shards = await scrapeArchonShards(log);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log(
-      `[WikiScraper] scrapeArchonShards failed: ${message}. Continuing with empty shard data.`,
-    );
+    log(`[WikiScraper] scrapeArchonShards failed: ${message}. Continuing with empty shard data.`);
   }
 
   state.phase = 'riven_disposition';
@@ -1033,10 +970,7 @@ export async function runWikiScrape(
 
   state.phase = 'merging';
   log('Merging wiki data into database...');
-  const result = mergeWikiData(
-    { abilities, passives, augments, shards, dispositions },
-    log,
-  );
+  const result = mergeWikiData({ abilities, passives, augments, shards, dispositions }, log);
 
   state.phase = 'done';
   log('Wiki scrape complete');

@@ -1,10 +1,6 @@
 import type { EquipmentType } from '../types/warframe';
 
-const SPECIAL_PRIMARY_NAMES = new Set([
-  'Artemis Bow',
-  'Artemis Bow Prime',
-  'Neutralizer',
-]);
+const SPECIAL_PRIMARY_NAMES = new Set(['Artemis Bow', 'Artemis Bow Prime', 'Neutralizer']);
 
 const SPECIAL_SECONDARY_NAMES = new Set([
   'Balefire Charger',
@@ -80,10 +76,7 @@ export function getSpecialItemSelectionType(
   if (equipmentType === 'primary' && SPECIAL_PRIMARY_NAMES.has(normalized)) {
     return 'primary';
   }
-  if (
-    equipmentType === 'secondary' &&
-    SPECIAL_SECONDARY_NAMES.has(normalized)
-  ) {
+  if (equipmentType === 'secondary' && SPECIAL_SECONDARY_NAMES.has(normalized)) {
     return 'secondary';
   }
   if (equipmentType === 'melee' && SPECIAL_MELEE_NAMES.has(normalized)) {
@@ -102,16 +95,11 @@ export function getSpecialItemSelectionType(
   return null;
 }
 
-export function matchesSpecialItemType(
-  name: string,
-  equipmentType: EquipmentType,
-): boolean {
+export function matchesSpecialItemType(name: string, equipmentType: EquipmentType): boolean {
   return getSpecialItemSelectionType(name, equipmentType) !== null;
 }
 
-export function getRequiredExaltedStanceName(
-  equipmentName?: string | null,
-): string | null {
+export function getRequiredExaltedStanceName(equipmentName?: string | null): string | null {
   if (!equipmentName) return null;
   const lookupName = normalizeLookupName(equipmentName);
   return REQUIRED_EXALTED_STANCES_BY_EQUIPMENT[lookupName] ?? null;

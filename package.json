@@ -1,8 +1,8 @@
 {
   "name": "parametric",
   "version": "2.1.1",
-  "description": "Parametric - Warframe Mod Builder/Planner",
   "private": true,
+  "description": "Parametric - Warframe Mod Builder/Planner",
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.server.json && vite build",
@@ -10,14 +10,11 @@
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.json --noEmit",
     "start": "node dist/server/index.js",
     "import": "node dist/server/import/runManualImport.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "check-format": "prettier --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt --write .",
+    "check-format": "oxfmt --check .",
     "test": "vitest run"
-  },
-  "engines": {
-    "node": ">=25.0.0"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.55.1",
@@ -32,6 +29,7 @@
     "express-rate-limit": "^8.3.0",
     "express-session": "^1.19.0",
     "helmet": "^8.1.0",
+    "html-to-image": "^1.11.13",
     "lzma": "^2.3.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -39,7 +37,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.3",
     "@tailwindcss/vite": "^4.1.18",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cookie-parser": "^1.4.10",
@@ -48,21 +45,19 @@
     "@types/node": "^25.3.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
-    "eslint": "^9.39.3",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import-x": "^4.16.1",
-    "eslint-plugin-n": "^17.24.0",
-    "eslint-plugin-promise": "^7.2.1",
+    "@vitejs/plugin-react": "^6.0.1",
     "globals": "^17.4.0",
-    "prettier": "^3.8.1",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vite": "^8.0.1",
+    "vitest": "^4.1.0"
   },
   "overrides": {
     "undici": ">=7.24.4"
+  },
+  "engines": {
+    "node": ">=25.0.0"
   }
 }

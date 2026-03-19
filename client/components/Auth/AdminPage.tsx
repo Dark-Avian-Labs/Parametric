@@ -25,10 +25,8 @@ export function AdminPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="glass-shell p-6">
-        <h1 className="text-2xl font-bold text-foreground">Admin Panel</h1>
-        <p className="mt-1 text-sm text-muted">
-          Archon Shard configuration for Parametric.
-        </p>
+        <h1 className="text-foreground text-2xl font-bold">Admin Panel</h1>
+        <p className="text-muted mt-1 text-sm">Archon Shard configuration for Parametric.</p>
       </div>
       <ArchonShardAdmin />
     </div>
@@ -36,9 +34,7 @@ export function AdminPage() {
 }
 
 function ArchonShardAdmin() {
-  const { data, loading, error, refetch } = useApi<{ shards: ShardType[] }>(
-    '/api/archon-shards',
-  );
+  const { data, loading, error, refetch } = useApi<{ shards: ShardType[] }>('/api/archon-shards');
   const shards = data?.shards || [];
   const [editingBuff, setEditingBuff] = useState<ShardBuff | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -130,36 +126,20 @@ function ArchonShardAdmin() {
   return (
     <>
       <div className="glass-surface p-6">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          Archon Shards
-        </h2>
-        <p className="mb-3 text-xs text-muted">
-          Edit shard types and their buff values.
-        </p>
+        <h2 className="text-foreground mb-4 text-lg font-semibold">Archon Shards</h2>
+        <p className="text-muted mb-3 text-xs">Edit shard types and their buff values.</p>
         {statusMessage ? (
-          <p
-            className="mb-3 text-sm text-success"
-            role="status"
-            aria-live="polite"
-          >
+          <p className="text-success mb-3 text-sm" role="status" aria-live="polite">
             {statusMessage}
           </p>
         ) : null}
         {errorMessage || error ? (
-          <p
-            className="mb-3 text-sm text-danger"
-            role="alert"
-            aria-live="assertive"
-          >
+          <p className="text-danger mb-3 text-sm" role="alert" aria-live="assertive">
             {errorMessage || error}
           </p>
         ) : null}
         {loading ? (
-          <p
-            className="mb-3 text-sm text-muted"
-            role="status"
-            aria-live="polite"
-          >
+          <p className="text-muted mb-3 text-sm" role="status" aria-live="polite">
             Loading archon shard configuration...
           </p>
         ) : null}
@@ -168,21 +148,12 @@ function ArchonShardAdmin() {
           {shards.map((shard) => (
             <div key={shard.id} className="glass-surface rounded-lg p-3">
               <div className="mb-2 flex items-center gap-2">
-                <img
-                  src={shard.icon_path}
-                  alt=""
-                  className="h-5 w-5 object-contain"
-                />
-                <span className="text-sm font-semibold text-foreground">
-                  {shard.name}
-                </span>
+                <img src={shard.icon_path} alt="" className="h-5 w-5 object-contain" />
+                <span className="text-foreground text-sm font-semibold">{shard.name}</span>
               </div>
               <div className="space-y-1">
                 {shard.buffs.map((buff) => (
-                  <div
-                    key={buff.id}
-                    className="flex items-center gap-2 text-xs"
-                  >
+                  <div key={buff.id} className="flex items-center gap-2 text-xs">
                     {editingBuff?.id === buff.id ? (
                       <>
                         <input
@@ -256,18 +227,12 @@ function ArchonShardAdmin() {
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-muted">
-                          {buff.description}
-                        </span>
-                        <span className="w-16 text-center text-foreground">
-                          {buff.base_value}
-                        </span>
-                        <span className="w-16 text-center text-warning">
+                        <span className="text-muted flex-1">{buff.description}</span>
+                        <span className="text-foreground w-16 text-center">{buff.base_value}</span>
+                        <span className="text-warning w-16 text-center">
                           {buff.tauforged_value}
                         </span>
-                        <span className="w-10 text-center text-muted/50">
-                          {buff.value_format}
-                        </span>
+                        <span className="text-muted/50 w-10 text-center">{buff.value_format}</span>
                         <button
                           type="button"
                           onClick={() => setEditingBuff({ ...buff })}
@@ -291,7 +256,7 @@ function ArchonShardAdmin() {
                 <button
                   type="button"
                   onClick={() => handleAddBuff(shard.id)}
-                  className="mt-1 text-xs text-accent hover:text-accent/80"
+                  className="text-accent hover:text-accent/80 mt-1 text-xs"
                   aria-label={`Add buff for ${shard.name}`}
                 >
                   + Add buff

@@ -34,10 +34,7 @@ export function SearchBar() {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
@@ -70,20 +67,16 @@ export function SearchBar() {
       setLoading(true);
       setSearchError(null);
       try {
-        const response = await apiFetch(
-          `/api/search?q=${encodeURIComponent(term)}&limit=20`,
-          { signal: controller.signal },
-        );
+        const response = await apiFetch(`/api/search?q=${encodeURIComponent(term)}&limit=20`, {
+          signal: controller.signal,
+        });
         const body = (await response.json()) as { items?: SearchResult[] };
         const items = Array.isArray(body.items) ? body.items : [];
         if (controller.signal.aborted) return;
         setResults(items);
         setOpen(items.length > 0);
       } catch (e) {
-        if (
-          controller.signal.aborted ||
-          (e instanceof DOMException && e.name === 'AbortError')
-        ) {
+        if (controller.signal.aborted || (e instanceof DOMException && e.name === 'AbortError')) {
           return;
         }
         console.error('Search request failed', e);
@@ -136,7 +129,7 @@ export function SearchBar() {
         {query && (
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-lg text-muted hover:text-foreground"
+            className="text-muted hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2 text-lg"
             aria-label="Clear search"
             onClick={() => {
               setQuery('');
@@ -151,24 +144,22 @@ export function SearchBar() {
       </div>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border border-glass-border bg-surface-modal shadow-lg backdrop-blur-xl">
+        <div className="border-glass-border bg-surface-modal absolute top-full right-0 z-50 mt-1 w-80 overflow-hidden rounded-xl border shadow-lg backdrop-blur-xl">
           {loading ? (
-            <div className="p-3 text-center text-sm text-muted">Searching…</div>
+            <div className="text-muted p-3 text-center text-sm">Searching…</div>
           ) : searchError ? (
-            <div className="p-3 text-center text-sm text-muted">
-              {searchError}
-            </div>
+            <div className="text-muted p-3 text-center text-sm">{searchError}</div>
           ) : (
-            <div className="max-h-80 overflow-y-auto custom-scroll">
+            <div className="custom-scroll max-h-80 overflow-y-auto">
               {Object.entries(grouped).map(([category, items]) => (
                 <div key={category}>
-                  <div className="sticky top-0 bg-surface-modal/95 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted/60 backdrop-blur">
+                  <div className="bg-surface-modal/95 text-muted/60 sticky top-0 px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase backdrop-blur">
                     {category}
                   </div>
                   {items.map((item) => (
                     <button
                       key={item.unique_name}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-glass-hover hover:text-foreground"
+                      className="text-muted hover:bg-glass-hover hover:text-foreground flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors"
                       onClick={() => handleSelect(item)}
                     >
                       {item.image_path && (
@@ -177,8 +168,7 @@ export function SearchBar() {
                           alt=""
                           className="h-7 w-7 rounded object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              'none';
+                            (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
                       )}

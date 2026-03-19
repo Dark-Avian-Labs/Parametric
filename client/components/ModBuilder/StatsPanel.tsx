@@ -1,22 +1,11 @@
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { ShardSlotConfig, ShardType } from './ArchonShardSlots';
-import type {
-  Warframe,
-  Weapon,
-  EquipmentType,
-  ModSlot,
-} from '../../types/warframe';
+import type { Warframe, Weapon, EquipmentType, ModSlot } from '../../types/warframe';
 import { formatPercent } from '../../utils/damage';
-import {
-  calculateWeaponDps,
-  type WeaponCalcResult,
-} from '../../utils/damageCalc';
-import {
-  calculateWarframeStats,
-  type WarframeBonusEffects,
-} from '../../utils/warframeCalc';
+import { calculateWeaponDps, type WeaponCalcResult } from '../../utils/damageCalc';
+import { calculateWarframeStats, type WarframeBonusEffects } from '../../utils/warframeCalc';
+import type { ShardSlotConfig, ShardType } from './ArchonShardSlots';
 
 interface StatsPanelProps {
   equipment: Warframe | Weapon;
@@ -37,9 +26,7 @@ export function StatsPanel({
 }: StatsPanelProps) {
   return (
     <div className="glass-panel overflow-visible p-4">
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted">
-        Stats
-      </h3>
+      <h3 className="text-muted mb-3 text-sm font-semibold tracking-wider uppercase">Stats</h3>
 
       {type === 'warframe' ? (
         <WarframeStats
@@ -176,8 +163,7 @@ function WarframeStats({
     if (wiki && base) {
       const wikiWordCount = wiki.split(/\s+/).filter(Boolean).length;
       const baseWordCount = base.split(/\s+/).filter(Boolean).length;
-      const looksTruncated =
-        wikiWordCount <= 3 || wiki.length < Math.max(20, base.length * 0.6);
+      const looksTruncated = wikiWordCount <= 3 || wiki.length < Math.max(20, base.length * 0.6);
       if (looksTruncated && baseWordCount > wikiWordCount) {
         return base;
       }
@@ -198,12 +184,8 @@ function WarframeStats({
           }}
         />
       )}
-      <div className="text-center text-sm font-semibold text-foreground">
-        {warframe.name}
-      </div>
-      <div className="text-center text-xs text-muted">
-        MR {warframe.mastery_req}
-      </div>
+      <div className="text-foreground text-center text-sm font-semibold">{warframe.name}</div>
+      <div className="text-muted text-center text-xs">MR {warframe.mastery_req}</div>
 
       <div className="mt-3 space-y-1.5">
         {baseStats.map(
@@ -222,10 +204,8 @@ function WarframeStats({
       </div>
 
       {abilityStats.length > 0 && (
-        <div className="mt-3 border-t border-glass-divider pt-2">
-          <div className="text-[10px] font-semibold uppercase text-muted">
-            Ability Stats
-          </div>
+        <div className="border-glass-divider mt-3 border-t pt-2">
+          <div className="text-muted text-[10px] font-semibold uppercase">Ability Stats</div>
           <div className="mt-1 space-y-1.5">
             {abilityStats.map((stat) => (
               <div key={stat.label} className="flex justify-between text-xs">
@@ -242,21 +222,15 @@ function WarframeStats({
       )}
 
       {passiveText && (
-        <div className="mt-3 border-t border-glass-divider pt-2">
-          <div className="text-[10px] font-semibold uppercase text-muted">
-            Passive
-          </div>
-          <div className="mt-1 text-xs leading-relaxed text-muted">
+        <div className="border-glass-divider mt-3 border-t pt-2">
+          <div className="text-muted text-[10px] font-semibold uppercase">Passive</div>
+          <div className="text-muted mt-1 text-xs leading-relaxed">
             <PassiveText text={passiveText} />
           </div>
         </div>
       )}
 
-      {abilities && (
-        <div className="mt-3 border-t border-glass-divider pt-2">
-          {abilities}
-        </div>
-      )}
+      {abilities && <div className="border-glass-divider mt-3 border-t pt-2">{abilities}</div>}
     </div>
   );
 }
@@ -270,15 +244,12 @@ function extractArchonShardBonuses(
 
   for (const slot of shardSlots) {
     if (!slot?.shard_type_id || slot.buff_id == null) continue;
-    const shard = shardTypes.find(
-      (s) => String(s.id) === String(slot.shard_type_id),
-    );
+    const shard = shardTypes.find((s) => String(s.id) === String(slot.shard_type_id));
     if (!shard) continue;
     const buff = shard.buffs.find((b) => String(b.id) === String(slot.buff_id));
     if (!buff) continue;
 
-    const value =
-      slot.tauforged === true ? buff.tauforged_value : buff.base_value;
+    const value = slot.tauforged === true ? buff.tauforged_value : buff.base_value;
     const pct = buff.value_format === '%' ? value / 100 : 0;
     const flat = buff.value_format === '%' ? 0 : value;
     const desc = buff.description.toLowerCase();
@@ -319,11 +290,7 @@ function extractArchonShardBonuses(
       bonuses.energyFlat = (bonuses.energyFlat ?? 0) + flat;
       continue;
     }
-    if (
-      desc.includes('health') &&
-      !desc.includes('health orb') &&
-      !desc.includes('health regen')
-    ) {
+    if (desc.includes('health') && !desc.includes('health orb') && !desc.includes('health regen')) {
       bonuses.healthPct = (bonuses.healthPct ?? 0) + pct;
       bonuses.healthFlat = (bonuses.healthFlat ?? 0) + flat;
     }
@@ -395,11 +362,7 @@ function PassiveText({ text }: { text: string }) {
         const varMatch = part.match(/^\|([A-Z_]+)\|$/);
         if (varMatch) {
           return (
-            <span
-              key={i}
-              className="font-semibold text-accent"
-              title={varMatch[1]}
-            >
+            <span key={i} className="text-accent font-semibold" title={varMatch[1]}>
               ?
             </span>
           );
@@ -419,11 +382,7 @@ interface FireBehavior {
 
 type StatColor = 'text-foreground' | 'text-green-400' | 'text-red-400';
 
-function statColor(
-  base: number,
-  modded: number,
-  lowerIsBetter = false,
-): StatColor {
+function statColor(base: number, modded: number, lowerIsBetter = false): StatColor {
   const diff = modded - base;
   if (Math.abs(diff) < 0.0001) return 'text-foreground';
   const positive = lowerIsBetter ? diff < 0 : diff > 0;
@@ -454,8 +413,7 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
 
   const isMelee = weapon.range != null;
   const rivenDisposition = weapon.riven_disposition ?? weapon.omega_attenuation;
-  const dispositionPips =
-    rivenDisposition != null ? getDispositionPips(rivenDisposition) : null;
+  const dispositionPips = rivenDisposition != null ? getDispositionPips(rivenDisposition) : null;
 
   const moddedStats: Array<{
     label: string;
@@ -546,10 +504,7 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
               label: 'Reload',
               baseDisplay: base ? `${base.toFixed(1)}s` : undefined,
               moddedDisplay: m != null ? `${m.toFixed(2)}s` : undefined,
-              color:
-                base != null && m != null
-                  ? statColor(base, m, true)
-                  : undefined,
+              color: base != null && m != null ? statColor(base, m, true) : undefined,
             };
           })(),
         ]
@@ -585,10 +540,8 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
           }}
         />
       )}
-      <div className="text-center text-sm font-semibold text-foreground">
-        {weapon.name}
-      </div>
-      <div className="text-center text-xs text-muted">
+      <div className="text-foreground text-center text-sm font-semibold">{weapon.name}</div>
+      <div className="text-muted text-center text-xs">
         MR {weapon.mastery_req}
         {weapon.product_category && ` · ${weapon.product_category}`}
       </div>
@@ -613,7 +566,7 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
         {rivenDisposition != null && dispositionPips != null && (
           <div className="flex justify-between text-xs">
             <span className="text-muted">Riven Dispo</span>
-            <span className="flex items-center gap-1 font-medium text-foreground">
+            <span className="text-foreground flex items-center gap-1 font-medium">
               <span
                 style={{
                   fontFamily: 'Roboto, sans-serif',
@@ -633,75 +586,60 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
             stat.value != null && (
               <div key={stat.label} className="flex justify-between text-xs">
                 <span className="text-muted">{stat.label}</span>
-                <span className="font-medium text-foreground">
-                  {stat.value}
-                </span>
+                <span className="text-foreground font-medium">{stat.value}</span>
               </div>
             ),
         )}
       </div>
 
       {calc && (
-        <div className="mt-3 border-t border-glass-divider pt-2">
+        <div className="border-glass-divider mt-3 border-t pt-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase text-muted">
-              DPS
-            </span>
+            <span className="text-muted text-[10px] font-semibold uppercase">DPS</span>
             <DpsInfoTip isMelee={isMelee} />
           </div>
           <div className="mt-1 space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-muted">Avg Hit</span>
-              <span className="font-semibold text-foreground">
+              <span className="text-foreground font-semibold">
                 {formatBigNumber(calc.averageHit)}
               </span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-muted">Burst DPS</span>
-              <span className="font-semibold text-accent">
-                {formatBigNumber(calc.burstDps)}
-              </span>
+              <span className="text-accent font-semibold">{formatBigNumber(calc.burstDps)}</span>
             </div>
             {!isMelee && (
               <div className="flex justify-between text-xs">
                 <span className="text-muted">Sustained DPS</span>
-                <span className="font-semibold text-accent">
+                <span className="text-accent font-semibold">
                   {formatBigNumber(calc.sustainedDps)}
                 </span>
               </div>
             )}
             <div className="flex justify-between text-xs">
               <span className="text-muted">Status/sec</span>
-              <span className="font-medium text-foreground">
-                {calc.statusPerSec.toFixed(2)}
-              </span>
+              <span className="text-foreground font-medium">{calc.statusPerSec.toFixed(2)}</span>
             </div>
           </div>
         </div>
       )}
 
-      {fireBehaviors.length > 0 &&
-        fireBehaviors.some((fb) => fb.projectileSpeed != null) && (
-          <div className="mt-3 border-t border-glass-divider pt-2">
-            <div className="text-[10px] font-semibold uppercase text-muted">
-              Projectile Speed
-            </div>
-            <div className="mt-1 space-y-0.5">
-              {fireBehaviors.map((fb, i) =>
-                fb.projectileSpeed != null ? (
-                  <div key={i} className="flex justify-between text-xs">
-                    <span className="text-muted">
-                      {fb.name || `Mode ${i + 1}`}
-                    </span>
-                    <span className="font-medium text-foreground">
-                      {fb.projectileSpeed} m/s
-                    </span>
-                  </div>
-                ) : null,
-              )}
-            </div>
+      {fireBehaviors.some((fb) => fb.projectileSpeed != null) && (
+        <div className="border-glass-divider mt-3 border-t pt-2">
+          <div className="text-muted text-[10px] font-semibold uppercase">Projectile Speed</div>
+          <div className="mt-1 space-y-0.5">
+            {fireBehaviors.map((fb, i) =>
+              fb.projectileSpeed != null ? (
+                <div key={i} className="flex justify-between text-xs">
+                  <span className="text-muted">{fb.name || `Mode ${i + 1}`}</span>
+                  <span className="text-foreground font-medium">{fb.projectileSpeed} m/s</span>
+                </div>
+              ) : null,
+            )}
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }
@@ -753,7 +691,7 @@ function DpsInfoTip({ isMelee }: { isMelee: boolean }) {
     <>
       <button
         ref={btnRef}
-        className="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold leading-none text-muted/60 transition-colors hover:bg-glass-hover hover:text-muted"
+        className="text-muted/60 hover:bg-glass-hover hover:text-muted flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none font-bold transition-colors"
         onClick={toggle}
         title="What do these numbers mean?"
       >
@@ -764,7 +702,7 @@ function DpsInfoTip({ isMelee }: { isMelee: boolean }) {
         createPortal(
           <div
             ref={tooltipRef}
-            className="fixed z-[9999] w-52 rounded-lg border border-glass-border bg-black/40 p-2.5 text-[10px] leading-snug text-muted shadow-2xl backdrop-blur-xl"
+            className="border-glass-border text-muted fixed z-[9999] w-52 rounded-lg border bg-black/40 p-2.5 text-[10px] leading-snug shadow-2xl backdrop-blur-xl"
             style={{
               top: pos.top,
               left: pos.left,
@@ -772,22 +710,22 @@ function DpsInfoTip({ isMelee }: { isMelee: boolean }) {
             }}
           >
             <p>
-              <strong className="text-foreground">Avg Hit</strong>: damage per
-              single hit, averaged over crits.
+              <strong className="text-foreground">Avg Hit</strong>: damage per single hit, averaged
+              over crits.
             </p>
             <p className="mt-1">
-              <strong className="text-foreground">Burst DPS</strong>: max
-              damage/sec while firing (ignores reload).
+              <strong className="text-foreground">Burst DPS</strong>: max damage/sec while firing
+              (ignores reload).
             </p>
             {!isMelee && (
               <p className="mt-1">
-                <strong className="text-foreground">Sustained DPS</strong>:
-                damage/sec including reload downtime.
+                <strong className="text-foreground">Sustained DPS</strong>: damage/sec including
+                reload downtime.
               </p>
             )}
             <p className="mt-1">
-              <strong className="text-foreground">Status/sec</strong>: status
-              procs applied per second.
+              <strong className="text-foreground">Status/sec</strong>: status procs applied per
+              second.
             </p>
           </div>,
           document.body,

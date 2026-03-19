@@ -1,16 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  DEFAULT_LAYOUT,
-  dbRarityToCardRarity,
-  dbPolarityToIconName,
-} from './cardLayout';
-import { CardPreview } from './CardPreview';
 import type { Mod, SlotType } from '../../types/warframe';
 import { sanitizeDisplayTextKeepDamageTokens } from '../../utils/damageTypeTokens';
 import { calculateEffectiveDrain } from '../../utils/drain';
 import { isPostureMod } from '../../utils/modFiltering';
+import { DEFAULT_LAYOUT, dbRarityToCardRarity, dbPolarityToIconName } from './cardLayout';
+import { CardPreview } from './CardPreview';
 
 interface ModCardProps {
   mod: Mod;
@@ -79,10 +75,7 @@ export function ModCard({
   if (mod.set_stats && maxSetRank > 0) {
     try {
       const setStats: string[] = JSON.parse(mod.set_stats);
-      const idx = Math.min(
-        Math.max(effectiveSetRank - 1, 0),
-        setStats.length - 1,
-      );
+      const idx = Math.min(Math.max(effectiveSetRank - 1, 0), setStats.length - 1);
       setDescription = sanitizeDisplayTextKeepDamageTokens(setStats[idx] ?? '');
     } catch {
       // ignore
@@ -199,7 +192,7 @@ export function ModCard({
           {onRemove && (
             <button
               onClick={onRemove}
-              className="absolute right-0.5 top-0.5 z-50 flex h-4 w-4 items-center justify-center rounded-full border border-glass-border bg-glass-active text-[10px] font-bold text-danger shadow-lg transition-opacity hover:bg-glass-hover"
+              className="border-glass-border bg-glass-active text-danger hover:bg-glass-hover absolute top-0.5 right-0.5 z-50 flex h-4 w-4 items-center justify-center rounded-full border text-[10px] font-bold shadow-lg transition-opacity"
             >
               X
             </button>
@@ -236,13 +229,13 @@ function RankStars({
 
   return (
     <div
-      className="absolute bottom-1 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded border border-glass-border bg-glass-active px-1.5 py-1 backdrop-blur-md"
+      className="border-glass-border bg-glass-active absolute bottom-1 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded border px-1.5 py-1 backdrop-blur-md"
       onMouseLeave={() => setHoverIndex(null)}
     >
       <button
         onMouseEnter={() => setHoverIndex(-1)}
         onClick={() => onChange(0)}
-        className={`mr-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-sm text-[8px] font-bold leading-none transition-colors ${
+        className={`mr-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-sm text-[8px] leading-none font-bold transition-colors ${
           hoverIndex === -1
             ? 'bg-danger text-white'
             : rank === 0
@@ -368,7 +361,7 @@ function CollapsedHoverExpand({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed z-[9999] mod-selector-expand"
+      className="mod-selector-expand pointer-events-none fixed z-[9999]"
       style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
     >
       <div
@@ -400,12 +393,12 @@ function SetRankDots({
 
   return (
     <div
-      className="absolute left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded border border-glass-border bg-glass-active px-1.5 py-1 backdrop-blur-md"
+      className="border-glass-border bg-glass-active absolute left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded border px-1.5 py-1 backdrop-blur-md"
       style={{ bottom: hasRankStars ? 24 : 4 }}
       onMouseLeave={() => setHoverIndex(null)}
     >
       <span
-        className="mr-0.5 text-[7px] font-semibold uppercase leading-none"
+        className="mr-0.5 text-[7px] leading-none font-semibold uppercase"
         style={{ color: 'rgba(200,170,100,0.6)' }}
       >
         Set
@@ -415,8 +408,7 @@ function SetRankDots({
         let bg: string;
 
         if (hoverIndex === null) {
-          bg =
-            dotRank <= setRank ? 'rgb(200,170,100)' : 'rgba(200,170,100,0.2)';
+          bg = dotRank <= setRank ? 'rgb(200,170,100)' : 'rgba(200,170,100,0.2)';
         } else if (
           targetRank !== null &&
           targetRank < setRank &&

@@ -24,9 +24,7 @@ export interface ExportFileInfo {
 export async function runImportPipeline(
   onStatus?: (status: ImportStatus) => void,
 ): Promise<ExportFileInfo[]> {
-  const report =
-    onStatus ??
-    ((s: ImportStatus) => console.log(`[Import] ${s.step}: ${s.message}`));
+  const report = onStatus ?? ((s: ImportStatus) => console.log(`[Import] ${s.step}: ${s.message}`));
   const results: ExportFileInfo[] = [];
 
   report({ step: 'manifest', message: 'Downloading and parsing manifest...' });
@@ -165,9 +163,7 @@ export function listExportFiles(): ExportFileInfo[] {
     const localPath = path.join(EXPORTS_DIR, file);
     const category = file.replace('.json', '');
     const hashPath = path.join(EXPORTS_DIR, `${category}.hash`);
-    const hash = fs.existsSync(hashPath)
-      ? fs.readFileSync(hashPath, 'utf-8').trim()
-      : '';
+    const hash = fs.existsSync(hashPath) ? fs.readFileSync(hashPath, 'utf-8').trim() : '';
     const stats = fs.statSync(localPath);
 
     let itemCount: number | undefined;

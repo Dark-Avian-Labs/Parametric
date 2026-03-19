@@ -2,18 +2,13 @@ import type { Request, Response } from 'express';
 
 import { GAME_ID } from '../config.js';
 
-function parseBaseUrl(
-  rawValue: string | undefined,
-  envName: string,
-): string | null {
+function parseBaseUrl(rawValue: string | undefined, envName: string): string | null {
   const trimmed = rawValue?.trim();
   if (!trimmed) return null;
   try {
     const parsed = new URL(trimmed);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      console.warn(
-        `[auth.remoteAuth] Ignoring ${envName}: URL must use http/https protocol.`,
-      );
+      console.warn(`[auth.remoteAuth] Ignoring ${envName}: URL must use http/https protocol.`);
       return null;
     }
     return parsed.toString().replace(/\/+$/, '');
@@ -23,22 +18,14 @@ function parseBaseUrl(
   }
 }
 
-const parsedPrimaryAuthServiceUrl = parseBaseUrl(
-  process.env.AUTH_SERVICE_URL,
-  'AUTH_SERVICE_URL',
-);
+const parsedPrimaryAuthServiceUrl = parseBaseUrl(process.env.AUTH_SERVICE_URL, 'AUTH_SERVICE_URL');
 
 if (!parsedPrimaryAuthServiceUrl && process.env.NODE_ENV === 'production') {
-  throw new Error(
-    '[auth.remoteAuth] AUTH_SERVICE_URL must be set to a valid http/https URL.',
-  );
+  throw new Error('[auth.remoteAuth] AUTH_SERVICE_URL must be set to a valid http/https URL.');
 }
 
 const AUTH_SERVICE_URL = parsedPrimaryAuthServiceUrl ?? 'http://auth.invalid';
-const parsedAuthFetchTimeoutMs = Number.parseInt(
-  process.env.AUTH_FETCH_TIMEOUT_MS ?? '5000',
-  10,
-);
+const parsedAuthFetchTimeoutMs = Number.parseInt(process.env.AUTH_FETCH_TIMEOUT_MS ?? '5000', 10);
 const AUTH_FETCH_TIMEOUT_MS =
   Number.isFinite(parsedAuthFetchTimeoutMs) &&
   Number.isInteger(parsedAuthFetchTimeoutMs) &&
@@ -112,9 +99,7 @@ function parseAppPublicBaseUrl(rawValue: string | undefined): string {
   return parsed.toString().replace(/\/+$/, '');
 }
 
-const APP_PUBLIC_BASE_URL_PARSED = parseAppPublicBaseUrl(
-  process.env.APP_PUBLIC_BASE_URL,
-);
+const APP_PUBLIC_BASE_URL_PARSED = parseAppPublicBaseUrl(process.env.APP_PUBLIC_BASE_URL);
 
 function isSafeRelativePath(nextPath: string): boolean {
   return (
@@ -174,9 +159,7 @@ export async function fetchRemoteAuthState(
       });
       if (!upstream.ok) {
         if (upstream.status === 429) {
-          const retryAfterSec = parseRetryAfterSeconds(
-            upstream.headers.get('retry-after'),
-          );
+          const retryAfterSec = parseRetryAfterSeconds(upstream.headers.get('retry-after'));
           return {
             authenticated: false,
             has_game_access: false,
@@ -235,9 +218,7 @@ export async function fetchRemoteAuthState(
   return await cache[cacheKey];
 }
 
-export async function syncSessionFromAuth(
-  req: Request,
-): Promise<RemoteAuthState> {
+export async function syncSessionFromAuth(req: Request): Promise<RemoteAuthState> {
   const state = await fetchRemoteAuthState(req, GAME_ID);
   if (state.auth_service_error) {
     return state;
@@ -261,11 +242,7 @@ export async function syncSessionFromAuth(
   return state;
 }
 
-export async function proxyAuthJson(
-  req: Request,
-  res: Response,
-  path: string,
-): Promise<void> {
+export async function proxyAuthJson(req: Request, res: Response, path: string): Promise<void> {
   const url = `${resolveAuthServiceUrl(req)}${path}`;
   const method = req.method.toUpperCase();
   const controller = new AbortController();
@@ -305,20 +282,14 @@ export async function proxyAuthJson(
   }
 }
 
-export async function proxyAuthLogout(
-  req: Request,
-  res: Response,
-): Promise<void> {
+export async function proxyAuthLogout(req: Request, res: Response): Promise<void> {
   const authBase = resolveAuthServiceUrl(req);
   const csrfUrl = `${authBase}/api/auth/csrf`;
   const logoutUrl = `${authBase}/api/auth/logout`;
 
   try {
     const csrfController = new AbortController();
-    const csrfTimeout = setTimeout(
-      () => csrfController.abort(),
-      AUTH_FETCH_TIMEOUT_MS,
-    );
+    const csrfTimeout = setTimeout(() => csrfController.abort(), AUTH_FETCH_TIMEOUT_MS);
     let csrfResponse: globalThis.Response;
     try {
       csrfResponse = await fetch(csrfUrl, {
@@ -341,10 +312,7 @@ export async function proxyAuthLogout(
     }
 
     const logoutController = new AbortController();
-    const logoutTimeout = setTimeout(
-      () => logoutController.abort(),
-      AUTH_FETCH_TIMEOUT_MS,
-    );
+    const logoutTimeout = setTimeout(() => logoutController.abort(), AUTH_FETCH_TIMEOUT_MS);
     let upstream: globalThis.Response;
     try {
       upstream = await fetch(logoutUrl, {

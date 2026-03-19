@@ -9,13 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 
-import type {
-  AppAccountProfile,
-  AppAccountState,
-  AuthStatus,
-  RemoteAuthUser,
-  RemoteAuthState,
-} from './types';
 import {
   API_UNAUTHORIZED_EVENT,
   apiFetch,
@@ -25,14 +18,19 @@ import {
 } from '../../utils/api';
 import { normalizeAvatarId } from '../../utils/profileIcons';
 import { getStoredProfile, mergeStoredProfile } from '../profile/profileStore';
+import type {
+  AppAccountProfile,
+  AppAccountState,
+  AuthStatus,
+  RemoteAuthUser,
+  RemoteAuthState,
+} from './types';
 
 interface AuthContextValue {
   status: AuthStatus;
   account: AppAccountState;
   rateLimitedUntilMs: number | null;
-  updateProfile: (
-    updates: Partial<Pick<AppAccountProfile, 'displayName' | 'email'>>,
-  ) => void;
+  updateProfile: (updates: Partial<Pick<AppAccountProfile, 'displayName' | 'email'>>) => void;
   refresh: (signal?: AbortSignal) => Promise<void>;
   logout: (redirectPath?: string) => Promise<void>;
 }
@@ -91,9 +89,7 @@ export function AuthProvider({
     isAuthenticated: false,
     profile: null,
   });
-  const [rateLimitedUntilMs, setRateLimitedUntilMs] = useState<number | null>(
-    null,
-  );
+  const [rateLimitedUntilMs, setRateLimitedUntilMs] = useState<number | null>(null);
   const rateLimitedUntilMsRef = useRef<number | null>(null);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
@@ -188,29 +184,20 @@ export function AuthProvider({
       }
       void refresh();
     };
-    window.addEventListener(
-      API_UNAUTHORIZED_EVENT,
-      onUnauthorized as EventListener,
-    );
+    window.addEventListener(API_UNAUTHORIZED_EVENT, onUnauthorized as EventListener);
     return () => {
-      window.removeEventListener(
-        API_UNAUTHORIZED_EVENT,
-        onUnauthorized as EventListener,
-      );
+      window.removeEventListener(API_UNAUTHORIZED_EVENT, onUnauthorized as EventListener);
     };
   }, [refresh]);
 
-  const updateProfile = useCallback<AuthContextValue['updateProfile']>(
-    (updates) => {
-      setAccount((prev) => {
-        if (!prev.profile) {
-          return prev;
-        }
-        return { ...prev, profile: mergeStoredProfile(prev.profile, updates) };
-      });
-    },
-    [],
-  );
+  const updateProfile = useCallback<AuthContextValue['updateProfile']>((updates) => {
+    setAccount((prev) => {
+      if (!prev.profile) {
+        return prev;
+      }
+      return { ...prev, profile: mergeStoredProfile(prev.profile, updates) };
+    });
+  }, []);
 
   const logout = useCallback(
     async (redirectPath?: string) => {
@@ -224,9 +211,7 @@ export function AuthProvider({
         );
       } finally {
         clearCsrfToken();
-        window.location.href = buildCentralAuthLoginUrl(
-          redirectPath ?? defaultLogoutRedirectPath,
-        );
+        window.location.href = buildCentralAuthLoginUrl(redirectPath ?? defaultLogoutRedirectPath);
       }
     },
     [defaultLogoutRedirectPath],

@@ -100,10 +100,7 @@ async function isCsrfFailureResponse(response: Response): Promise<boolean> {
     };
     const code = body.code ?? body.errorCode ?? body.error_code;
     const details = `${body.error ?? ''} ${body.message ?? ''}`.toLowerCase();
-    return (
-      response.status === 403 &&
-      (code === 'CSRF_INVALID' || details.includes('csrf'))
-    );
+    return response.status === 403 && (code === 'CSRF_INVALID' || details.includes('csrf'));
   } catch {
     try {
       const text = (await response.clone().text()).toLowerCase();
@@ -115,17 +112,10 @@ async function isCsrfFailureResponse(response: Response): Promise<boolean> {
 }
 
 function setJsonContentType(headers: Headers, init?: RequestInit): void {
-  if (
-    !headers.has('Content-Type') &&
-    init?.body &&
-    typeof init.body === 'string'
-  ) {
+  if (!headers.has('Content-Type') && init?.body && typeof init.body === 'string') {
     try {
       const parsed = JSON.parse(init.body) as unknown;
-      if (
-        Array.isArray(parsed) ||
-        (parsed !== null && typeof parsed === 'object')
-      ) {
+      if (Array.isArray(parsed) || (parsed !== null && typeof parsed === 'object')) {
         headers.set('Content-Type', 'application/json');
       }
     } catch {
@@ -159,13 +149,9 @@ function injectCsrfIntoJsonBody(
   }
 }
 
-export async function apiFetch(
-  url: string,
-  init?: RequestInit,
-): Promise<Response> {
+export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method ?? 'GET').toUpperCase();
-  const needsCsrf =
-    method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
+  const needsCsrf = method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS';
 
   const headers = new Headers(init?.headers);
   setJsonContentType(headers, init);

@@ -20,11 +20,7 @@ for (const [path, src] of Object.entries(PROFILE_ICON_MODULES)) {
 
 export function normalizeAvatarId(value: unknown): number {
   const parsed = Number(value);
-  if (
-    Number.isInteger(parsed) &&
-    parsed >= MIN_AVATAR_ID &&
-    parsed <= MAX_AVATAR_ID
-  ) {
+  if (Number.isInteger(parsed) && parsed >= MIN_AVATAR_ID && parsed <= MAX_AVATAR_ID) {
     return parsed;
   }
   return DEFAULT_AVATAR_ID;
@@ -32,7 +28,5 @@ export function normalizeAvatarId(value: unknown): number {
 
 export function getProfileIconSrc(value: unknown): string {
   const avatarId = normalizeAvatarId(value);
-  return (
-    PROFILE_ICON_BY_ID[avatarId] ?? PROFILE_ICON_BY_ID[DEFAULT_AVATAR_ID] ?? ''
-  );
+  return PROFILE_ICON_BY_ID[avatarId] ?? PROFILE_ICON_BY_ID[DEFAULT_AVATAR_ID] ?? '';
 }

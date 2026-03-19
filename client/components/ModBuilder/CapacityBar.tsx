@@ -13,16 +13,10 @@ interface CapacityBarProps {
   onFormaToggle?: () => void;
 }
 
-export function CapacityBar({
-  capacity,
-  formaCost,
-  formaMode,
-  onFormaToggle,
-}: CapacityBarProps) {
+export function CapacityBar({ capacity, formaCost, formaMode, onFormaToggle }: CapacityBarProps) {
   const totalAvailable = capacity.baseCapacity + capacity.capacityBonus;
   const used = capacity.totalDrain;
-  const percentage =
-    totalAvailable > 0 ? Math.min((used / totalAvailable) * 100, 100) : 0;
+  const percentage = totalAvailable > 0 ? Math.min((used / totalAvailable) * 100, 100) : 0;
   const isOverCapacity = capacity.remaining < 0;
 
   return (
@@ -30,15 +24,11 @@ export function CapacityBar({
       <div className="mb-2 flex items-center justify-between text-xs">
         <div className="flex items-center gap-3">
           <span className="text-muted">Capacity</span>
-          <span
-            className={`font-semibold ${isOverCapacity ? 'text-danger' : 'text-foreground'}`}
-          >
+          <span className={`font-semibold ${isOverCapacity ? 'text-danger' : 'text-foreground'}`}>
             {used} / {totalAvailable}
           </span>
           {capacity.capacityBonus > 0 && (
-            <span className="text-success">
-              (+{capacity.capacityBonus} from aura/stance)
-            </span>
+            <span className="text-success">(+{capacity.capacityBonus} from aura/stance)</span>
           )}
         </div>
 
@@ -50,24 +40,16 @@ export function CapacityBar({
                   width="w-72"
                   content={
                     <>
-                      <div className="text-xs font-semibold text-foreground">
-                        Forma
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-muted">
+                      <div className="text-foreground text-xs font-semibold">Forma</div>
+                      <div className="text-muted mt-0.5 text-[10px]">
                         Standard Forma used for polarity changes.
                       </div>
                     </>
                   }
                 >
                   <span className="flex items-center gap-0.5">
-                    <img
-                      src="/icons/forma.png"
-                      alt="Forma"
-                      className="h-4 w-4 object-contain"
-                    />
-                    <span className="text-xs font-medium text-foreground">
-                      {formaCost.regular}
-                    </span>
+                    <img src="/icons/forma.png" alt="Forma" className="h-4 w-4 object-contain" />
+                    <span className="text-foreground text-xs font-medium">{formaCost.regular}</span>
                   </span>
                 </GlassTooltip>
               )}
@@ -76,12 +58,8 @@ export function CapacityBar({
                   width="w-72"
                   content={
                     <>
-                      <div className="text-xs font-semibold text-foreground">
-                        Omni Forma
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-muted">
-                        Universal polarity Forma.
-                      </div>
+                      <div className="text-foreground text-xs font-semibold">Omni Forma</div>
+                      <div className="text-muted mt-0.5 text-[10px]">Universal polarity Forma.</div>
                     </>
                   }
                 >
@@ -91,7 +69,7 @@ export function CapacityBar({
                       alt="Omni Forma"
                       className="h-4 w-4 object-contain"
                     />
-                    <span className="text-xs font-medium text-foreground">
+                    <span className="text-foreground text-xs font-medium">
                       {formaCost.universal}
                     </span>
                   </span>
@@ -102,10 +80,8 @@ export function CapacityBar({
                   width="w-72"
                   content={
                     <>
-                      <div className="text-xs font-semibold text-foreground">
-                        Umbral Forma
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-muted">
+                      <div className="text-foreground text-xs font-semibold">Umbral Forma</div>
+                      <div className="text-muted mt-0.5 text-[10px]">
                         Required for Umbral polarity slots.
                       </div>
                     </>
@@ -117,9 +93,7 @@ export function CapacityBar({
                       alt="Umbra Forma"
                       className="h-4 w-4 object-contain"
                     />
-                    <span className="text-xs font-medium text-foreground">
-                      {formaCost.umbra}
-                    </span>
+                    <span className="text-foreground text-xs font-medium">{formaCost.umbra}</span>
                   </span>
                 </GlassTooltip>
               )}
@@ -128,10 +102,10 @@ export function CapacityBar({
                   width="w-72"
                   content={
                     <>
-                      <div className="text-xs font-semibold text-foreground">
+                      <div className="text-foreground text-xs font-semibold">
                         Stance / Aura Forma
                       </div>
-                      <div className="mt-0.5 text-[10px] text-muted">
+                      <div className="text-muted mt-0.5 text-[10px]">
                         Used for universal capacity-slot polarity.
                       </div>
                     </>
@@ -143,9 +117,7 @@ export function CapacityBar({
                       alt="Stance Forma"
                       className="h-4 w-4 object-contain"
                     />
-                    <span className="text-xs font-medium text-foreground">
-                      {formaCost.stance}
-                    </span>
+                    <span className="text-foreground text-xs font-medium">{formaCost.stance}</span>
                   </span>
                 </GlassTooltip>
               )}
@@ -161,31 +133,21 @@ export function CapacityBar({
                   : 'border-glass-border text-muted hover:border-glass-border-hover hover:text-foreground'
               }`}
             >
-              <img
-                src="/icons/forma.png"
-                alt=""
-                className="h-3.5 w-3.5 object-contain"
-              />
+              <img src="/icons/forma.png" alt="" className="h-3.5 w-3.5 object-contain" />
               Forma
             </button>
           )}
 
-          <span
-            className={`font-semibold ${isOverCapacity ? 'text-danger' : 'text-success'}`}
-          >
+          <span className={`font-semibold ${isOverCapacity ? 'text-danger' : 'text-success'}`}>
             {capacity.remaining} remaining
           </span>
         </div>
       </div>
 
-      <div className="h-2 overflow-hidden rounded-full bg-glass-active">
+      <div className="bg-glass-active h-2 overflow-hidden rounded-full">
         <div
           className={`h-full rounded-full transition-all duration-300 ${
-            isOverCapacity
-              ? 'bg-danger'
-              : percentage > 80
-                ? 'bg-warning'
-                : 'bg-accent'
+            isOverCapacity ? 'bg-danger' : percentage > 80 ? 'bg-warning' : 'bg-accent'
           }`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />

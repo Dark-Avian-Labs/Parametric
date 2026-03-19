@@ -7,13 +7,7 @@ import {
 } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 
-import { EquipmentGridModal } from './EquipmentGridModal';
-import { SearchBar } from './SearchBar';
-import {
-  APP_DISPLAY_NAME,
-  LEGAL_ENTITY_NAME,
-  LEGAL_PAGE_URL,
-} from '../../app/config';
+import { APP_DISPLAY_NAME, LEGAL_ENTITY_NAME, LEGAL_PAGE_URL } from '../../app/config';
 import { APP_PATHS, buildNewPath } from '../../app/paths';
 import bgArt from '../../assets/background.txt?raw';
 import feathers from '../../assets/feathers.png';
@@ -23,6 +17,8 @@ import { useAuth } from '../../features/auth/AuthContext';
 import { getProfileIconSrc } from '../../utils/profileIcons';
 import { CompareBar } from '../Compare/CompareBar';
 import { Menu } from '../ui/Menu';
+import { EquipmentGridModal } from './EquipmentGridModal';
+import { SearchBar } from './SearchBar';
 
 export function Layout() {
   const [showAddBuild, setShowAddBuild] = useState(false);
@@ -86,13 +82,9 @@ export function Layout() {
   const handleUserMenuKeyDown = useCallback(
     (event: ReactKeyboardEvent) => {
       if (!userMenuOpen || !menuRef.current) return;
-      const items = Array.from(
-        menuRef.current.querySelectorAll<HTMLElement>('[role="menuitem"]'),
-      );
+      const items = Array.from(menuRef.current.querySelectorAll<HTMLElement>('[role="menuitem"]'));
       if (items.length === 0) return;
-      const activeIndex = items.findIndex(
-        (item) => item === document.activeElement,
-      );
+      const activeIndex = items.findIndex((item) => item === document.activeElement);
       const first = items[0];
       const last = items[items.length - 1];
 
@@ -108,9 +100,7 @@ export function Layout() {
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
         const next =
-          activeIndex < 0
-            ? items.length - 1
-            : (activeIndex - 1 + items.length) % items.length;
+          activeIndex < 0 ? items.length - 1 : (activeIndex - 1 + items.length) % items.length;
         items[next].focus();
       } else if (event.key === 'Home') {
         event.preventDefault();
@@ -141,7 +131,7 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-black focus:px-3 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-black focus:px-3 focus:py-2 focus:text-white"
       >
         Skip to main content
       </a>
@@ -151,19 +141,11 @@ export function Layout() {
       <header className="relative z-30 h-[100px] px-6">
         <div className="mx-auto grid h-full w-full max-w-[2000px] grid-cols-[1fr_auto_1fr] items-center gap-4">
           <Link to={APP_PATHS.home} className="brand-lockup w-fit">
-            <img
-              src={feathers}
-              alt="Dark Avian Labs feather mark"
-              className="brand-lockup__icon"
-            />
-            <span className="brand-lockup__title brand-lockup--fx">
-              {APP_DISPLAY_NAME}
-            </span>
+            <img src={feathers} alt="Dark Avian Labs feather mark" className="brand-lockup__icon" />
+            <span className="brand-lockup__title brand-lockup--fx">{APP_DISPLAY_NAME}</span>
           </Link>
 
-          <div className="justify-self-center">
-            {isLoggedIn ? <SearchBar /> : null}
-          </div>
+          <div className="justify-self-center">{isLoggedIn ? <SearchBar /> : null}</div>
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             <nav className="flex gap-2">
@@ -209,11 +191,7 @@ export function Layout() {
                 aria-label="Open user menu"
                 onClick={() => setUserMenuOpen((prev) => !prev)}
                 onKeyDown={(event) => {
-                  if (
-                    event.key === 'ArrowDown' ||
-                    event.key === 'Enter' ||
-                    event.key === ' '
-                  ) {
+                  if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     setUserMenuOpen(true);
                   }
@@ -285,7 +263,7 @@ export function Layout() {
         <div className="mx-auto w-full max-w-[2000px] text-center">
           <a
             href={LEGAL_PAGE_URL}
-            className="text-sm text-muted hover:text-foreground"
+            className="text-muted hover:text-foreground text-sm"
             target={LEGAL_PAGE_URL.startsWith('http') ? '_blank' : undefined}
             rel={LEGAL_PAGE_URL.startsWith('http') ? 'noreferrer' : undefined}
           >

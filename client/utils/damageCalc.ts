@@ -1,6 +1,6 @@
+import type { Weapon, ModSlot } from '../types/warframe';
 import { calculateBuildDamage } from './damage';
 import { aggregateAllMods, type StatEffects } from './modStatParser';
-import type { Weapon, ModSlot } from '../types/warframe';
 
 export interface ModdedStats {
   totalDamage: number;
@@ -47,19 +47,12 @@ function parseAmmoCost(weapon: Weapon): number {
   return 1;
 }
 
-export function calculateWeaponDps(
-  weapon: Weapon,
-  slots: ModSlot[],
-): WeaponCalcResult {
+export function calculateWeaponDps(weapon: Weapon, slots: ModSlot[]): WeaponCalcResult {
   const disposition = weapon.riven_disposition ?? weapon.omega_attenuation ?? 1;
   const effects = aggregateAllMods(slots, {
     rivenDispositionMultiplier: disposition,
   });
-  const { totalDamage: buildTotalDamage } = calculateBuildDamage(
-    weapon,
-    slots,
-    effects,
-  );
+  const { totalDamage: buildTotalDamage } = calculateBuildDamage(weapon, slots, effects);
   const isMelee = weapon.range != null;
 
   const base = {
@@ -74,20 +67,15 @@ export function calculateWeaponDps(
   };
 
   const fallbackTotalDamage = base.totalDamage * (1 + effects.baseDamage);
-  const moddedTotalDamage =
-    buildTotalDamage > 0 ? buildTotalDamage : fallbackTotalDamage;
+  const moddedTotalDamage = buildTotalDamage > 0 ? buildTotalDamage : fallbackTotalDamage;
   const moddedCritChance = base.critChance * (1 + effects.critChance);
-  const moddedCritMultiplier =
-    base.critMultiplier * (1 + effects.critMultiplier);
+  const moddedCritMultiplier = base.critMultiplier * (1 + effects.critMultiplier);
   const moddedStatusChance = base.statusChance * (1 + effects.statusChance);
   const moddedFireRate = base.fireRate * (1 + effects.fireRate);
   const moddedMultishot = base.multishot * (1 + effects.multishot);
   const reloadDivisor = 1 + effects.reloadSpeed;
-  const moddedReloadTime =
-    reloadDivisor > 0 ? base.reloadTime / reloadDivisor : base.reloadTime;
-  const moddedMagazineSize = Math.ceil(
-    base.magazineSize * (1 + effects.magazineCapacity),
-  );
+  const moddedReloadTime = reloadDivisor > 0 ? base.reloadTime / reloadDivisor : base.reloadTime;
+  const moddedMagazineSize = Math.ceil(base.magazineSize * (1 + effects.magazineCapacity));
 
   const modded: ModdedStats = {
     totalDamage: moddedTotalDamage,

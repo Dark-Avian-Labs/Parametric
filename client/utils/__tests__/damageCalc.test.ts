@@ -38,17 +38,13 @@ describe('calculateWeaponDps', () => {
   });
 
   it('applies base damage mod', () => {
-    const slots: ModSlot[] = [
-      { index: 0, type: 'general', mod: makeMod(['+165% Damage']), rank: 0 },
-    ];
+    const slots: ModSlot[] = [{ index: 0, type: 'general', mod: makeMod(['+165% Damage']), rank: 0 }];
     const result = calculateWeaponDps(makeWeapon(), slots);
     expect(result.modded.totalDamage).toBeCloseTo(265);
   });
 
   it('applies multishot mod', () => {
-    const slots: ModSlot[] = [
-      { index: 0, type: 'general', mod: makeMod(['+90% Multishot']), rank: 0 },
-    ];
+    const slots: ModSlot[] = [{ index: 0, type: 'general', mod: makeMod(['+90% Multishot']), rank: 0 }];
     const result = calculateWeaponDps(makeWeapon(), slots);
     expect(result.modded.multishot).toBeCloseTo(1.9);
   });

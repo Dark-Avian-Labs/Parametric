@@ -46,10 +46,7 @@ export function ArcaneCardPreview({
         textShadow: '0 1px 3px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,0.6)',
       }}
     >
-      <div
-        className="absolute inset-0"
-        style={{ transform: `translateY(${L.cardOffsetY * s}px)` }}
-      >
+      <div className="absolute inset-0" style={{ transform: `translateY(${L.cardOffsetY * s}px)` }}>
         <img
           src={bgSrc}
           alt="bg"
@@ -92,13 +89,12 @@ export function ArcaneCardPreview({
         )}
 
         <div
-          className="absolute left-1/2 -translate-x-1/2 text-center text-foreground"
+          className="text-foreground absolute left-1/2 -translate-x-1/2 text-center"
           style={{
             zIndex: 2,
             top: (collapsed ? L.collapsedNameOffsetY : L.nameOffsetY) * s,
             width: (L.cardWidth - L.textPaddingX * 2) * s,
-            fontSize:
-              (collapsed ? L.collapsedNameFontSize : L.nameFontSize) * s,
+            fontSize: (collapsed ? L.collapsedNameFontSize : L.nameFontSize) * s,
             fontWeight: 500,
             textShadow: '0 1px 4px rgba(0,0,0,0.9)',
           }}
@@ -143,11 +139,11 @@ export function ArcaneCardPreview({
       {showGuides && (
         <>
           <div
-            className="absolute left-1/2 top-0 h-full"
+            className="absolute top-0 left-1/2 h-full"
             style={{ width: 1, background: 'rgba(255,0,0,0.2)' }}
           />
           <div
-            className="absolute left-0 top-1/2 w-full"
+            className="absolute top-1/2 left-0 w-full"
             style={{ height: 1, background: 'rgba(255,0,0,0.2)' }}
           />
         </>

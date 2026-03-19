@@ -10,10 +10,7 @@ interface ShardPickerPanelProps {
   onClose: () => void;
 }
 
-function formatBuffValue(
-  buff: ShardType['buffs'][number],
-  tauforged: boolean,
-): string {
+function formatBuffValue(buff: ShardType['buffs'][number], tauforged: boolean): string {
   const value = tauforged ? buff.tauforged_value : buff.base_value;
   if (buff.value_format === 'proc') return '';
   if (buff.value_format === '%') return ` +${value}%`;
@@ -43,10 +40,10 @@ export function ShardPickerPanel({
   return (
     <div className="glass-panel p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Archon Shards</h2>
+        <h2 className="text-foreground text-lg font-semibold">Archon Shards</h2>
         <button
           onClick={onClose}
-          className="rounded-lg border border-glass-border px-2.5 py-1 text-xs text-muted transition-all hover:bg-glass-hover hover:text-foreground"
+          className="border-glass-border text-muted hover:bg-glass-hover hover:text-foreground rounded-lg border px-2.5 py-1 text-xs transition-all"
         >
           Back to Mods
         </button>
@@ -66,19 +63,14 @@ export function ShardPickerPanel({
                   : 'border-glass-border text-muted hover:border-glass-border-hover'
               }`}
             >
-              <img
-                src={icon}
-                alt=""
-                className="h-5 w-5 object-contain"
-                draggable={false}
-              />
+              <img src={icon} alt="" className="h-5 w-5 object-contain" draggable={false} />
               {shard.name}
             </button>
           );
         })}
       </div>
 
-      <label className="mb-3 flex items-center gap-2 text-xs text-muted">
+      <label className="text-muted mb-3 flex items-center gap-2 text-xs">
         <input
           type="checkbox"
           checked={tauforged}
@@ -88,11 +80,11 @@ export function ShardPickerPanel({
         Tauforged (1.5x values)
       </label>
 
-      <div className="max-h-[calc(100vh-500px)] overflow-y-auto custom-scroll">
+      <div className="custom-scroll max-h-[calc(100vh-500px)] overflow-y-auto">
         <div className="space-y-1">
           <button
             onClick={onRemove}
-            className="flex w-full items-center justify-between rounded-lg border border-dashed border-danger/40 px-3 py-2 text-left text-sm text-danger/70 transition-all hover:border-danger hover:bg-danger/10"
+            className="border-danger/40 text-danger/70 hover:border-danger hover:bg-danger/10 flex w-full items-center justify-between rounded-lg border border-dashed px-3 py-2 text-left text-sm transition-all"
           >
             <span>Remove Shard</span>
             <span className="text-xs">&times;</span>
@@ -100,30 +92,26 @@ export function ShardPickerPanel({
           {activeShard &&
             activeShard.buffs.map((buff) => {
               const formattedValue = formatBuffValue(buff, tauforged);
-              const buffId =
-                typeof buff.id === 'number' ? buff.id : Number(buff.id);
+              const buffId = typeof buff.id === 'number' ? buff.id : Number(buff.id);
               return (
                 <button
                   key={buff.id}
                   onClick={() => {
                     if (!Number.isFinite(buffId)) {
                       if (import.meta.env.DEV) {
-                        console.warn(
-                          '[ShardPickerPanel] Invalid buff id; selection ignored',
-                          {
-                            selectedType,
-                            rawBuffId: buff.id,
-                          },
-                        );
+                        console.warn('[ShardPickerPanel] Invalid buff id; selection ignored', {
+                          selectedType,
+                          rawBuffId: buff.id,
+                        });
                       }
                       return;
                     }
                     onSelect(selectedType, buffId, tauforged);
                   }}
-                  className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
+                  className="border-glass-border text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-all"
                 >
                   <span>{buff.description}</span>
-                  <span className="text-xs text-accent">{formattedValue}</span>
+                  <span className="text-accent text-xs">{formattedValue}</span>
                 </button>
               );
             })}

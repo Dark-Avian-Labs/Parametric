@@ -42,9 +42,7 @@ export function RivenBuilder({
   }, [config]);
 
   const [rows, setRows] = useState<RivenStat[]>(initialRows);
-  const [polarity, setPolarity] = useState<RivenConfig['polarity']>(
-    config?.polarity ?? AP_ATTACK,
-  );
+  const [polarity, setPolarity] = useState<RivenConfig['polarity']>(config?.polarity ?? AP_ATTACK);
   const [error, setError] = useState<string>('');
   const [adjustNotice, setAdjustNotice] = useState<string>('');
   const isMounted = useRef(false);
@@ -60,19 +58,12 @@ export function RivenBuilder({
   const selectedStats = rows.map((r) => r.stat).filter(Boolean);
 
   const getFilteredStats = (currentStat: string) =>
-    availableStats.filter(
-      (s) => s === currentStat || !selectedStats.includes(s),
-    );
+    availableStats.filter((s) => s === currentStat || !selectedStats.includes(s));
 
-  const updateRow = (
-    idx: number,
-    key: keyof RivenStat,
-    value: string | number,
-  ) => {
+  const updateRow = (idx: number, key: keyof RivenStat, value: string | number) => {
     const next = [...rows];
     if (key === 'stat') next[idx] = { ...next[idx], stat: value as string };
-    else if (key === 'value')
-      next[idx] = { ...next[idx], value: value as number };
+    else if (key === 'value') next[idx] = { ...next[idx], value: value as number };
     setRows(next);
   };
 
@@ -122,39 +113,24 @@ export function RivenBuilder({
       },
     ]);
     setError('');
-    setAdjustNotice(
-      verified.adjusted
-        ? 'Some values were adjusted to valid roll ranges.'
-        : '',
-    );
+    setAdjustNotice(verified.adjusted ? 'Some values were adjusted to valid roll ranges.' : '');
     onSave(verified.config);
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal max-w-lg"
-        style={{ width: '90%' }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="modal max-w-lg" style={{ width: '90%' }} onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">
-            Riven Builder
-          </h3>
-          <button
-            className="text-lg text-muted hover:text-foreground"
-            onClick={onClose}
-          >
+          <h3 className="text-foreground text-sm font-semibold">Riven Builder</h3>
+          <button className="text-muted hover:text-foreground text-lg" onClick={onClose}>
             &times;
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg border border-riven bg-glass p-4">
-          <div className="mb-2 text-center text-sm font-semibold text-riven-light">
-            Riven Mod
-          </div>
+        <div className="border-riven bg-glass mb-4 rounded-lg border p-4">
+          <div className="text-riven-light mb-2 text-center text-sm font-semibold">Riven Mod</div>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-muted">Polarity</span>
+            <span className="text-muted text-xs font-semibold">Polarity</span>
             <div className="flex items-center gap-1.5">
               {[
                 {
@@ -210,9 +186,7 @@ export function RivenBuilder({
                 .slice(0, 3)
                 .filter((r) => r.stat)
                 .map((r) => ({ ...r, isNegative: false })),
-              negative: rows[3]?.stat
-                ? { ...rows[3], isNegative: true }
-                : undefined,
+              negative: rows[3]?.stat ? { ...rows[3], isNegative: true } : undefined,
             }) || 'Select at least two positive stats'}
           </div>
         </div>
@@ -243,9 +217,7 @@ export function RivenBuilder({
                 <input
                   type="number"
                   value={stat.value}
-                  onChange={(e) =>
-                    updateRow(i, 'value', parseFloat(e.target.value) || 0)
-                  }
+                  onChange={(e) => updateRow(i, 'value', parseFloat(e.target.value) || 0)}
                   className="form-input w-20 text-xs"
                   step="0.1"
                 />
@@ -254,13 +226,9 @@ export function RivenBuilder({
           </div>
         </div>
 
-        <p className="mb-2 text-[11px] text-muted">
-          Values will be verified and adjusted on save.
-        </p>
-        {adjustNotice && (
-          <p className="mb-2 text-xs text-muted">{adjustNotice}</p>
-        )}
-        {error && <p className="mb-4 text-xs text-danger">{error}</p>}
+        <p className="text-muted mb-2 text-[11px]">Values will be verified and adjusted on save.</p>
+        {adjustNotice && <p className="text-muted mb-2 text-xs">{adjustNotice}</p>}
+        {error && <p className="text-danger mb-4 text-xs">{error}</p>}
 
         <div className="flex justify-end gap-2">
           <button className="btn btn-secondary text-xs" onClick={onClose}>

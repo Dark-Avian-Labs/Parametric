@@ -1,5 +1,5 @@
-import { getRequiredExaltedStanceName } from './specialItems';
 import type { Mod, EquipmentType } from '../types/warframe';
+import { getRequiredExaltedStanceName } from './specialItems';
 
 export const VARIANT_PREFIXES = [
   'Primed',
@@ -90,11 +90,7 @@ export function getCompanionSubtype(equipment?: {
   ) {
     return 'kavat';
   }
-  if (
-    name.includes('KUBROW') ||
-    name.includes('PREDASITE') ||
-    unique.includes('KUBROWPET')
-  ) {
+  if (name.includes('KUBROW') || name.includes('PREDASITE') || unique.includes('KUBROWPET')) {
     return 'kubrow';
   }
   if (unique.includes('/SENTINELS/')) {
@@ -160,8 +156,7 @@ function isWarframeModCompatible(
 ): boolean {
   if (modType === 'AURA') return true;
 
-  if (modType === 'WARFRAME' && compat.toUpperCase() === 'WARFRAME')
-    return true;
+  if (modType === 'WARFRAME' && compat.toUpperCase() === 'WARFRAME') return true;
 
   if (modType === 'WARFRAME' && equipment) {
     const equipName = equipment.name.replace(/\s+PRIME$/i, '').toUpperCase();
@@ -194,11 +189,7 @@ function isPrimaryModCompatible(
 
   const category = equipment?.product_category || '';
   if (category === 'SentinelWeapons') {
-    if (
-      compatUpper === 'RIFLE' ||
-      compatUpper === 'ASSAULT RIFLE' ||
-      compatUpper === 'SHOTGUN'
-    ) {
+    if (compatUpper === 'RIFLE' || compatUpper === 'ASSAULT RIFLE' || compatUpper === 'SHOTGUN') {
       return true;
     }
   }
@@ -280,8 +271,7 @@ function isCompanionModCompatible(
   equipment?: { unique_name: string; name: string },
 ): boolean {
   const compatUpper = compat.toUpperCase();
-  const normalizedName =
-    equipment?.name.replace(/\s+/g, ' ').toUpperCase() || '';
+  const normalizedName = equipment?.name.replace(/\s+/g, ' ').toUpperCase() || '';
   const companionSubtype = getCompanionSubtype(equipment);
 
   if (
@@ -294,22 +284,18 @@ function isCompanionModCompatible(
     if (compatUpper === normalizedName) return true;
 
     if (modType === 'HELMINTH CHARGER') {
-      return (
-        companionSubtype === 'helminth' && compatUpper === 'HELMINTH CHARGER'
-      );
+      return companionSubtype === 'helminth' && compatUpper === 'HELMINTH CHARGER';
     }
 
     if (modType === 'KAVAT') {
       return (
-        companionSubtype === 'kavat' &&
-        (compatUpper === 'KAVAT' || compatUpper === 'VULPAPHYLA')
+        companionSubtype === 'kavat' && (compatUpper === 'KAVAT' || compatUpper === 'VULPAPHYLA')
       );
     }
 
     if (modType === 'KUBROW') {
       return (
-        companionSubtype === 'kubrow' &&
-        (compatUpper === 'KUBROW' || compatUpper === 'PREDASITE')
+        companionSubtype === 'kubrow' && (compatUpper === 'KUBROW' || compatUpper === 'PREDASITE')
       );
     }
 
@@ -327,9 +313,7 @@ function isCompanionModCompatible(
     }
     if (companionSubtype === 'helminth') {
       return (
-        compatUpper === 'COMPANION' ||
-        compatUpper === 'BEAST' ||
-        compatUpper === 'HELMINTH CHARGER'
+        compatUpper === 'COMPANION' || compatUpper === 'BEAST' || compatUpper === 'HELMINTH CHARGER'
       );
     }
 
@@ -339,11 +323,7 @@ function isCompanionModCompatible(
   return false;
 }
 
-function isBeastClawModCompatible(
-  mod: Mod,
-  modType: string,
-  compat: string,
-): boolean {
+function isBeastClawModCompatible(mod: Mod, modType: string, compat: string): boolean {
   const compatUpper = compat.toUpperCase();
 
   if (modType === 'STANCE') {

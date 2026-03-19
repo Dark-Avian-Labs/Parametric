@@ -16,10 +16,4 @@ export {
   dbPolarityToIconName,
   isArchonMod,
 } from './cardLayout';
-export type {
-  CardLayout,
-  ArcaneCardLayout,
-  ArcaneRarity,
-  Rarity,
-  SlotIcon,
-} from './cardLayout';
+export type { CardLayout, ArcaneCardLayout, ArcaneRarity, Rarity, SlotIcon } from './cardLayout';

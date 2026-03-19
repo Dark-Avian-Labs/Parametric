@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useReducer,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
 
 import type { EquipmentType } from '../types/warframe';
 import type { WeaponCalcResult } from '../utils/damageCalc';
@@ -34,10 +27,7 @@ type CompareAction =
 
 const MAX_SNAPSHOTS = 3;
 
-function compareReducer(
-  state: CompareState,
-  action: CompareAction,
-): CompareState {
+function compareReducer(state: CompareState, action: CompareAction): CompareState {
   switch (action.type) {
     case 'ADD_SNAPSHOT': {
       const next = [...state.snapshots, action.snapshot];
@@ -69,10 +59,7 @@ export function CompareProvider({ children }: { children: ReactNode }) {
     (snapshot: CompareSnapshot) => dispatch({ type: 'ADD_SNAPSHOT', snapshot }),
     [],
   );
-  const removeSnapshot = useCallback(
-    (id: string) => dispatch({ type: 'REMOVE_SNAPSHOT', id }),
-    [],
-  );
+  const removeSnapshot = useCallback((id: string) => dispatch({ type: 'REMOVE_SNAPSHOT', id }), []);
   const clearAll = useCallback(() => dispatch({ type: 'CLEAR_ALL' }), []);
 
   const value = useMemo<CompareContextValue>(
@@ -85,9 +72,7 @@ export function CompareProvider({ children }: { children: ReactNode }) {
     [state.snapshots, addSnapshot, removeSnapshot, clearAll],
   );
 
-  return (
-    <CompareContext.Provider value={value}>{children}</CompareContext.Provider>
-  );
+  return <CompareContext.Provider value={value}>{children}</CompareContext.Provider>;
 }
 
 export function useCompare(): CompareContextValue {

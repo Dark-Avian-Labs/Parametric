@@ -8,12 +8,8 @@ export function createAppSchema(): void {
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
-  const hasMigration = db.prepare(
-    'SELECT 1 FROM schema_migrations WHERE id = ?',
-  );
-  const markMigration = db.prepare(
-    'INSERT OR IGNORE INTO schema_migrations (id) VALUES (?)',
-  );
+  const hasMigration = db.prepare('SELECT 1 FROM schema_migrations WHERE id = ?');
+  const markMigration = db.prepare('INSERT OR IGNORE INTO schema_migrations (id) VALUES (?)');
 
   db.exec(`
     -- Warframes (includes Archwings, Necramechs)
@@ -344,17 +340,13 @@ export function createAppSchema(): void {
       sql: 'ALTER TABLE arcanes ADD COLUMN compat_tags TEXT',
     },
   ];
-  const ALLOWED_MIGRATION_TABLES = new Set(
-    migrations.map((migration) => migration.table),
-  );
+  const ALLOWED_MIGRATION_TABLES = new Set(migrations.map((migration) => migration.table));
   for (const m of migrations) {
     if (hasMigration.get(m.id)) {
       continue;
     }
     if (!ALLOWED_MIGRATION_TABLES.has(m.table)) {
-      throw new Error(
-        `[DB] Migration ${m.id} references unexpected table: ${m.table}`,
-      );
+      throw new Error(`[DB] Migration ${m.id} references unexpected table: ${m.table}`);
     }
     const cols = db.prepare(`PRAGMA table_info(${m.table})`).all() as {
       name: string;
@@ -373,21 +365,15 @@ export function createAppSchema(): void {
       LIMIT 1`,
   );
   if (hasColumn.get('builds', 'share_token')) {
-    db.exec(
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_builds_share_token ON builds(share_token)',
-    );
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_builds_share_token ON builds(share_token)');
   }
   if (hasColumn.get('loadouts', 'share_token')) {
-    db.exec(
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_loadouts_share_token ON loadouts(share_token)',
-    );
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_loadouts_share_token ON loadouts(share_token)');
   }
 
   const ARCHON_MIGRATION_ID = '20260301_archon_shard_types_id_integer';
   if (!hasMigration.get(ARCHON_MIGRATION_ID)) {
-    const archonCols = db
-      .prepare('PRAGMA table_info(archon_shard_types)')
-      .all() as {
+    const archonCols = db.prepare('PRAGMA table_info(archon_shard_types)').all() as {
       name: string;
       type: string;
     }[];
@@ -426,10 +412,7 @@ export function createAppSchema(): void {
               row.tauforged_icon_path,
               row.sort_order,
             );
-            typeIdMap.set(
-              row.id,
-              (result as { lastInsertRowid: number }).lastInsertRowid,
-            );
+            typeIdMap.set(row.id, (result as { lastInsertRowid: number }).lastInsertRowid);
           }
           const oldBuffs = db
             .prepare(
@@ -445,9 +428,7 @@ export function createAppSchema(): void {
           }[];
           db.exec(`DROP TABLE archon_shard_buffs`);
           db.exec(`DROP TABLE archon_shard_types`);
-          db.exec(
-            `ALTER TABLE archon_shard_types_new RENAME TO archon_shard_types`,
-          );
+          db.exec(`ALTER TABLE archon_shard_types_new RENAME TO archon_shard_types`);
           db.exec(`
           CREATE TABLE archon_shard_buffs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -481,9 +462,7 @@ export function createAppSchema(): void {
           }
         })();
         markMigration.run(ARCHON_MIGRATION_ID);
-        console.log(
-          '[DB] Migration: archon_shard_types id TEXT -> INTEGER AUTOINCREMENT',
-        );
+        console.log('[DB] Migration: archon_shard_types id TEXT -> INTEGER AUTOINCREMENT');
       } catch (err) {
         console.error('[DB] Migration failed, rolled back:', err);
         throw err;

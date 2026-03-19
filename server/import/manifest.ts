@@ -19,15 +19,11 @@ export async function downloadAndParseManifest(): Promise<ManifestEntry[]> {
 
   const response = await fetch(MANIFEST_URL);
   if (!response.ok) {
-    throw new Error(
-      `Failed to download manifest: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Failed to download manifest: ${response.status} ${response.statusText}`);
   }
 
   const compressedBuffer = Buffer.from(await response.arrayBuffer());
-  console.log(
-    `[Import] Downloaded ${compressedBuffer.length} bytes, decompressing...`,
-  );
+  console.log(`[Import] Downloaded ${compressedBuffer.length} bytes, decompressing...`);
 
   const text = await decompressLzma(compressedBuffer);
 
@@ -41,18 +37,15 @@ export async function downloadAndParseManifest(): Promise<ManifestEntry[]> {
 function decompressLzma(compressed: Buffer): Promise<string> {
   return new Promise((resolve, reject) => {
     const byteArray = Array.from(compressed);
-    lzmaWorker.decompress(
-      byteArray,
-      (result: string | null, error?: Error | string) => {
-        if (error) {
-          reject(typeof error === 'string' ? new Error(error) : error);
-        } else if (result !== null) {
-          resolve(result);
-        } else {
-          reject(new Error('LZMA decompression returned null'));
-        }
-      },
-    );
+    lzmaWorker.decompress(byteArray, (result: string | null, error?: Error | string) => {
+      if (error) {
+        reject(typeof error === 'string' ? new Error(error) : error);
+      } else if (result !== null) {
+        resolve(result);
+      } else {
+        reject(new Error('LZMA decompression returned null'));
+      }
+    });
   });
 }
 
@@ -70,8 +63,7 @@ export function parseManifestText(text: string): ManifestEntry[] {
     const hash = trimmed.substring(bangIndex + 1);
 
     const dotIndex = filename.indexOf('.');
-    const category =
-      dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
+    const category = dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
 
     entries.push({
       category,

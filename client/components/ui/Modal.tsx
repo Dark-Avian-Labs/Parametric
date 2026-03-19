@@ -12,13 +12,7 @@ interface ModalProps {
 const FOCUSABLE_SELECTOR =
   'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Modal({
-  open,
-  onClose,
-  children,
-  className,
-  ariaLabelledBy,
-}: ModalProps) {
+export function Modal({ open, onClose, children, className, ariaLabelledBy }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
@@ -32,9 +26,7 @@ export function Modal({
     const previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     previousFocusRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const dialog = dialogRef.current;
     if (!dialog) {
       return () => {
@@ -43,9 +35,7 @@ export function Modal({
       };
     }
 
-    const focusables = Array.from(
-      dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-    );
+    const focusables = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
     (focusables[0] ?? dialog).focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -55,9 +45,7 @@ export function Modal({
         return;
       }
       if (event.key !== 'Tab') return;
-      const nodes = Array.from(
-        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      );
+      const nodes = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
       if (nodes.length === 0) {
         event.preventDefault();
         dialog.focus();

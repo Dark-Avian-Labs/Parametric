@@ -21,10 +21,7 @@ const CATEGORY_URLS: Record<string, string> = {
   companion: '/build/new/sentinels/',
 };
 
-async function scrapeCategory(
-  category: string,
-  urlPath: string,
-): Promise<OverframeIndexEntry[]> {
+async function scrapeCategory(category: string, urlPath: string): Promise<OverframeIndexEntry[]> {
   const url = `${BASE_URL}${urlPath}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
@@ -49,22 +46,21 @@ async function scrapeCategory(
   return entries;
 }
 
-function matchToDb(
-  entries: OverframeIndexEntry[],
-  onlyMissing = false,
-): OverframeIndexEntry[] {
+function matchToDb(entries: OverframeIndexEntry[], onlyMissing = false): OverframeIndexEntry[] {
   const db = getDb();
 
-  const warframes = db
-    .prepare('SELECT unique_name, name FROM warframes')
-    .all() as { unique_name: string; name: string }[];
+  const warframes = db.prepare('SELECT unique_name, name FROM warframes').all() as {
+    unique_name: string;
+    name: string;
+  }[];
   const weapons = db.prepare('SELECT unique_name, name FROM weapons').all() as {
     unique_name: string;
     name: string;
   }[];
-  const companions = db
-    .prepare('SELECT unique_name, name FROM companions')
-    .all() as { unique_name: string; name: string }[];
+  const companions = db.prepare('SELECT unique_name, name FROM companions').all() as {
+    unique_name: string;
+    name: string;
+  }[];
 
   const nameMap = new Map<string, string>();
   for (const item of [...warframes, ...weapons, ...companions]) {
@@ -76,9 +72,7 @@ function matchToDb(
     hasDataSet = new Set<string>();
     for (const table of ['warframes', 'weapons', 'companions']) {
       const rows = db
-        .prepare(
-          `SELECT unique_name FROM ${table} WHERE artifact_slots IS NOT NULL`,
-        )
+        .prepare(`SELECT unique_name FROM ${table} WHERE artifact_slots IS NOT NULL`)
         .all() as { unique_name: string }[];
       for (const row of rows) hasDataSet.add(row.unique_name);
     }
@@ -127,9 +121,7 @@ export async function scrapeIndex(
       `${matched.length} items need scraping (${allEntries.length - matched.length} already have data)`,
     );
   } else {
-    onProgress?.(
-      `Matched ${matched.length} of ${allEntries.length} to database`,
-    );
+    onProgress?.(`Matched ${matched.length} of ${allEntries.length} to database`);
   }
 
   return {

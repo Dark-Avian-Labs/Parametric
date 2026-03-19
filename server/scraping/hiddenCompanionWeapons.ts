@@ -8,17 +8,13 @@ const OVERFRAME_BASE_URL = 'https://overframe.gg';
 const BEAST_CLAWS_ICON_PATH = '/icons/beast-claws.png';
 const BEAST_CLAWS_ICON_FILE = 'beast-claws.png';
 
-function ensureBeastClawsIconInDataImages(
-  onProgress?: (msg: string) => void,
-): void {
+function ensureBeastClawsIconInDataImages(onProgress?: (msg: string) => void): void {
   const sourcePath = path.join(PROJECT_ROOT, 'icons', BEAST_CLAWS_ICON_FILE);
   const targetDir = path.join(IMAGES_DIR, 'icons');
   const targetPath = path.join(targetDir, BEAST_CLAWS_ICON_FILE);
 
   if (!fs.existsSync(sourcePath)) {
-    onProgress?.(
-      `Overframe hidden claw sync: icon source not found at ${sourcePath}`,
-    );
+    onProgress?.(`Overframe hidden claw sync: icon source not found at ${sourcePath}`);
     return;
   }
 
@@ -67,20 +63,14 @@ function toNumber(value: unknown): number | null {
   return null;
 }
 
-function sumDamageFromBehavior(
-  behavior: Record<string, unknown>,
-): number | null {
-  const impact = behavior['impact:WeaponImpactBehavior'] as
-    | Record<string, unknown>
-    | undefined;
+function sumDamageFromBehavior(behavior: Record<string, unknown>): number | null {
+  const impact = behavior['impact:WeaponImpactBehavior'] as Record<string, unknown> | undefined;
   const attackData = impact?.AttackData as Record<string, unknown> | undefined;
   const amount = toNumber(attackData?.Amount);
   return amount;
 }
 
-function extractWeaponDataFromNextData(
-  nextData: unknown,
-): OverframeWeaponData | null {
+function extractWeaponDataFromNextData(nextData: unknown): OverframeWeaponData | null {
   if (!nextData || typeof nextData !== 'object') return null;
   const root = nextData as Record<string, unknown>;
   const item = (
@@ -100,9 +90,7 @@ function extractWeaponDataFromNextData(
   const productCategory = String(data?.ProductCategory ?? '');
   if (productCategory !== 'SentinelWeapons') return null;
 
-  const behaviorsRaw = Array.isArray(data?.Behaviors)
-    ? (data?.Behaviors as unknown[])
-    : [];
+  const behaviorsRaw = Array.isArray(data?.Behaviors) ? (data?.Behaviors as unknown[]) : [];
   const behaviors = behaviorsRaw.filter(
     (value): value is Record<string, unknown> =>
       !!value && typeof value === 'object' && !Array.isArray(value),
@@ -116,10 +104,9 @@ function extractWeaponDataFromNextData(
 
   const totalDamage = sumDamageFromBehavior(firstBehavior);
 
-  const artifactSlots = Array.isArray(data?.ArtifactSlots)
-    ? (data?.ArtifactSlots as unknown[]).filter(
-        (slot): slot is string => typeof slot === 'string',
-      )
+  const artifactSlotsRaw = data?.ArtifactSlots;
+  const artifactSlots = Array.isArray(artifactSlotsRaw)
+    ? artifactSlotsRaw.filter((slot): slot is string => typeof slot === 'string')
     : undefined;
 
   const iconPath = typeof data?.Icon === 'string' ? data.Icon : undefined;
@@ -131,18 +118,13 @@ function extractWeaponDataFromNextData(
     artifactSlots,
     behaviors,
     criticalChance: toNumber(impact?.criticalHitChance) ?? undefined,
-    criticalMultiplier:
-      toNumber(impact?.criticalHitDamageMultiplier) ?? undefined,
-    procChance:
-      toNumber((impact?.AttackData as Record<string, unknown>)?.ProcChance) ??
-      undefined,
+    criticalMultiplier: toNumber(impact?.criticalHitDamageMultiplier) ?? undefined,
+    procChance: toNumber((impact?.AttackData as Record<string, unknown>)?.ProcChance) ?? undefined,
     totalDamage: totalDamage ?? undefined,
   };
 }
 
-async function fetchOverframeNextData(
-  relativeUrl: string,
-): Promise<OverframeWeaponData | null> {
+async function fetchOverframeNextData(relativeUrl: string): Promise<OverframeWeaponData | null> {
   const url = `${OVERFRAME_BASE_URL}${relativeUrl}`;
   try {
     const controller = new AbortController();

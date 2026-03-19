@@ -1,21 +1,12 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-} from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 
-import type { Arcane } from './ArcaneSlots';
 import { useApi } from '../../hooks/useApi';
 import type { EquipmentType } from '../../types/warframe';
 import { getMaxRank, getArcaneDescription } from '../../utils/arcaneUtils';
 import { GlassTooltip } from '../GlassTooltip';
 import { ArcaneCardPreview } from '../ModCard/ArcaneCardPreview';
-import {
-  DEFAULT_ARCANE_LAYOUT,
-  normalizeArcaneRarity,
-} from '../ModCard/cardLayout';
+import { DEFAULT_ARCANE_LAYOUT, normalizeArcaneRarity } from '../ModCard/cardLayout';
+import type { Arcane } from './ArcaneSlots';
 
 interface ArcanePickerPanelProps {
   equipmentType: EquipmentType;
@@ -40,9 +31,7 @@ export function ArcanePickerPanel({
   );
   const arcanes = data?.items || [];
 
-  const filtered = arcanes.filter((a) =>
-    a.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = arcanes.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()));
 
   const gridRef = useRef<HTMLDivElement>(null);
   const [cardScale, setCardScale] = useState<number>(0);
@@ -70,16 +59,16 @@ export function ArcanePickerPanel({
     <div className="glass-panel p-4">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Arcanes</h2>
+          <h2 className="text-foreground text-lg font-semibold">Arcanes</h2>
           {currentArcaneName && (
-            <p className="text-xs text-muted">
+            <p className="text-muted text-xs">
               Current: <span className="text-accent">{currentArcaneName}</span>
             </p>
           )}
         </div>
         <button
           onClick={onClose}
-          className="rounded-lg border border-glass-border px-2.5 py-1 text-xs text-muted transition-all hover:bg-glass-hover hover:text-foreground"
+          className="border-glass-border text-muted hover:bg-glass-hover hover:text-foreground rounded-lg border px-2.5 py-1 text-xs transition-all"
         >
           Back to Mods
         </button>
@@ -94,14 +83,12 @@ export function ArcanePickerPanel({
         autoFocus
       />
 
-      <div className="mb-2 text-xs text-muted">
-        {filtered.length} arcanes available
-      </div>
+      <div className="text-muted mb-2 text-xs">{filtered.length} arcanes available</div>
 
-      <div className="max-h-[calc(100vh-420px)] overflow-y-auto custom-scroll">
-        {loading && <p className="text-sm text-muted">Loading arcanes...</p>}
+      <div className="custom-scroll max-h-[calc(100vh-420px)] overflow-y-auto">
+        {loading && <p className="text-muted text-sm">Loading arcanes...</p>}
         {!loading && filtered.length === 0 && (
-          <p className="text-sm text-muted">No arcanes match the search.</p>
+          <p className="text-muted text-sm">No arcanes match the search.</p>
         )}
         <div ref={gridRef} className="grid grid-cols-4">
           {cardScale > 0 && !loading && filtered.length > 0 && (
@@ -125,14 +112,8 @@ export function ArcanePickerPanel({
                     clone.style.pointerEvents = 'none';
                     document.body.appendChild(clone);
                     const rect = el.getBoundingClientRect();
-                    e.dataTransfer.setDragImage(
-                      clone,
-                      rect.width / 2,
-                      rect.height / 2,
-                    );
-                    requestAnimationFrame(() =>
-                      document.body.removeChild(clone),
-                    );
+                    e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+                    requestAnimationFrame(() => document.body.removeChild(clone));
                   }}
                   className="cursor-grab"
                 >
@@ -195,13 +176,9 @@ function ArcanePickerCard({
 
   const tooltipContent = desc ? (
     <>
-      <div className="mb-1 text-xs font-semibold text-foreground">
-        {arcane.name}
-      </div>
-      <div className="text-[10px] leading-tight text-muted">{desc}</div>
-      {arcane.rarity && (
-        <div className="mt-1 text-[9px] text-muted/50">{arcane.rarity}</div>
-      )}
+      <div className="text-foreground mb-1 text-xs font-semibold">{arcane.name}</div>
+      <div className="text-muted text-[10px] leading-tight">{desc}</div>
+      {arcane.rarity && <div className="text-muted/50 mt-1 text-[9px]">{arcane.rarity}</div>}
     </>
   ) : null;
 

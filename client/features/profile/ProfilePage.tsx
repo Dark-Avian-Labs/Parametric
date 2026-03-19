@@ -34,7 +34,7 @@ export function ProfilePage() {
     return (
       <div className="mx-auto max-w-4xl">
         <div className="glass-shell p-6">
-          <p className="text-sm text-muted">Unable to load profile data.</p>
+          <p className="text-muted text-sm">Unable to load profile data.</p>
         </div>
       </div>
     );
@@ -135,16 +135,13 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="glass-shell p-6">
-        <h1 className="text-2xl font-semibold text-foreground">Profile</h1>
+        <h1 className="text-foreground text-2xl font-semibold">Profile</h1>
       </div>
       <div className="glass-shell p-6">
         <h2 className="sr-only">Profile details</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label
-              htmlFor="profile-username"
-              className="mb-1.5 block text-sm text-muted"
-            >
+            <label htmlFor="profile-username" className="text-muted mb-1.5 block text-sm">
               Username
             </label>
             <input
@@ -156,10 +153,7 @@ export function ProfilePage() {
             />
           </div>
           <div>
-            <label
-              htmlFor="profile-role"
-              className="mb-1.5 block text-sm text-muted"
-            >
+            <label htmlFor="profile-role" className="text-muted mb-1.5 block text-sm">
               Role
             </label>
             <input
@@ -171,10 +165,7 @@ export function ProfilePage() {
             />
           </div>
           <div>
-            <label
-              htmlFor="profile-display-name"
-              className="mb-1.5 block text-sm text-muted"
-            >
+            <label htmlFor="profile-display-name" className="text-muted mb-1.5 block text-sm">
               Name
             </label>
             <input
@@ -190,10 +181,7 @@ export function ProfilePage() {
             />
           </div>
           <div>
-            <label
-              htmlFor="profile-email"
-              className="mb-1.5 block text-sm text-muted"
-            >
+            <label htmlFor="profile-email" className="text-muted mb-1.5 block text-sm">
               Email
             </label>
             <input
@@ -249,10 +237,7 @@ export function ProfilePage() {
         ariaLabelledBy="change-password-title"
         onClose={resetPasswordModalState}
       >
-        <h3
-          id="change-password-title"
-          className="mb-3 text-lg font-semibold text-foreground"
-        >
+        <h3 id="change-password-title" className="text-foreground mb-3 text-lg font-semibold">
           Change Password
         </h3>
         <div className="space-y-3">

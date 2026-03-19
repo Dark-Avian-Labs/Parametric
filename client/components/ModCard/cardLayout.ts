@@ -13,13 +13,7 @@ export const RARITIES = [
 export const SLOT_ICONS = ['', 'aura', 'stance', 'posture', 'exilus'] as const;
 export type SlotIcon = (typeof SLOT_ICONS)[number];
 export type Rarity = (typeof RARITIES)[number];
-export const ARCANE_RARITIES = [
-  'common',
-  'uncommon',
-  'rare',
-  'legendary',
-  'empty',
-] as const;
+export const ARCANE_RARITIES = ['common', 'uncommon', 'rare', 'legendary', 'empty'] as const;
 export type ArcaneRarity = (typeof ARCANE_RARITIES)[number];
 
 export const DAMAGE_COLORS: Record<string, string> = {
@@ -66,28 +60,18 @@ export function getRarityBorderColor(rarity: Rarity): string {
   }
 }
 
-export function getModAsset(
-  rarity: Rarity,
-  part: string,
-  modSet?: string,
-): string {
+export function getModAsset(rarity: Rarity, part: string, modSet?: string): string {
   if (modSet && part === 'FrameTop') {
     const setFolder = modSet.split('/').pop();
     if (setFolder) return `/icons/mods/sets/${setFolder}/${rarity}FrameTop.png`;
   }
-  if (
-    rarity === 'Galvanized' &&
-    ['Background', 'SideLight', 'LowerTab'].includes(part)
-  ) {
+  if (rarity === 'Galvanized' && ['Background', 'SideLight', 'LowerTab'].includes(part)) {
     return `/icons/mods/Legendary${part}.png`;
   }
   return `/icons/mods/${rarity}${part}.png`;
 }
 
-export function dbRarityToCardRarity(
-  dbRarity?: string,
-  modName?: string,
-): Rarity {
+export function dbRarityToCardRarity(dbRarity?: string, modName?: string): Rarity {
   if (modName && isArchonMod(modName)) return 'Archon';
   if (modName && isGalvanizedMod(modName)) return 'Galvanized';
   if (modName && isAmalgamMod(modName)) return 'Amalgam';
@@ -106,24 +90,15 @@ export function dbRarityToCardRarity(
 }
 
 export function isArchonMod(nameOrUniqueName: string): boolean {
-  return (
-    nameOrUniqueName.startsWith('Archon ') ||
-    nameOrUniqueName.includes('/Archon/')
-  );
+  return nameOrUniqueName.startsWith('Archon ') || nameOrUniqueName.includes('/Archon/');
 }
 
 export function isGalvanizedMod(nameOrUniqueName: string): boolean {
-  return (
-    nameOrUniqueName.startsWith('Galvanized ') ||
-    nameOrUniqueName.includes('/Galvanized/')
-  );
+  return nameOrUniqueName.startsWith('Galvanized ') || nameOrUniqueName.includes('/Galvanized/');
 }
 
 export function isAmalgamMod(nameOrUniqueName: string): boolean {
-  return (
-    nameOrUniqueName.startsWith('Amalgam ') ||
-    nameOrUniqueName.includes('/Amalgam/')
-  );
+  return nameOrUniqueName.startsWith('Amalgam ') || nameOrUniqueName.includes('/Amalgam/');
 }
 
 export function dbPolarityToIconName(dbPolarity?: string): string {

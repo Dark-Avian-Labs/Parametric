@@ -274,18 +274,10 @@ export const DAMAGE_TYPES = [
 
 export type DamageType = (typeof DAMAGE_TYPES)[number];
 
-export const PRIMARY_ELEMENTS = [
-  'Heat',
-  'Cold',
-  'Electricity',
-  'Toxin',
-] as const;
+export const PRIMARY_ELEMENTS = ['Heat', 'Cold', 'Electricity', 'Toxin'] as const;
 export type PrimaryElement = (typeof PRIMARY_ELEMENTS)[number];
 
-export const ELEMENT_COMBINATIONS: Record<
-  string,
-  { a: PrimaryElement; b: PrimaryElement }
-> = {
+export const ELEMENT_COMBINATIONS: Record<string, { a: PrimaryElement; b: PrimaryElement }> = {
   Blast: { a: 'Heat', b: 'Cold' },
   Corrosive: { a: 'Electricity', b: 'Toxin' },
   Gas: { a: 'Heat', b: 'Toxin' },
@@ -294,12 +286,7 @@ export const ELEMENT_COMBINATIONS: Record<
   Viral: { a: 'Cold', b: 'Toxin' },
 };
 
-export const ELEMENT_PRIORITY: PrimaryElement[] = [
-  'Heat',
-  'Cold',
-  'Electricity',
-  'Toxin',
-];
+export const ELEMENT_PRIORITY: PrimaryElement[] = ['Heat', 'Cold', 'Electricity', 'Toxin'];
 
 export interface EquipmentSlotConfig {
   generalSlots: number;
@@ -310,10 +297,7 @@ export interface EquipmentSlotConfig {
   hasSecondAura: boolean;
 }
 
-export const EQUIPMENT_SLOT_CONFIGS: Record<
-  EquipmentType,
-  EquipmentSlotConfig
-> = {
+export const EQUIPMENT_SLOT_CONFIGS: Record<EquipmentType, EquipmentSlotConfig> = {
   warframe: {
     generalSlots: 8,
     hasAura: true,

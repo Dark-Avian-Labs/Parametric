@@ -22,9 +22,7 @@ export function HelminthPickerPanel({
   onClose,
 }: HelminthPickerPanelProps) {
   const [search, setSearch] = useState('');
-  const { data, loading } = useApi<{ items: Ability[] }>(
-    '/api/helminth-abilities',
-  );
+  const { data, loading } = useApi<{ items: Ability[] }>('/api/helminth-abilities');
   const helminthAbilities = data?.items || [];
 
   const filtered = helminthAbilities.filter((a) =>
@@ -33,46 +31,42 @@ export function HelminthPickerPanel({
 
   const renderDamageSnippet = (raw: string): React.ReactNode => {
     const cleaned = sanitizeDisplayTextKeepDamageTokens(raw);
-    return splitDisplayTextByDamageTokens(cleaned).map(
-      (segment, segmentIndex) => {
-        if (segment.kind === 'text') {
-          return <span key={`t-${segmentIndex}`}>{segment.value}</span>;
-        }
-        const iconPath = getDamageTypeIconPath(segment.value);
-        if (!iconPath)
-          return <span key={`u-${segmentIndex}`}>{segment.value}</span>;
-        return (
-          <img
-            key={`i-${segmentIndex}`}
-            src={iconPath}
-            alt={segment.value}
-            className="mx-[0.08em] inline-block"
-            style={{
-              width: 12,
-              height: 12,
-              verticalAlign: '-0.12em',
-              filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))',
-            }}
-            draggable={false}
-          />
-        );
-      },
-    );
+    return splitDisplayTextByDamageTokens(cleaned).map((segment, segmentIndex) => {
+      if (segment.kind === 'text') {
+        return <span key={`t-${segmentIndex}`}>{segment.value}</span>;
+      }
+      const iconPath = getDamageTypeIconPath(segment.value);
+      if (!iconPath) return <span key={`u-${segmentIndex}`}>{segment.value}</span>;
+      return (
+        <img
+          key={`i-${segmentIndex}`}
+          src={iconPath}
+          alt={segment.value}
+          className="mx-[0.08em] inline-block"
+          style={{
+            width: 12,
+            height: 12,
+            verticalAlign: '-0.12em',
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))',
+          }}
+          draggable={false}
+        />
+      );
+    });
   };
 
   return (
     <div className="glass-panel p-4">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Helminth</h2>
-          <p className="text-xs text-muted">
-            Replacing:{' '}
-            <span className="text-danger">{replacingAbilityName}</span>
+          <h2 className="text-foreground text-lg font-semibold">Helminth</h2>
+          <p className="text-muted text-xs">
+            Replacing: <span className="text-danger">{replacingAbilityName}</span>
           </p>
         </div>
         <button
           onClick={onClose}
-          className="rounded-lg border border-glass-border px-2.5 py-1 text-xs text-muted transition-all hover:bg-glass-hover hover:text-foreground"
+          className="border-glass-border text-muted hover:bg-glass-hover hover:text-foreground rounded-lg border px-2.5 py-1 text-xs transition-all"
         >
           Back to Mods
         </button>
@@ -87,29 +81,25 @@ export function HelminthPickerPanel({
         autoFocus
       />
 
-      <div className="mb-2 text-xs text-muted">
-        {filtered.length} abilities available
-      </div>
+      <div className="text-muted mb-2 text-xs">{filtered.length} abilities available</div>
 
-      <div className="max-h-[calc(100vh-420px)] overflow-y-auto custom-scroll">
+      <div className="custom-scroll max-h-[calc(100vh-420px)] overflow-y-auto">
         {loading ? (
-          <p className="text-sm text-muted">Loading abilities...</p>
+          <p className="text-muted text-sm">Loading abilities...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-muted">No abilities match the search.</p>
+          <p className="text-muted text-sm">No abilities match the search.</p>
         ) : (
           <div className="space-y-1.5">
             <button
               onClick={onRestore}
-              className="flex w-full items-start gap-3 rounded-lg border border-dashed border-danger/40 p-3 text-left transition-all hover:border-danger hover:bg-danger/10"
+              className="border-danger/40 hover:border-danger hover:bg-danger/10 flex w-full items-start gap-3 rounded-lg border border-dashed p-3 text-left transition-all"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-danger/10 text-lg text-danger/60">
+              <div className="bg-danger/10 text-danger/60 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg">
                 &times;
               </div>
               <div className="min-w-0 pt-0.5">
-                <div className="text-sm font-medium text-danger/80">
-                  Restore Original
-                </div>
-                <div className="mt-0.5 text-[11px] leading-tight text-muted/50">
+                <div className="text-danger/80 text-sm font-medium">Restore Original</div>
+                <div className="text-muted/50 mt-0.5 text-[11px] leading-tight">
                   Remove Helminth replacement
                 </div>
               </div>
@@ -118,7 +108,7 @@ export function HelminthPickerPanel({
               <button
                 key={ability.unique_name}
                 onClick={() => onSelect(ability)}
-                className="flex w-full items-start gap-3 rounded-lg border border-glass-border p-3 text-left transition-all hover:border-glass-border-hover hover:bg-glass-hover"
+                className="border-glass-border hover:border-glass-border-hover hover:bg-glass-hover flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-all"
               >
                 {ability.image_path ? (
                   <img
@@ -128,16 +118,14 @@ export function HelminthPickerPanel({
                     draggable={false}
                   />
                 ) : (
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-glass text-sm font-bold text-muted/40">
+                  <div className="bg-glass text-muted/40 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold">
                     {ability.name.charAt(0)}
                   </div>
                 )}
                 <div className="min-w-0 pt-0.5">
-                  <div className="text-sm font-medium text-foreground">
-                    {ability.name}
-                  </div>
+                  <div className="text-foreground text-sm font-medium">{ability.name}</div>
                   {ability.description && (
-                    <div className="mt-0.5 whitespace-normal break-words text-[11px] leading-relaxed text-muted/60">
+                    <div className="text-muted/60 mt-0.5 text-[11px] leading-relaxed break-words whitespace-normal">
                       {renderDamageSnippet(ability.description)}
                     </div>
                   )}

@@ -2,8 +2,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { EXPORTS_DIR, REQUIRED_EXPORTS } from '../config.js';
-import { downloadImages } from './images.js';
-import { runImportPipeline, listExportFiles } from './pipeline.js';
 import { getDb } from '../db/connection.js';
 import { processExports, backfillModDescriptions } from '../db/queries.js';
 import { createAppSchema } from '../db/schema.js';
@@ -13,12 +11,11 @@ import { syncHiddenCompanionWeaponsFromOverframe } from '../scraping/hiddenCompa
 import { scrapeIndex } from '../scraping/indexScraper.js';
 import { scrapeItems } from '../scraping/itemScraper.js';
 import { runWikiScrape } from '../scraping/wikiScraper.js';
+import { downloadImages } from './images.js';
+import { runImportPipeline, listExportFiles } from './pipeline.js';
 
 const TAG = '[Startup]';
-const EXPORT_HASH_STATE_FILE = path.join(
-  EXPORTS_DIR,
-  '.processed-export-hashes.json',
-);
+const EXPORT_HASH_STATE_FILE = path.join(EXPORTS_DIR, '.processed-export-hashes.json');
 
 function getCurrentExportHashes(): Record<string, string> {
   const files = listExportFiles();
@@ -45,11 +42,7 @@ function readProcessedExportHashes(): Record<string, string> | null {
 }
 
 function writeProcessedExportHashes(hashes: Record<string, string>): void {
-  fs.writeFileSync(
-    EXPORT_HASH_STATE_FILE,
-    JSON.stringify(hashes, null, 2),
-    'utf-8',
-  );
+  fs.writeFileSync(EXPORT_HASH_STATE_FILE, JSON.stringify(hashes, null, 2), 'utf-8');
 }
 
 function hashesChanged(
@@ -80,9 +73,7 @@ function hasExportFiles(): boolean {
 function hasDbData(): boolean {
   try {
     const db = getDb();
-    const count = (
-      db.prepare('SELECT COUNT(*) as c FROM warframes').get() as { c: number }
-    ).c;
+    const count = (db.prepare('SELECT COUNT(*) as c FROM warframes').get() as { c: number }).c;
     return count > 0;
   } catch {
     return false;
@@ -94,9 +85,7 @@ interface StartupPipelineOptions {
   includeExaltedStanceMods?: boolean;
 }
 
-export async function runStartupPipeline(
-  options: StartupPipelineOptions = {},
-): Promise<void> {
+export async function runStartupPipeline(options: StartupPipelineOptions = {}): Promise<void> {
   const startTime = Date.now();
   console.log(`${TAG} Starting data pipeline...`);
 
@@ -116,10 +105,7 @@ export async function runStartupPipeline(
       }
     });
   } catch (err) {
-    console.error(
-      `${TAG} Export download failed:`,
-      err instanceof Error ? err.message : err,
-    );
+    console.error(`${TAG} Export download failed:`, err instanceof Error ? err.message : err);
     if (!hasExportFiles()) {
       console.error(`${TAG} No export files available, cannot continue`);
       return;
@@ -129,10 +115,7 @@ export async function runStartupPipeline(
   try {
     const currentExportHashes = getCurrentExportHashes();
     const previousExportHashes = readProcessedExportHashes();
-    const shouldProcess = hashesChanged(
-      currentExportHashes,
-      previousExportHashes,
-    );
+    const shouldProcess = hashesChanged(currentExportHashes, previousExportHashes);
 
     if (shouldProcess) {
       console.log(`${TAG} Processing exports into database...`);
@@ -145,15 +128,10 @@ export async function runStartupPipeline(
       writeProcessedExportHashes(currentExportHashes);
       console.log(`${TAG} Export hashes updated after successful processing.`);
     } else {
-      console.log(
-        `${TAG} Export hashes unchanged. Skipping export DB processing.`,
-      );
+      console.log(`${TAG} Export hashes unchanged. Skipping export DB processing.`);
     }
   } catch (err) {
-    console.error(
-      `${TAG} Export processing failed:`,
-      err instanceof Error ? err.message : err,
-    );
+    console.error(`${TAG} Export processing failed:`, err instanceof Error ? err.message : err);
     if (!hasDbData()) {
       console.error(`${TAG} No DB data available, cannot continue to scrapers`);
     }
@@ -162,19 +140,14 @@ export async function runStartupPipeline(
 
   if (options.includeExaltedStanceMods) {
     try {
-      const exaltedStanceResult = await syncExaltedStanceModsFromOverframe(
-        (msg) => {
-          console.log(`${TAG} ${msg}`);
-        },
-      );
+      const exaltedStanceResult = await syncExaltedStanceModsFromOverframe((msg) => {
+        console.log(`${TAG} ${msg}`);
+      });
       console.log(
         `${TAG} Exalted stances: ${exaltedStanceResult.found} found, ${exaltedStanceResult.insertedOrUpdated} updated`,
       );
     } catch (err) {
-      console.error(
-        `${TAG} Exalted stance sync failed:`,
-        err instanceof Error ? err.message : err,
-      );
+      console.error(`${TAG} Exalted stance sync failed:`, err instanceof Error ? err.message : err);
     }
   }
 
@@ -192,18 +165,14 @@ export async function runStartupPipeline(
       console.log(`${TAG} Images: all ${imgResult.skipped} up to date`);
     }
   } catch (err) {
-    console.error(
-      `${TAG} Image download failed:`,
-      err instanceof Error ? err.message : err,
-    );
+    console.error(`${TAG} Image download failed:`, err instanceof Error ? err.message : err);
   }
 
   if (options.includeHiddenCompanionWeapons) {
     try {
-      const hiddenCompanionResult =
-        await syncHiddenCompanionWeaponsFromOverframe((msg) => {
-          console.log(`${TAG} ${msg}`);
-        });
+      const hiddenCompanionResult = await syncHiddenCompanionWeaponsFromOverframe((msg) => {
+        console.log(`${TAG} ${msg}`);
+      });
       console.log(
         `${TAG} Hidden companion claws: ${hiddenCompanionResult.found} found, ${hiddenCompanionResult.insertedOrUpdated} updated`,
       );
@@ -225,14 +194,10 @@ export async function runStartupPipeline(
     );
 
     if (indexResult.entries.length > 0) {
-      console.log(
-        `${TAG} Overframe: scraping ${indexResult.entries.length} items...`,
-      );
+      console.log(`${TAG} Overframe: scraping ${indexResult.entries.length} items...`);
       const scrapedItems = await scrapeItems(indexResult.entries, 1500, (p) => {
         if (p.current === 1 || p.current % 50 === 0 || p.current === p.total) {
-          console.log(
-            `${TAG} Overframe: ${p.current}/${p.total} ${p.currentItem}`,
-          );
+          console.log(`${TAG} Overframe: ${p.current}/${p.total} ${p.currentItem}`);
         }
       });
 
@@ -247,10 +212,7 @@ export async function runStartupPipeline(
       console.log(`${TAG} Overframe: all items up to date`);
     }
   } catch (err) {
-    console.error(
-      `${TAG} Overframe scrape failed:`,
-      err instanceof Error ? err.message : err,
-    );
+    console.error(`${TAG} Overframe scrape failed:`, err instanceof Error ? err.message : err);
   }
 
   try {
@@ -274,10 +236,7 @@ export async function runStartupPipeline(
         `${wikiResult.passivesUpdated} passives, ${wikiResult.augmentsUpdated} augments`,
     );
   } catch (err) {
-    console.error(
-      `${TAG} Wiki scrape failed:`,
-      err instanceof Error ? err.message : err,
-    );
+    console.error(`${TAG} Wiki scrape failed:`, err instanceof Error ? err.message : err);
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

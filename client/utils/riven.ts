@@ -105,9 +105,7 @@ const RIVEN_ROLL_RULES: Record<string, RivenRollRule> = {
   '3-1': { positiveMultiplier: 0.9375, negativeMultiplier: 0.75 },
 };
 
-export function getRivenWeaponType(
-  equipmentType: EquipmentType,
-): RivenWeaponType | null {
+export function getRivenWeaponType(equipmentType: EquipmentType): RivenWeaponType | null {
   if (
     equipmentType === 'primary' ||
     equipmentType === 'secondary' ||
@@ -125,10 +123,7 @@ export function getRivenStatsForType(type: EquipmentType): string[] {
   return Object.keys(BASELINES[weaponType]);
 }
 
-export function getRivenBaselineValue(
-  stat: string,
-  weaponType: RivenWeaponType,
-): number | null {
+export function getRivenBaselineValue(stat: string, weaponType: RivenWeaponType): number | null {
   const baselineMap = BASELINES[weaponType] as BaselineMap;
   return baselineMap[stat] ?? null;
 }
@@ -143,10 +138,7 @@ function clamp(value: number, min: number, max: number): number {
   return value;
 }
 
-function getRollRule(
-  positiveCount: number,
-  hasNegative: boolean,
-): RivenRollRule | null {
+function getRollRule(positiveCount: number, hasNegative: boolean): RivenRollRule | null {
   const key = `${positiveCount}-${hasNegative ? 1 : 0}`;
   return RIVEN_ROLL_RULES[key] ?? null;
 }
@@ -186,8 +178,7 @@ export function verifyAndAdjustRivenConfig(
     }
 
     const nextValue = toOneDecimal(nextAbs);
-    if (nextValue !== toOneDecimal(originalAbs) || stat.value < 0)
-      adjusted = true;
+    if (nextValue !== toOneDecimal(originalAbs) || stat.value < 0) adjusted = true;
     return { ...stat, value: nextValue, isNegative: false };
   });
 
@@ -271,9 +262,7 @@ export function buildRivenDescription(config: RivenConfig): string {
   return lines.join('\n');
 }
 
-export function normalizeRivenConfigMembership(
-  config: RivenConfig,
-): RivenConfig {
+export function normalizeRivenConfigMembership(config: RivenConfig): RivenConfig {
   return {
     ...config,
     positive: (config.positive || []).map((stat) => ({
@@ -305,10 +294,7 @@ export function createRivenPlaceholderMod(imagePath?: string): Mod {
   };
 }
 
-export function createRivenMod(
-  config: RivenConfig,
-  imagePath: string | undefined,
-): Mod {
+export function createRivenMod(config: RivenConfig, imagePath: string | undefined): Mod {
   const normalizedConfig = normalizeRivenConfigMembership(config);
   return {
     unique_name: RIVEN_MOD_UNIQUE,

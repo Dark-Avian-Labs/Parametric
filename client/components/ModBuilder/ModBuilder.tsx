@@ -1,22 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { AbilityBar } from './AbilityBar';
-import { ArcanePickerPanel } from './ArcanePickerPanel';
-import { ArcaneSlots, type ArcaneSlot, type Arcane } from './ArcaneSlots';
-import {
-  ArchonShardSlots,
-  type ShardSlotConfig,
-  type ShardType,
-} from './ArchonShardSlots';
-import { CapacityBar } from './CapacityBar';
-import { ElementOutput } from './ElementOutput';
-import { FilterPanel } from './FilterPanel';
-import { HelminthPickerPanel } from './HelminthPickerPanel';
-import { ModSlotGrid } from './ModSlotGrid';
-import { RivenBuilder } from './RivenBuilder';
-import { ShardPickerPanel } from './ShardPickerPanel';
-import { StatsPanel } from './StatsPanel';
 import { buildEditPath } from '../../app/paths';
 import { useCompare } from '../../context/CompareContext';
 import { useApi } from '../../hooks/useApi';
@@ -39,18 +23,11 @@ import {
 } from '../../types/warframe';
 import { apiFetch } from '../../utils/api';
 import { getMaxRank } from '../../utils/arcaneUtils';
-import {
-  getCompanionWeaponSelectionType,
-  isCompanionWeapon,
-} from '../../utils/companionWeapons';
+import { getCompanionWeaponSelectionType, isCompanionWeapon } from '../../utils/companionWeapons';
 import { calculateBuildDamage } from '../../utils/damage';
 import { calculateWeaponDps } from '../../utils/damageCalc';
 import { calculateTotalCapacity } from '../../utils/drain';
-import {
-  calculateFormaCount,
-  type FormaCount,
-  type SlotPolarity,
-} from '../../utils/formaCounter';
+import { calculateFormaCount, type FormaCount, type SlotPolarity } from '../../utils/formaCounter';
 import { isModLockedOut, isPostureMod } from '../../utils/modFiltering';
 import {
   createRivenMod,
@@ -60,11 +37,21 @@ import {
   normalizeRivenConfigMembership,
   RIVEN_PLACEHOLDER_UNIQUE,
 } from '../../utils/riven';
-import {
-  getRequiredExaltedStanceName,
-  matchesSpecialItemType,
-} from '../../utils/specialItems';
+import { getRequiredExaltedStanceName, matchesSpecialItemType } from '../../utils/specialItems';
+import { BuildShareModal } from '../Share/BuildShareModal';
 import { Modal } from '../ui/Modal';
+import { AbilityBar } from './AbilityBar';
+import { ArcanePickerPanel } from './ArcanePickerPanel';
+import { ArcaneSlots, type ArcaneSlot, type Arcane } from './ArcaneSlots';
+import { ArchonShardSlots, type ShardSlotConfig, type ShardType } from './ArchonShardSlots';
+import { CapacityBar } from './CapacityBar';
+import { ElementOutput } from './ElementOutput';
+import { FilterPanel } from './FilterPanel';
+import { HelminthPickerPanel } from './HelminthPickerPanel';
+import { ModSlotGrid } from './ModSlotGrid';
+import { RivenBuilder } from './RivenBuilder';
+import { ShardPickerPanel } from './ShardPickerPanel';
+import { StatsPanel } from './StatsPanel';
 
 type RightPanelMode = 'mods' | 'helminth' | 'arcanes' | 'shards';
 
@@ -121,10 +108,7 @@ function clampSetRank(slot: ModSlot, rank: number): number {
   return Math.max(1, Math.min(maxSetRank, rank));
 }
 
-function applySetPieceDelta(
-  prevSlots: ModSlot[],
-  nextSlots: ModSlot[],
-): ModSlot[] {
+function applySetPieceDelta(prevSlots: ModSlot[], nextSlots: ModSlot[]): ModSlot[] {
   const prevCounts = new Map<string, number>();
   const prevRanks = new Map<string, number>();
 
@@ -193,43 +177,26 @@ export function ModBuilder() {
   const [equipmentType, setEquipmentType] = useState<EquipmentType>(
     (routeEqType as EquipmentType) || 'warframe',
   );
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(
-    null,
-  );
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [slots, setSlots] = useState<ModSlot[]>([]);
   const [orokinReactor, setOrokinReactor] = useState(false);
   const [buildName, setBuildName] = useState('New Build');
-  const [currentBuildId, setCurrentBuildId] = useState<string | undefined>(
-    buildId,
-  );
-  const [targetEquipmentUniqueName, setTargetEquipmentUniqueName] = useState<
-    string | null
-  >(null);
-  const [helminthConfig, setHelminthConfig] = useState<
-    BuildConfig['helminth'] | undefined
-  >();
+  const [currentBuildId, setCurrentBuildId] = useState<string | undefined>(buildId);
+  const [targetEquipmentUniqueName, setTargetEquipmentUniqueName] = useState<string | null>(null);
+  const [helminthConfig, setHelminthConfig] = useState<BuildConfig['helminth'] | undefined>();
   const [activeSlotType, setActiveSlotType] = useState<SlotType | undefined>();
   const [activeSlotIndex, setActiveSlotIndex] = useState<number | undefined>();
   const [loaded, setLoaded] = useState(false);
-  const [equipmentLoadError, setEquipmentLoadError] = useState<string | null>(
-    null,
-  );
+  const [equipmentLoadError, setEquipmentLoadError] = useState<string | null>(null);
   const [isOwnBuild, setIsOwnBuild] = useState(true);
-  const [arcaneSlots, setArcaneSlots] = useState<ArcaneSlot[]>([
-    { rank: 0 },
-    { rank: 0 },
-  ]);
+  const [arcaneSlots, setArcaneSlots] = useState<ArcaneSlot[]>([{ rank: 0 }, { rank: 0 }]);
   const [shardSlots, setShardSlots] = useState<ShardSlotConfig[]>(
     Array.from({ length: 5 }, () => ({ tauforged: false })),
   );
   const [formaMode, setFormaMode] = useState(false);
-  const [defaultPolarities, setDefaultPolarities] = useState<SlotPolarity[]>(
-    [],
-  );
+  const [defaultPolarities, setDefaultPolarities] = useState<SlotPolarity[]>([]);
   const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('mods');
-  const [activeAbilityIndex, setActiveAbilityIndex] = useState<number | null>(
-    null,
-  );
+  const [activeAbilityIndex, setActiveAbilityIndex] = useState<number | null>(null);
   const [activeArcaneSlot, setActiveArcaneSlot] = useState<number | null>(null);
   const [activeShardSlot, setActiveShardSlot] = useState<number | null>(null);
   const [editingRivenSlot, setEditingRivenSlot] = useState<number | null>(null);
@@ -270,13 +237,9 @@ export function ModBuilder() {
   const apiUrl = getEquipmentListUrl(equipmentType);
   const { data: equipmentData } = useApi<{ items: Equipment[] }>(apiUrl);
 
-  const { data: shardData } = useApi<{ shards: ShardType[] }>(
-    '/api/archon-shards',
-  );
+  const { data: shardData } = useApi<{ shards: ShardType[] }>('/api/archon-shards');
   const shardTypes = shardData?.shards || [];
-  const { data: stanceData } = useApi<{ items: Mod[] }>(
-    '/api/mods?types=STANCE',
-  );
+  const { data: stanceData } = useApi<{ items: Mod[] }>('/api/mods?types=STANCE');
 
   const { addSnapshot, snapshots: compareSnapshots } = useCompare();
 
@@ -294,16 +257,13 @@ export function ModBuilder() {
         return null;
       }
 
-      const companionPromise = apiFetch(
-        '/api/weapons?type=SentinelWeapons',
-      ).catch(() => null);
+      const companionPromise = apiFetch('/api/weapons?type=SentinelWeapons').catch(() => null);
       const response = await apiFetch('/api/weapons?type=SpecialItems');
       if (!response.ok) return null;
       const data = (await response.json()) as { items?: Weapon[] };
       const specialItem = (data.items ?? []).find(
         (item) =>
-          item.unique_name === targetUniqueName &&
-          matchesSpecialItemType(item.name, equipmentType),
+          item.unique_name === targetUniqueName && matchesSpecialItemType(item.name, equipmentType),
       );
       if (specialItem) return specialItem;
 
@@ -353,9 +313,7 @@ export function ModBuilder() {
       const config = (body.build.mod_config ?? {}) as Partial<BuildConfig>;
       if (!alive) return;
       setEquipmentType(body.build.equipment_type);
-      setBuildName(
-        typeof config.name === 'string' ? config.name : body.build.name,
-      );
+      setBuildName(typeof config.name === 'string' ? config.name : body.build.name);
       setTargetEquipmentUniqueName(body.build.equipment_unique_name);
       setCurrentBuildId(String(body.build.id));
       setIsOwnBuild(true);
@@ -385,12 +343,9 @@ export function ModBuilder() {
         setIsOwnBuild(true);
         setHelminthConfig(stored.helminth);
         if (stored.slots?.length) setSlots(stored.slots as ModSlot[]);
-        if (stored.arcaneSlots)
-          setArcaneSlots(stored.arcaneSlots as ArcaneSlot[]);
-        if (stored.shardSlots)
-          setShardSlots(stored.shardSlots as ShardSlotConfig[]);
-        if (stored.orokinReactor !== undefined)
-          setOrokinReactor(stored.orokinReactor);
+        if (stored.arcaneSlots) setArcaneSlots(stored.arcaneSlots as ArcaneSlot[]);
+        if (stored.shardSlots) setShardSlots(stored.shardSlots as ShardSlotConfig[]);
+        if (stored.orokinReactor !== undefined) setOrokinReactor(stored.orokinReactor);
         if (!stored.slots?.length) {
           void loadBuildFromApi(buildId);
         }
@@ -409,9 +364,7 @@ export function ModBuilder() {
     if (!equipmentData?.items?.length) return undefined;
     let alive = true;
 
-    async function setSpecialItemSelection(
-      targetUniqueName: string,
-    ): Promise<void> {
+    async function setSpecialItemSelection(targetUniqueName: string): Promise<void> {
       if (selectedEquipment || loaded) return;
       const specialItem = await resolveSpecialItem(targetUniqueName);
       if (!alive) return;
@@ -424,12 +377,9 @@ export function ModBuilder() {
 
     if (buildId && !loaded) {
       const targetUniqueName =
-        targetEquipmentUniqueName ??
-        (isOwnBuild ? getBuild(buildId)?.equipment_unique_name : null);
+        targetEquipmentUniqueName ?? (isOwnBuild ? getBuild(buildId)?.equipment_unique_name : null);
       if (targetUniqueName) {
-        const item = equipmentData.items.find(
-          (i) => i.unique_name === targetUniqueName,
-        );
+        const item = equipmentData.items.find((i) => i.unique_name === targetUniqueName);
         if (item) {
           setSelectedEquipment(item);
           setLoaded(true);
@@ -437,9 +387,7 @@ export function ModBuilder() {
         } else {
           void setSpecialItemSelection(targetUniqueName).catch((error) => {
             const message =
-              error instanceof Error
-                ? error.message
-                : 'Failed to load special equipment.';
+              error instanceof Error ? error.message : 'Failed to load special equipment.';
             setEquipmentLoadError(message);
           });
         }
@@ -454,9 +402,7 @@ export function ModBuilder() {
       } else {
         void setSpecialItemSelection(decodedId).catch((error) => {
           const message =
-            error instanceof Error
-              ? error.message
-              : 'Failed to load special equipment.';
+            error instanceof Error ? error.message : 'Failed to load special equipment.';
           setEquipmentLoadError(message);
         });
       }
@@ -485,10 +431,7 @@ export function ModBuilder() {
     }
   }, [loaded, buildId, getBuild, isOwnBuild]);
 
-  const equippedMods = useMemo(
-    () => slots.filter((s) => s.mod).map((s) => s.mod!),
-    [slots],
-  );
+  const equippedMods = useMemo(() => slots.filter((s) => s.mod).map((s) => s.mod!), [slots]);
   const selectedRequiredExaltedStanceName = useMemo(() => {
     if (equipmentType !== 'melee' || !selectedEquipment?.name) {
       return null;
@@ -504,8 +447,7 @@ export function ModBuilder() {
       (mod) =>
         (mod.type || '').toUpperCase() === 'STANCE' &&
         !isPostureMod(mod) &&
-        mod.name.trim().toLowerCase() ===
-          selectedRequiredExaltedStanceName.toLowerCase(),
+        mod.name.trim().toLowerCase() === selectedRequiredExaltedStanceName.toLowerCase(),
     );
     if (found) {
       return found;
@@ -535,8 +477,7 @@ export function ModBuilder() {
 
     const shouldInitializeSlots = !buildId;
 
-    const config =
-      EQUIPMENT_SLOT_CONFIGS[equipmentType] || EQUIPMENT_SLOT_CONFIGS.warframe;
+    const config = EQUIPMENT_SLOT_CONFIGS[equipmentType] || EQUIPMENT_SLOT_CONFIGS.warframe;
     const companionWeaponSelectionTypes: EquipmentType[] = [
       'primary',
       'secondary',
@@ -560,9 +501,7 @@ export function ModBuilder() {
 
     const polarityFromAP = (ap: string | undefined): string | undefined => {
       if (!ap || ap === 'AP_UNIVERSAL') return undefined;
-      return (POLARITIES as Record<string, string>)[ap as PolarityKey]
-        ? ap
-        : undefined;
+      return (POLARITIES as Record<string, string>)[ap as PolarityKey] ? ap : undefined;
     };
 
     const hasArtifactSlots = artifactSlots.length > 0;
@@ -575,9 +514,7 @@ export function ModBuilder() {
       newSlots.push({ index: idx++, type: 'aura', polarity: pol });
     }
     if (config.hasStance) {
-      const pol = hasArtifactSlots
-        ? polarityFromAP(artifactSlots[8])
-        : undefined;
+      const pol = hasArtifactSlots ? polarityFromAP(artifactSlots[8]) : undefined;
       newSlots.push({ index: idx++, type: 'stance', polarity: pol });
     }
     if (config.hasPosture) {
@@ -614,9 +551,7 @@ export function ModBuilder() {
       newSlots.push({ index: idx++, type: 'exilus', polarity: pol });
     }
 
-    setDefaultPolarities(
-      newSlots.map((s) => ({ polarity: s.polarity, type: s.type })),
-    );
+    setDefaultPolarities(newSlots.map((s) => ({ polarity: s.polarity, type: s.type })));
     if (!shouldInitializeSlots) {
       return;
     }
@@ -626,11 +561,7 @@ export function ModBuilder() {
   }, [selectedEquipment, equipmentType, buildId, slots.length]);
 
   useEffect(() => {
-    if (
-      buildId ||
-      equipmentType !== 'melee' ||
-      !selectedEquipment?.unique_name
-    ) {
+    if (buildId || equipmentType !== 'melee' || !selectedEquipment?.unique_name) {
       return;
     }
     if (!selectedRequiredExaltedStanceName || !autoInstallStanceMod) {
@@ -699,15 +630,11 @@ export function ModBuilder() {
     if (
       slotType === 'stance' &&
       selectedRequiredExaltedStanceName &&
-      mod.name.trim().toLowerCase() !==
-        selectedRequiredExaltedStanceName.toLowerCase()
+      mod.name.trim().toLowerCase() !== selectedRequiredExaltedStanceName.toLowerCase()
     ) {
       return false;
     }
-    if (
-      slotType === 'posture' &&
-      (modType !== 'STANCE' || !isPostureMod(mod))
-    ) {
+    if (slotType === 'posture' && (modType !== 'STANCE' || !isPostureMod(mod))) {
       return false;
     }
     if (slotType === 'exilus' && mod.is_utility !== 1) return false;
@@ -745,8 +672,7 @@ export function ModBuilder() {
         if (!targetSlot) return prev;
 
         if (isRivenPlaceholder && targetSlot.type !== 'general') return prev;
-        if (!isRivenPlaceholder && !canPlaceModInSlot(mod, targetSlot.type))
-          return prev;
+        if (!isRivenPlaceholder && !canPlaceModInSlot(mod, targetSlot.type)) return prev;
 
         if (isRivenPlaceholder) {
           if (targetSlot.mod && isRivenMod(targetSlot.mod)) {
@@ -760,18 +686,14 @@ export function ModBuilder() {
           }
         }
 
-        const currentMods = prev
-          .filter((s) => s.mod && s.index !== slotIndex)
-          .map((s) => s.mod!);
+        const currentMods = prev.filter((s) => s.mod && s.index !== slotIndex).map((s) => s.mod!);
 
         if (!isRivenPlaceholder && isModLockedOut(mod, currentMods)) {
           return prev;
         }
 
         const rivenConfig = getDefaultRivenConfig();
-        const resolvedMod = isRivenPlaceholder
-          ? createRivenMod(rivenConfig, mod.image_path)
-          : mod;
+        const resolvedMod = isRivenPlaceholder ? createRivenMod(rivenConfig, mod.image_path) : mod;
         if (isRivenPlaceholder) {
           openRivenEditorForSlotRef.current = slotIndex;
           placedNewRivenRef.current = true;
@@ -797,105 +719,85 @@ export function ModBuilder() {
       }
       if (openRivenEditorForSlotRef.current !== null) {
         setEditingRivenSlot(openRivenEditorForSlotRef.current);
-        setDraftRivenSlot(
-          placedNewRivenRef.current ? openRivenEditorForSlotRef.current : null,
-        );
+        setDraftRivenSlot(placedNewRivenRef.current ? openRivenEditorForSlotRef.current : null);
       }
       setSearchResetKey((k) => k + 1);
     },
     [getDefaultRivenConfig],
   );
 
-  const handleSetRankChange = useCallback(
-    (slotIndex: number, setRank: number) => {
-      setSlots((prev) => {
-        const targetSlot = prev.find((s) => s.index === slotIndex);
-        if (!targetSlot) return prev;
+  const handleSetRankChange = useCallback((slotIndex: number, setRank: number) => {
+    setSlots((prev) => {
+      const targetSlot = prev.find((s) => s.index === slotIndex);
+      if (!targetSlot) return prev;
 
-        const setName = getSetName(targetSlot);
-        if (!setName) {
-          return prev.map((s) =>
-            s.index === slotIndex ? { ...s, setRank } : s,
-          );
-        }
+      const setName = getSetName(targetSlot);
+      if (!setName) {
+        return prev.map((s) => (s.index === slotIndex ? { ...s, setRank } : s));
+      }
 
-        const currentRank = targetSlot.setRank ?? 1;
-        const delta = setRank - currentRank;
-        if (delta === 0) return prev;
-        return applySetRankDelta(prev, setName, delta, currentRank);
+      const currentRank = targetSlot.setRank ?? 1;
+      const delta = setRank - currentRank;
+      if (delta === 0) return prev;
+      return applySetRankDelta(prev, setName, delta, currentRank);
+    });
+  }, []);
+
+  const handleModSwap = useCallback((sourceIndex: number, targetIndex: number) => {
+    if (sourceIndex === targetIndex) return;
+
+    setSlots((prev) => {
+      const source = prev.find((s) => s.index === sourceIndex);
+      const target = prev.find((s) => s.index === targetIndex);
+      if (!source || !target || !source.mod) return prev;
+
+      const sourceMod = source.mod;
+      const sourceRank = source.rank;
+      const sourceSetRank = source.setRank;
+      const sourceRivenConfig = source.riven_config;
+      const sourceRivenArt = source.riven_art_path;
+      const targetMod = target.mod;
+      const targetRank = target.rank;
+      const targetSetRank = target.setRank;
+      const targetRivenConfig = target.riven_config;
+      const targetRivenArt = target.riven_art_path;
+
+      if (!canPlaceModInSlot(sourceMod, target.type)) return prev;
+
+      if (targetMod && !canPlaceModInSlot(targetMod, source.type)) return prev;
+
+      const otherMods = prev
+        .filter((s) => s.mod && s.index !== sourceIndex && s.index !== targetIndex)
+        .map((s) => s.mod!);
+
+      if (isModLockedOut(sourceMod, [...otherMods, ...(targetMod ? [targetMod] : [])])) return prev;
+
+      if (targetMod && isModLockedOut(targetMod, [...otherMods, sourceMod])) return prev;
+
+      const swapped = prev.map((s) => {
+        if (s.index === targetIndex)
+          return {
+            ...s,
+            mod: sourceMod,
+            rank: sourceRank,
+            setRank: sourceSetRank,
+            riven_config: sourceRivenConfig,
+            riven_art_path: sourceRivenArt,
+          };
+        if (s.index === sourceIndex)
+          return {
+            ...s,
+            mod: targetMod,
+            rank: targetRank,
+            setRank: targetSetRank,
+            riven_config: targetRivenConfig,
+            riven_art_path: targetRivenArt,
+          };
+        return s;
       });
-    },
-    [],
-  );
-
-  const handleModSwap = useCallback(
-    (sourceIndex: number, targetIndex: number) => {
-      if (sourceIndex === targetIndex) return;
-
-      setSlots((prev) => {
-        const source = prev.find((s) => s.index === sourceIndex);
-        const target = prev.find((s) => s.index === targetIndex);
-        if (!source || !target || !source.mod) return prev;
-
-        const sourceMod = source.mod;
-        const sourceRank = source.rank;
-        const sourceSetRank = source.setRank;
-        const sourceRivenConfig = source.riven_config;
-        const sourceRivenArt = source.riven_art_path;
-        const targetMod = target.mod;
-        const targetRank = target.rank;
-        const targetSetRank = target.setRank;
-        const targetRivenConfig = target.riven_config;
-        const targetRivenArt = target.riven_art_path;
-
-        if (!canPlaceModInSlot(sourceMod, target.type)) return prev;
-
-        if (targetMod && !canPlaceModInSlot(targetMod, source.type))
-          return prev;
-
-        const otherMods = prev
-          .filter(
-            (s) => s.mod && s.index !== sourceIndex && s.index !== targetIndex,
-          )
-          .map((s) => s.mod!);
-
-        if (
-          isModLockedOut(sourceMod, [
-            ...otherMods,
-            ...(targetMod ? [targetMod] : []),
-          ])
-        )
-          return prev;
-
-        if (targetMod && isModLockedOut(targetMod, [...otherMods, sourceMod]))
-          return prev;
-
-        const swapped = prev.map((s) => {
-          if (s.index === targetIndex)
-            return {
-              ...s,
-              mod: sourceMod,
-              rank: sourceRank,
-              setRank: sourceSetRank,
-              riven_config: sourceRivenConfig,
-              riven_art_path: sourceRivenArt,
-            };
-          if (s.index === sourceIndex)
-            return {
-              ...s,
-              mod: targetMod,
-              rank: targetRank,
-              setRank: targetSetRank,
-              riven_config: targetRivenConfig,
-              riven_art_path: targetRivenArt,
-            };
-          return s;
-        });
-        return applySetPieceDelta(prev, swapped);
-      });
-    },
-    [],
-  );
+      return applySetPieceDelta(prev, swapped);
+    });
+  }, []);
 
   const handleModRemove = useCallback((slotIndex: number) => {
     setSlots((prev) => {
@@ -916,9 +818,7 @@ export function ModBuilder() {
   }, []);
 
   const handleRankChange = useCallback((slotIndex: number, rank: number) => {
-    setSlots((prev) =>
-      prev.map((s) => (s.index === slotIndex ? { ...s, rank } : s)),
-    );
+    setSlots((prev) => prev.map((s) => (s.index === slotIndex ? { ...s, rank } : s)));
   }, []);
 
   const capacity = useMemo(
@@ -935,14 +835,9 @@ export function ModBuilder() {
     [defaultPolarities, slots],
   );
 
-  const handlePolarityChange = useCallback(
-    (slotIndex: number, polarity: string | undefined) => {
-      setSlots((prev) =>
-        prev.map((s) => (s.index === slotIndex ? { ...s, polarity } : s)),
-      );
-    },
-    [],
-  );
+  const handlePolarityChange = useCallback((slotIndex: number, polarity: string | undefined) => {
+    setSlots((prev) => prev.map((s) => (s.index === slotIndex ? { ...s, polarity } : s)));
+  }, []);
 
   const handleArcaneSlotClick = useCallback(
     (slotIndex: number) => {
@@ -983,18 +878,15 @@ export function ModBuilder() {
     });
   }, []);
 
-  const handleArcaneRankChange = useCallback(
-    (slotIndex: number, rank: number) => {
-      setArcaneSlots((prev) => {
-        const next = [...prev];
-        if (next[slotIndex]) {
-          next[slotIndex] = { ...next[slotIndex], rank };
-        }
-        return next;
-      });
-    },
-    [],
-  );
+  const handleArcaneRankChange = useCallback((slotIndex: number, rank: number) => {
+    setArcaneSlots((prev) => {
+      const next = [...prev];
+      if (next[slotIndex]) {
+        next[slotIndex] = { ...next[slotIndex], rank };
+      }
+      return next;
+    });
+  }, []);
 
   const handleShardSlotClick = useCallback(
     (slotIndex: number) => {
@@ -1050,10 +942,7 @@ export function ModBuilder() {
           return {
             ...slot,
             riven_config: normalizedConfig,
-            mod: createRivenMod(
-              normalizedConfig,
-              slot.riven_art_path ?? slot.mod.image_path,
-            ),
+            mod: createRivenMod(normalizedConfig, slot.riven_art_path ?? slot.mod.image_path),
           };
         }),
       );
@@ -1063,9 +952,7 @@ export function ModBuilder() {
     [editingRivenSlot],
   );
 
-  const [rivenToastMessage, setRivenToastMessage] = useState<string | null>(
-    null,
-  );
+  const [rivenToastMessage, setRivenToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!rivenToastMessage) return undefined;
@@ -1095,6 +982,7 @@ export function ModBuilder() {
   }, [draftRivenSlot, editingRivenSlot]);
 
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveToast, setSaveToast] = useState(false);
@@ -1107,9 +995,7 @@ export function ModBuilder() {
   };
 
   const [compareToast, setCompareToast] = useState(false);
-  const compareToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const compareToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -1123,10 +1009,7 @@ export function ModBuilder() {
     if (!selectedEquipment || equipmentType === 'warframe') return;
     const weapon = selectedEquipment as Weapon;
     const calc = calculateWeaponDps(weapon, slots);
-    const { totalDamage, damageBreakdown } = calculateBuildDamage(
-      weapon,
-      slots,
-    );
+    const { totalDamage, damageBreakdown } = calculateBuildDamage(weapon, slots);
     addSnapshot({
       id: crypto.randomUUID(),
       label: buildName,
@@ -1175,11 +1058,7 @@ export function ModBuilder() {
         ? config
         : { ...config, name: `Copy of ${config.name}` };
 
-      const saved = await storageSave(
-        saveConfig,
-        selectedEquipment.name,
-        imagePath,
-      );
+      const saved = await storageSave(saveConfig, selectedEquipment.name, imagePath);
       setCurrentBuildId(saved.id);
       setIsOwnBuild(true);
       setShowSaveModal(false);
@@ -1191,9 +1070,7 @@ export function ModBuilder() {
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 2500);
     } catch (error) {
-      setSaveError(
-        error instanceof Error ? error.message : 'Failed to save build',
-      );
+      setSaveError(error instanceof Error ? error.message : 'Failed to save build');
     }
   };
 
@@ -1210,8 +1087,7 @@ export function ModBuilder() {
     selectedEquipment && selectedWeaponTypes.includes(equipmentType)
       ? (selectedEquipment as Weapon)
       : null;
-  const selectedIsCompanionWeapon =
-    selectedWeapon != null && isCompanionWeapon(selectedWeapon);
+  const selectedIsCompanionWeapon = selectedWeapon != null && isCompanionWeapon(selectedWeapon);
   const supportsArcanes =
     !selectedIsCompanionWeapon &&
     equipmentType !== 'companion' &&
@@ -1219,6 +1095,9 @@ export function ModBuilder() {
     equipmentType !== 'archmelee' &&
     equipmentType !== 'archwing' &&
     equipmentType !== 'necramech';
+  const selectedEquipmentImagePath = selectedEquipment?.image_path
+    ? `/images${selectedEquipment.image_path}`
+    : undefined;
 
   useEffect(() => {
     if (!selectedIsCompanionWeapon) return;
@@ -1240,12 +1119,7 @@ export function ModBuilder() {
 
   const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (
-      target.closest(
-        '.glass-panel, button, input, [role="button"], [draggable="true"]',
-      )
-    )
-      return;
+    if (target.closest('.glass-panel, button, input, [role="button"], [draggable="true"]')) return;
     setActiveSlotIndex(undefined);
     setActiveSlotType(undefined);
     setActiveArcaneSlot(null);
@@ -1276,10 +1150,7 @@ export function ModBuilder() {
                     onHelminthChange={setHelminthConfig}
                     activeAbilityIndex={activeAbilityIndex}
                     onAbilityClick={(index) => {
-                      if (
-                        activeAbilityIndex === index &&
-                        rightPanelMode === 'helminth'
-                      ) {
+                      if (activeAbilityIndex === index && rightPanelMode === 'helminth') {
                         setActiveAbilityIndex(null);
                         setRightPanelMode('mods');
                       } else {
@@ -1306,13 +1177,9 @@ export function ModBuilder() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0 space-y-2">
                 <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                  <span className="display-title text-[2rem] text-foreground">
-                    {buildName}
-                  </span>
+                  <span className="display-title text-foreground text-[2rem]">{buildName}</span>
                   {!isOwnBuild && (
-                    <span className="text-xs text-muted/70">
-                      Read-only shared build
-                    </span>
+                    <span className="text-muted/70 text-xs">Read-only shared build</span>
                   )}
                 </div>
               </div>
@@ -1326,9 +1193,7 @@ export function ModBuilder() {
                 >
                   <span
                     className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
-                      orokinReactor
-                        ? 'bg-success/20 text-success'
-                        : 'bg-muted/10 text-muted/50'
+                      orokinReactor ? 'bg-success/20 text-success' : 'bg-muted/10 text-muted/50'
                     }`}
                     aria-hidden="true"
                   >
@@ -1353,6 +1218,15 @@ export function ModBuilder() {
                 <button className="btn btn-accent" onClick={openSaveModal}>
                   {isOwnBuild ? 'Save Build' : 'Copy Build'}
                 </button>
+                {selectedEquipment && (
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={() => setShowShareModal(true)}
+                  >
+                    Share Image
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1454,8 +1328,7 @@ export function ModBuilder() {
                       ? {
                           unique_name: selectedEquipment.unique_name,
                           name: selectedEquipment.name,
-                          product_category: (selectedEquipment as Weapon)
-                            .product_category,
+                          product_category: (selectedEquipment as Weapon).product_category,
                         }
                       : undefined
                   }
@@ -1468,41 +1341,24 @@ export function ModBuilder() {
                   }}
                   onModSelect={(mod) => {
                     const modType = (mod.type || '').toUpperCase();
-                    const isRivenPlaceholder =
-                      mod.unique_name === RIVEN_PLACEHOLDER_UNIQUE;
+                    const isRivenPlaceholder = mod.unique_name === RIVEN_PLACEHOLDER_UNIQUE;
                     let emptySlot;
 
                     if (activeSlotType) {
-                      const targetType = isRivenPlaceholder
-                        ? 'general'
-                        : activeSlotType;
-                      emptySlot = slots.find(
-                        (s) => !s.mod && s.type === targetType,
-                      );
+                      const targetType = isRivenPlaceholder ? 'general' : activeSlotType;
+                      emptySlot = slots.find((s) => !s.mod && s.type === targetType);
                     } else if (modType === 'AURA') {
-                      emptySlot = slots.find(
-                        (s) => !s.mod && s.type === 'aura',
-                      );
+                      emptySlot = slots.find((s) => !s.mod && s.type === 'aura');
                     } else if (modType === 'STANCE') {
-                      const stanceSlotType = isPostureMod(mod)
-                        ? 'posture'
-                        : 'stance';
-                      emptySlot = slots.find(
-                        (s) => !s.mod && s.type === stanceSlotType,
-                      );
+                      const stanceSlotType = isPostureMod(mod) ? 'posture' : 'stance';
+                      emptySlot = slots.find((s) => !s.mod && s.type === stanceSlotType);
                     } else if (mod.is_utility === 1) {
-                      emptySlot = slots.find(
-                        (s) => !s.mod && s.type === 'exilus',
-                      );
+                      emptySlot = slots.find((s) => !s.mod && s.type === 'exilus');
                       if (!emptySlot) {
-                        emptySlot = slots.find(
-                          (s) => !s.mod && s.type === 'general',
-                        );
+                        emptySlot = slots.find((s) => !s.mod && s.type === 'general');
                       }
                     } else {
-                      emptySlot = slots.find(
-                        (s) => !s.mod && s.type === 'general',
-                      );
+                      emptySlot = slots.find((s) => !s.mod && s.type === 'general');
                     }
 
                     if (emptySlot) {
@@ -1541,9 +1397,7 @@ export function ModBuilder() {
               {rightPanelMode === 'arcanes' && activeArcaneSlot !== null && (
                 <ArcanePickerPanel
                   equipmentType={equipmentType}
-                  currentArcaneName={
-                    arcaneSlots[activeArcaneSlot]?.arcane?.name
-                  }
+                  currentArcaneName={arcaneSlots[activeArcaneSlot]?.arcane?.name}
                   onSelect={handleArcaneSelect}
                   onRemove={() => {
                     handleArcaneRemove(activeArcaneSlot);
@@ -1560,9 +1414,7 @@ export function ModBuilder() {
               {rightPanelMode === 'shards' && activeShardSlot !== null && (
                 <ShardPickerPanel
                   shards={shardTypes}
-                  currentSlot={
-                    shardSlots[activeShardSlot] || { tauforged: false }
-                  }
+                  currentSlot={shardSlots[activeShardSlot] || { tauforged: false }}
                   onSelect={handleShardSelect}
                   onRemove={() => {
                     handleShardRemove(activeShardSlot);
@@ -1587,14 +1439,11 @@ export function ModBuilder() {
           ariaLabelledBy="save-build-title"
           className="max-w-md"
         >
-          <h3
-            id="save-build-title"
-            className="mb-4 text-lg font-semibold text-foreground"
-          >
+          <h3 id="save-build-title" className="text-foreground mb-4 text-lg font-semibold">
             Save Build
           </h3>
           {saveError ? <p className="error-msg mb-3">{saveError}</p> : null}
-          <label className="mb-2 block text-xs uppercase tracking-[0.18em] text-muted">
+          <label className="text-muted mb-2 block text-xs tracking-[0.18em] uppercase">
             Build Name
           </label>
           <input
@@ -1628,6 +1477,20 @@ export function ModBuilder() {
             </button>
           </div>
         </Modal>
+      )}
+      {showShareModal && selectedEquipment && (
+        <BuildShareModal
+          open
+          onClose={() => setShowShareModal(false)}
+          buildName={buildName}
+          equipmentName={selectedEquipment.name}
+          equipmentType={equipmentType}
+          equipmentImagePath={selectedEquipmentImagePath}
+          slots={slots}
+          arcaneSlots={arcaneSlots}
+          shardSlots={shardSlots}
+          orokinReactor={orokinReactor}
+        />
       )}
 
       {saveToast && (

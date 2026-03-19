@@ -41,10 +41,7 @@ export function useBuildStorage() {
           return {
             ...(modConfig as BuildConfig),
             id: String(row.id ?? modConfig.id ?? ''),
-            name:
-              typeof row.name === 'string'
-                ? row.name
-                : (modConfig.name ?? 'Untitled Build'),
+            name: typeof row.name === 'string' ? row.name : (modConfig.name ?? 'Untitled Build'),
             equipment_type:
               (typeof row.equipment_type === 'string'
                 ? row.equipment_type
@@ -53,12 +50,9 @@ export function useBuildStorage() {
               (typeof row.equipment_unique_name === 'string'
                 ? row.equipment_unique_name
                 : modConfig.equipment_unique_name) ?? '',
-            equipment_name:
-              modConfig.equipment_name ?? modConfig.equipment_unique_name ?? '',
+            equipment_name: modConfig.equipment_name ?? modConfig.equipment_unique_name ?? '',
             equipment_image:
-              typeof modConfig.equipment_image === 'string'
-                ? modConfig.equipment_image
-                : undefined,
+              typeof modConfig.equipment_image === 'string' ? modConfig.equipment_image : undefined,
             created_at: String(row.created_at ?? new Date().toISOString()),
             updated_at: String(row.updated_at ?? new Date().toISOString()),
           } as StoredBuild;

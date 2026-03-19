@@ -9,10 +9,7 @@ export const APP_PATHS = {
   legal: '/legal',
 } as const;
 
-export function buildNewPath(
-  equipmentType: string,
-  equipmentId: string,
-): string {
+export function buildNewPath(equipmentType: string, equipmentId: string): string {
   return `/builder/new/${encodeURIComponent(equipmentType)}/${encodeURIComponent(equipmentId)}`;
 }
 

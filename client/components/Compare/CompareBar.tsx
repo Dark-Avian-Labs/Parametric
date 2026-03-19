@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { CompareModal } from './CompareModal';
 import { useCompare } from '../../context/CompareContext';
+import { CompareModal } from './CompareModal';
 
 function formatDps(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -17,9 +17,9 @@ export function CompareBar() {
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-0 z-[200] border-t border-glass-border bg-surface/95 backdrop-blur-md animate-slide-up">
+      <div className="border-glass-border bg-surface/95 animate-slide-up fixed inset-x-0 bottom-0 z-[200] border-t backdrop-blur-md">
         <div className="mx-auto flex max-w-[2000px] items-center gap-4 px-6 py-3">
-          <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted">
+          <span className="text-muted shrink-0 text-xs font-semibold tracking-wider uppercase">
             Compare
           </span>
 
@@ -27,7 +27,7 @@ export function CompareBar() {
             {snapshots.map((snap) => (
               <div
                 key={snap.id}
-                className="flex items-center gap-2 rounded-lg border border-glass-border bg-surface-modal px-3 py-2"
+                className="border-glass-border bg-surface-modal flex items-center gap-2 rounded-lg border px-3 py-2"
               >
                 {snap.weaponImage && (
                   <img
@@ -40,18 +40,16 @@ export function CompareBar() {
                   />
                 )}
                 <div className="min-w-0">
-                  <div className="max-w-[140px] truncate text-xs font-medium text-foreground">
+                  <div className="text-foreground max-w-[140px] truncate text-xs font-medium">
                     {snap.label}
                   </div>
-                  <div className="text-[10px] text-muted">
+                  <div className="text-muted text-[10px]">
                     {snap.weaponName} ·{' '}
-                    <span className="text-accent">
-                      {formatDps(snap.calc.burstDps)} DPS
-                    </span>
+                    <span className="text-accent">{formatDps(snap.calc.burstDps)} DPS</span>
                   </div>
                 </div>
                 <button
-                  className="ml-1 shrink-0 rounded p-0.5 text-muted hover:text-red-400 transition-colors"
+                  className="text-muted ml-1 shrink-0 rounded p-0.5 transition-colors hover:text-red-400"
                   onClick={() => removeSnapshot(snap.id)}
                   title="Remove from comparison"
                 >
@@ -70,24 +68,21 @@ export function CompareBar() {
             {Array.from({ length: 3 - snapshots.length }).map((_, i) => (
               <div
                 key={`empty-${i}`}
-                className="flex h-[52px] w-32 items-center justify-center rounded-lg border border-dashed border-glass-border/50"
+                className="border-glass-border/50 flex h-[52px] w-32 items-center justify-center rounded-lg border border-dashed"
               >
-                <span className="text-[10px] text-muted/40">Empty</span>
+                <span className="text-muted/40 text-[10px]">Empty</span>
               </div>
             ))}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
             {snapshots.length >= 2 && (
-              <button
-                className="btn btn-accent text-sm"
-                onClick={() => setShowModal(true)}
-              >
+              <button className="btn btn-accent text-sm" onClick={() => setShowModal(true)}>
                 Compare {snapshots.length}
               </button>
             )}
             <button
-              className="text-xs text-muted hover:text-red-400 transition-colors"
+              className="text-muted text-xs transition-colors hover:text-red-400"
               onClick={clearAll}
             >
               Clear all

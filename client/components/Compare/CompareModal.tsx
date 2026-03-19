@@ -145,11 +145,9 @@ export function CompareModal({ onClose }: CompareModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
-            Build Comparison
-          </h2>
+          <h2 className="text-foreground text-lg font-semibold">Build Comparison</h2>
           <button
-            className="rounded p-1 text-muted hover:text-foreground transition-colors"
+            className="text-muted hover:text-foreground rounded p-1 transition-colors"
             onClick={onClose}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -164,7 +162,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
         </div>
 
         <div
-          className={`grid gap-3 mb-4`}
+          className={`mb-4 grid gap-3`}
           style={{ gridTemplateColumns: `160px repeat(${cols}, 1fr)` }}
         >
           <div />
@@ -180,10 +178,8 @@ export function CompareModal({ onClose }: CompareModalProps) {
                   }}
                 />
               )}
-              <div className="text-sm font-semibold text-foreground">
-                {snap.label}
-              </div>
-              <div className="text-xs text-muted">{snap.weaponName}</div>
+              <div className="text-foreground text-sm font-semibold">{snap.label}</div>
+              <div className="text-muted text-xs">{snap.weaponName}</div>
             </div>
           ))}
         </div>
@@ -230,9 +226,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
             <div className="space-y-0.5">
               {elementTypes.map((elType) => {
                 const values = snapshots.map((s) => {
-                  const entry = s.elementBreakdown.find(
-                    (e) => e.type === elType,
-                  );
+                  const entry = s.elementBreakdown.find((e) => e.type === elType);
                   return entry?.value ?? 0;
                 });
                 const best = bestIndex(values, 'high');
@@ -240,7 +234,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
                 return (
                   <div
                     key={elType}
-                    className="grid items-center gap-3 rounded py-1.5 px-2"
+                    className="grid items-center gap-3 rounded px-2 py-1.5"
                     style={{
                       gridTemplateColumns: `160px repeat(${cols}, 1fr)`,
                     }}
@@ -252,9 +246,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
                       <span
                         key={i}
                         className={`text-center text-xs tabular-nums ${
-                          i === best
-                            ? 'font-bold text-green-400'
-                            : 'text-foreground'
+                          i === best ? 'font-bold text-green-400' : 'text-foreground'
                         }`}
                       >
                         {v > 0 ? fmt(v) : '-'}
@@ -264,10 +256,10 @@ export function CompareModal({ onClose }: CompareModalProps) {
                 );
               })}
               <div
-                className="grid items-center gap-3 border-t border-glass-divider pt-1.5 px-2"
+                className="border-glass-divider grid items-center gap-3 border-t px-2 pt-1.5"
                 style={{ gridTemplateColumns: `160px repeat(${cols}, 1fr)` }}
               >
-                <span className="text-xs font-semibold text-muted">Total</span>
+                <span className="text-muted text-xs font-semibold">Total</span>
                 {(() => {
                   const vals = snapshots.map((ss) => ss.totalElementDamage);
                   const bestTotalIdx = bestIndex(vals, 'high');
@@ -275,9 +267,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
                     <span
                       key={i}
                       className={`text-center text-xs font-semibold tabular-nums ${
-                        i === bestTotalIdx
-                          ? 'text-green-400'
-                          : 'text-foreground'
+                        i === bestTotalIdx ? 'text-green-400' : 'text-foreground'
                       }`}
                     >
                       {fmt(s.totalElementDamage)}
@@ -295,7 +285,7 @@ export function CompareModal({ onClose }: CompareModalProps) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-5 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted">
+    <div className="text-muted mt-5 mb-2 text-[10px] font-semibold tracking-wider uppercase">
       {children}
     </div>
   );
@@ -316,10 +306,10 @@ function StatRowView({
 }) {
   return (
     <div
-      className="grid items-center gap-3 rounded py-1.5 px-2 even:bg-white/[0.02]"
+      className="grid items-center gap-3 rounded px-2 py-1.5 even:bg-white/[0.02]"
       style={{ gridTemplateColumns: `160px repeat(${cols}, 1fr)` }}
     >
-      <span className="text-xs text-muted">{label}</span>
+      <span className="text-muted text-xs">{label}</span>
       {values.map((v, i) => (
         <span
           key={i}

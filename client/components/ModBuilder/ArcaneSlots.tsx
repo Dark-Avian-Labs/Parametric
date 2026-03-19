@@ -7,10 +7,7 @@ import {
 } from '../../utils/damageTypeTokens';
 import { GlassTooltip } from '../GlassTooltip';
 import { ArcaneCardPreview } from '../ModCard/ArcaneCardPreview';
-import {
-  DEFAULT_ARCANE_LAYOUT,
-  normalizeArcaneRarity,
-} from '../ModCard/cardLayout';
+import { DEFAULT_ARCANE_LAYOUT, normalizeArcaneRarity } from '../ModCard/cardLayout';
 
 export interface Arcane {
   unique_name: string;
@@ -54,9 +51,7 @@ export function ArcaneSlots({
 
   return (
     <div className="overflow-visible">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
-        Arcanes
-      </h3>
+      <h3 className="text-muted mb-2 text-xs font-semibold tracking-wider uppercase">Arcanes</h3>
       <div className="flex gap-0">
         {Array.from({ length: slotCount }, (_, i) => {
           const slot = slots[i] || { rank: 0 };
@@ -114,8 +109,7 @@ function ArcaneSlotCell({
         return <span key={`t-${segmentIndex}`}>{segment.value}</span>;
       }
       const iconPath = getDamageTypeIconPath(segment.value);
-      if (!iconPath)
-        return <span key={`u-${segmentIndex}`}>{segment.value}</span>;
+      if (!iconPath) return <span key={`u-${segmentIndex}`}>{segment.value}</span>;
       return (
         <img
           key={`i-${segmentIndex}`}
@@ -158,12 +152,8 @@ function ArcaneSlotCell({
   const tooltipContent =
     arcane && desc ? (
       <>
-        <div className="mb-1 text-xs font-semibold text-foreground">
-          {arcane.name}
-        </div>
-        <div className="text-[10px] leading-tight text-muted">
-          {renderDamageText(desc)}
-        </div>
+        <div className="text-foreground mb-1 text-xs font-semibold">{arcane.name}</div>
+        <div className="text-muted text-[10px] leading-tight">{renderDamageText(desc)}</div>
       </>
     ) : null;
 
@@ -176,7 +166,7 @@ function ArcaneSlotCell({
           height: arcane ? SLOT_H + RANK_ROW_H : SLOT_H,
           marginBottom: 4,
         }}
-        className={`relative cursor-pointer rounded-lg ${isActive ? 'ring-1 ring-accent' : ''}`}
+        className={`relative cursor-pointer rounded-lg ${isActive ? 'ring-accent ring-1' : ''}`}
         onClick={onClick}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
@@ -189,16 +179,11 @@ function ArcaneSlotCell({
       >
         {arcane ? (
           <>
-            <div
-              className="overflow-visible rounded-lg"
-              style={{ width: SLOT_W, height: SLOT_H }}
-            >
+            <div className="overflow-visible rounded-lg" style={{ width: SLOT_W, height: SLOT_H }}>
               <ArcaneCardPreview
                 layout={layout}
                 rarity={normalizeArcaneRarity(arcane.rarity)}
-                arcaneArt={
-                  arcane.image_path ? `/images${arcane.image_path}` : ''
-                }
+                arcaneArt={arcane.image_path ? `/images${arcane.image_path}` : ''}
                 arcaneName={arcane.name}
                 rank={slot.rank}
                 maxRank={maxRank}
@@ -212,21 +197,21 @@ function ArcaneSlotCell({
               >
                 <button
                   onClick={() => onRankChange(Math.max(0, slot.rank - 1))}
-                  className="flex h-3 w-6 items-center justify-center rounded-full border border-muted/30 text-[9px] font-bold text-muted transition-colors hover:border-foreground/50 hover:text-foreground"
+                  className="border-muted/30 text-muted hover:border-foreground/50 hover:text-foreground flex h-3 w-6 items-center justify-center rounded-full border text-[9px] font-bold transition-colors"
                   title="Decrease rank"
                 >
                   −
                 </button>
                 <button
                   onClick={() => onRankChange(Math.min(maxRank, slot.rank + 1))}
-                  className="flex h-3 w-6 items-center justify-center rounded-full border border-muted/30 text-[9px] font-bold text-muted transition-colors hover:border-foreground/50 hover:text-foreground"
+                  className="border-muted/30 text-muted hover:border-foreground/50 hover:text-foreground flex h-3 w-6 items-center justify-center rounded-full border text-[9px] font-bold transition-colors"
                   title="Increase rank"
                 >
                   +
                 </button>
                 <button
                   onClick={() => onRemove()}
-                  className="absolute right-8 flex h-3.25 w-3.25 items-center justify-center rounded-full border border-muted/30 text-[7px] text-muted/30 transition-colors hover:border-danger/50 hover:text-danger"
+                  className="border-muted/30 text-muted/30 hover:border-danger/50 hover:text-danger absolute right-8 flex h-3.25 w-3.25 items-center justify-center rounded-full border text-[7px] transition-colors"
                   title="Remove"
                 >
                   ✕
@@ -235,10 +220,7 @@ function ArcaneSlotCell({
             )}
           </>
         ) : (
-          <div
-            className="overflow-hidden rounded-lg"
-            style={{ width: SLOT_W, height: SLOT_H }}
-          >
+          <div className="overflow-hidden rounded-lg" style={{ width: SLOT_W, height: SLOT_H }}>
             <ArcaneCardPreview
               layout={layout}
               rarity="empty"

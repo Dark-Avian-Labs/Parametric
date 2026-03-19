@@ -1,10 +1,10 @@
 import { Component, lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { APP_PATHS } from './paths';
 import { Layout } from '../components/Layout/Layout';
 import { NotFoundPage } from '../components/NotFoundPage/NotFoundPage';
 import { RequireAuth } from '../features/auth/RequireAuth';
+import { APP_PATHS } from './paths';
 
 const BuildOverview = lazy(() =>
   import('../components/BuildOverview/BuildOverview').then((mod) => ({
@@ -46,10 +46,7 @@ type ChunkErrorBoundaryState = {
   hasError: boolean;
 };
 
-class ChunkErrorBoundary extends Component<
-  ChunkErrorBoundaryProps,
-  ChunkErrorBoundaryState
-> {
+class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, ChunkErrorBoundaryState> {
   state: ChunkErrorBoundaryState = {
     hasError: false,
   };
@@ -59,11 +56,7 @@ class ChunkErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    console.error(
-      '[ChunkErrorBoundary] Chunk load failed',
-      error,
-      info.componentStack,
-    );
+    console.error('[ChunkErrorBoundary] Chunk load failed', error, info.componentStack);
   }
 
   private handleRetry = () => {
@@ -80,7 +73,7 @@ class ChunkErrorBoundary extends Component<
       return (
         <div className="flex min-h-screen items-center justify-center p-6">
           <div className="space-y-4 text-center">
-            <p className="text-sm text-muted" role="alert">
+            <p className="text-muted text-sm" role="alert">
               We could not load this page. Please try again.
             </p>
             <button
@@ -102,7 +95,7 @@ class ChunkErrorBoundary extends Component<
 function RouteFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <p className="text-sm text-muted" role="status" aria-live="polite">
+      <p className="text-muted text-sm" role="status" aria-live="polite">
         Loading...
       </p>
     </div>
@@ -121,10 +114,7 @@ export function AppRoutes() {
               </RequireAuth>
             }
           >
-            <Route
-              path="/"
-              element={<Navigate to={APP_PATHS.home} replace />}
-            />
+            <Route path="/" element={<Navigate to={APP_PATHS.home} replace />} />
             <Route path={APP_PATHS.buildOverview} element={<BuildOverview />} />
             <Route path={APP_PATHS.buildNew} element={<ModBuilder />} />
             <Route path={APP_PATHS.buildEdit} element={<ModBuilder />} />

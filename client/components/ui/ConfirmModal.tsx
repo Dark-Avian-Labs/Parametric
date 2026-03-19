@@ -24,25 +24,22 @@ export function ConfirmModal({
       className="glass-modal-surface max-w-md p-5 shadow-2xl"
       ariaLabelledBy="confirm-delete-title"
     >
-      <h3
-        id="confirm-delete-title"
-        className="text-base font-semibold text-foreground"
-      >
+      <h3 id="confirm-delete-title" className="text-foreground text-base font-semibold">
         {title}
       </h3>
-      <p className="mt-2 text-sm text-muted">{message}</p>
+      <p className="text-muted mt-2 text-sm">{message}</p>
       <div className="mt-5 flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-glass-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-glass-border-hover hover:text-foreground"
+          className="border-glass-border text-muted hover:border-glass-border-hover hover:text-foreground rounded-lg border px-3 py-1.5 text-sm transition-colors"
         >
           Cancel
         </button>
         <button
           type="button"
           onClick={onConfirm}
-          className="rounded-lg border border-danger/50 bg-danger/10 px-3 py-1.5 text-sm text-danger transition-colors hover:bg-danger/20"
+          className="border-danger/50 bg-danger/10 text-danger hover:bg-danger/20 rounded-lg border px-3 py-1.5 text-sm transition-colors"
         >
           {confirmLabel}
         </button>

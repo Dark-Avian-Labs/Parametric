@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 import { classifyArcaneCompatTags } from '../arcaneCompat.js';
-import { getDb } from './connection.js';
 import { EXPORTS_DIR } from '../config.js';
+import { getDb } from './connection.js';
 
 export function processExports(): {
   warframes: number;
@@ -76,18 +76,14 @@ function saveImagePaths(): Map<string, string> {
   const pathMap = new Map<string, string>();
   for (const table of IMAGE_PATH_TABLES) {
     const rows = db
-      .prepare(
-        `SELECT unique_name, image_path FROM ${table} WHERE image_path IS NOT NULL`,
-      )
+      .prepare(`SELECT unique_name, image_path FROM ${table} WHERE image_path IS NOT NULL`)
       .all() as Array<{ unique_name: string; image_path: string }>;
     for (const row of rows) {
       pathMap.set(row.unique_name, row.image_path);
     }
   }
   if (pathMap.size > 0) {
-    console.log(
-      `[DB] Saved ${pathMap.size} image_path values before reprocessing`,
-    );
+    console.log(`[DB] Saved ${pathMap.size} image_path values before reprocessing`);
   }
   return pathMap;
 }
@@ -106,9 +102,7 @@ function restoreImagePaths(pathMap: Map<string, string>): void {
     }
   });
   tx();
-  console.log(
-    `[DB] Restored ${pathMap.size} image_path values after reprocessing`,
-  );
+  console.log(`[DB] Restored ${pathMap.size} image_path values after reprocessing`);
 }
 
 interface ScrapedRow {
@@ -147,9 +141,7 @@ function saveScrapedData(): {
     .all() as ScrapedRow[];
 
   saved.companions = db
-    .prepare(
-      `SELECT unique_name, artifact_slots FROM companions WHERE artifact_slots IS NOT NULL`,
-    )
+    .prepare(`SELECT unique_name, artifact_slots FROM companions WHERE artifact_slots IS NOT NULL`)
     .all() as ScrapedRow[];
 
   saved.abilities = db
@@ -172,8 +164,7 @@ function saveScrapedData(): {
     saved.companions.length +
     saved.abilities.length +
     saved.mods.length;
-  if (total > 0)
-    console.log(`[DB] Saved ${total} scraped data rows before reprocessing`);
+  if (total > 0) console.log(`[DB] Saved ${total} scraped data rows before reprocessing`);
   return saved;
 }
 
@@ -192,11 +183,7 @@ function restoreScrapedData(saved: ReturnType<typeof saveScrapedData>): void {
       'UPDATE warframes SET artifact_slots = ?, passive_description_wiki = ? WHERE unique_name = ?',
     );
     for (const row of saved.warframes) {
-      wfStmt.run(
-        row.artifact_slots,
-        row.passive_description_wiki,
-        row.unique_name,
-      );
+      wfStmt.run(row.artifact_slots, row.passive_description_wiki, row.unique_name);
     }
 
     const wpStmt = db.prepare(
@@ -206,9 +193,7 @@ function restoreScrapedData(saved: ReturnType<typeof saveScrapedData>): void {
       wpStmt.run(row.artifact_slots, row.fire_behaviors, row.unique_name);
     }
 
-    const cpStmt = db.prepare(
-      'UPDATE companions SET artifact_slots = ? WHERE unique_name = ?',
-    );
+    const cpStmt = db.prepare('UPDATE companions SET artifact_slots = ? WHERE unique_name = ?');
     for (const row of saved.companions) {
       cpStmt.run(row.artifact_slots, row.unique_name);
     }
@@ -217,12 +202,7 @@ function restoreScrapedData(saved: ReturnType<typeof saveScrapedData>): void {
       'UPDATE abilities SET ability_stats = ?, wiki_stats = ?, energy_cost = ? WHERE unique_name = ?',
     );
     for (const row of saved.abilities) {
-      abStmt.run(
-        row.ability_stats,
-        row.wiki_stats,
-        row.energy_cost,
-        row.unique_name,
-      );
+      abStmt.run(row.ability_stats, row.wiki_stats, row.energy_cost, row.unique_name);
     }
 
     const modStmt = db.prepare(
@@ -330,10 +310,7 @@ function processAbilities(data: Record<string, unknown[]>): number {
   let count = 0;
 
   const tx = db.transaction(() => {
-    const helminthAbilities = (data.ExportAbilities || []) as Record<
-      string,
-      unknown
-    >[];
+    const helminthAbilities = (data.ExportAbilities || []) as Record<string, unknown>[];
     for (const item of helminthAbilities) {
       stmt.run(
         item.abilityUniqueName || item.uniqueName,
@@ -347,25 +324,15 @@ function processAbilities(data: Record<string, unknown[]>): number {
 
     const warframes = (data.ExportWarframes || []) as Record<string, unknown>[];
     for (const wf of warframes) {
-      const abilities = wf.abilities as
-        | Array<Record<string, unknown>>
-        | undefined;
+      const abilities = wf.abilities as Array<Record<string, unknown>> | undefined;
       if (!abilities || !Array.isArray(abilities)) continue;
 
       for (const ab of abilities) {
-        const uniqueName = (ab.abilityUniqueName || ab.uniqueName) as
-          | string
-          | undefined;
+        const uniqueName = (ab.abilityUniqueName || ab.uniqueName) as string | undefined;
         const name = (ab.abilityName || ab.name) as string | undefined;
         if (!uniqueName || !name) continue;
 
-        stmt.run(
-          uniqueName,
-          name,
-          ab.description ?? null,
-          wf.uniqueName ?? null,
-          0,
-        );
+        stmt.run(uniqueName, name, ab.description ?? null, wf.uniqueName ?? null, 0);
         count++;
       }
     }
@@ -559,9 +526,7 @@ function processMods(data: Record<string, unknown[]>): number {
     VALUES (?, ?, ?)
   `);
 
-  const modSetExistsStmt = db.prepare(
-    'SELECT 1 FROM mod_sets WHERE unique_name = ? LIMIT 1',
-  );
+  const modSetExistsStmt = db.prepare('SELECT 1 FROM mod_sets WHERE unique_name = ? LIMIT 1');
 
   const tx = db.transaction(() => {
     for (const item of items) {
@@ -569,9 +534,7 @@ function processMods(data: Record<string, unknown[]>): number {
 
       let description: string | null = null;
       const baseDesc = item.description as string[] | undefined;
-      const levelStats = item.levelStats as
-        | Array<{ stats?: string[] }>
-        | undefined;
+      const levelStats = item.levelStats as Array<{ stats?: string[] }> | undefined;
       if (levelStats) {
         const levelDescs = levelStats.map((ls) => {
           const stats = ls.stats;
@@ -584,9 +547,7 @@ function processMods(data: Record<string, unknown[]>): number {
 
         if (baseDesc && Array.isArray(baseDesc) && hasLevelDescs) {
           const prefix = baseDesc.join('\n').replace(/\r\n/g, '\n').trim();
-          const descs = levelDescs.map((ld) =>
-            ld ? `${prefix} ${ld}` : prefix,
-          );
+          const descs = levelDescs.map((ld) => (ld ? `${prefix} ${ld}` : prefix));
           description = JSON.stringify(descs);
         } else if (hasLevelDescs) {
           description = JSON.stringify(levelDescs);
@@ -597,12 +558,9 @@ function processMods(data: Record<string, unknown[]>): number {
         description = JSON.stringify(baseDesc);
       }
 
-      const rawModSetRef =
-        typeof item.modSet === 'string' ? (item.modSet as string) : null;
+      const rawModSetRef = typeof item.modSet === 'string' ? (item.modSet as string) : null;
       const modSetRef =
-        rawModSetRef && modSetExistsStmt.get(rawModSetRef) !== undefined
-          ? rawModSetRef
-          : null;
+        rawModSetRef && modSetExistsStmt.get(rawModSetRef) !== undefined ? rawModSetRef : null;
 
       modStmt.run(
         item.uniqueName,
@@ -624,11 +582,7 @@ function processMods(data: Record<string, unknown[]>): number {
 
       if (levelStats) {
         for (let rank = 0; rank < levelStats.length; rank++) {
-          levelStmt.run(
-            item.uniqueName,
-            rank,
-            JSON.stringify(levelStats[rank]),
-          );
+          levelStmt.run(item.uniqueName, rank, JSON.stringify(levelStats[rank]));
         }
       }
 
@@ -706,9 +660,7 @@ export function backfillModDescriptions(): number {
   const db = getDb();
 
   const modsWithoutDesc = db
-    .prepare(
-      `SELECT unique_name FROM mods WHERE description IS NULL OR description = ''`,
-    )
+    .prepare(`SELECT unique_name FROM mods WHERE description IS NULL OR description = ''`)
     .all() as Array<{ unique_name: string }>;
 
   if (modsWithoutDesc.length === 0) return 0;
@@ -717,9 +669,7 @@ export function backfillModDescriptions(): number {
     `SELECT rank, stats FROM mod_level_stats WHERE mod_unique_name = ? ORDER BY rank`,
   );
 
-  const updateDesc = db.prepare(
-    `UPDATE mods SET description = ? WHERE unique_name = ?`,
-  );
+  const updateDesc = db.prepare(`UPDATE mods SET description = ? WHERE unique_name = ?`);
 
   let count = 0;
   const tx = db.transaction(() => {

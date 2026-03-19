@@ -22,8 +22,7 @@ export function classifyArcaneCompatTags(
   }
   if (
     uniqueName.includes('/operatorarmour/') ||
-    (uniqueName.includes('/operator') &&
-      !uniqueName.includes('/operatoramps/')) ||
+    (uniqueName.includes('/operator') && !uniqueName.includes('/operatoramps/')) ||
     name.startsWith('magus ') ||
     name.includes(' operator ')
   ) {
@@ -56,11 +55,7 @@ export function classifyArcaneCompatTags(
   ) {
     tags.add('secondary');
   }
-  if (
-    name.startsWith('melee ') ||
-    name.includes(' melee ') ||
-    uniqueName.includes('melee')
-  ) {
+  if (name.startsWith('melee ') || name.includes(' melee ') || uniqueName.includes('melee')) {
     tags.add('melee');
   }
   if (

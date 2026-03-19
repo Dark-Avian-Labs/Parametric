@@ -1,10 +1,5 @@
+import { AP_ANY, AP_UMBRA, REGULAR_POLARITIES, type SlotType } from '../types/warframe';
 import { isCapacitySlot } from './drain';
-import {
-  AP_ANY,
-  AP_UMBRA,
-  REGULAR_POLARITIES,
-  type SlotType,
-} from '../types/warframe';
 
 export interface FormaCount {
   regular: number;
@@ -19,9 +14,7 @@ export interface SlotPolarity {
   type: SlotType;
 }
 
-function countMultiset(
-  polarities: (string | undefined)[],
-): Map<string, number> {
+function countMultiset(polarities: (string | undefined)[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const p of polarities) {
     if (p) {
@@ -31,10 +24,7 @@ function countMultiset(
   return counts;
 }
 
-export function calculateFormaCount(
-  defaults: SlotPolarity[],
-  desired: SlotPolarity[],
-): FormaCount {
+export function calculateFormaCount(defaults: SlotPolarity[], desired: SlotPolarity[]): FormaCount {
   const defaultPolarities = defaults.map((s) => s.polarity);
   const desiredPolarities = desired.map((s) => s.polarity);
 
@@ -86,10 +76,7 @@ export function calculateFormaCount(
     }
   }
 
-  const newStance = Math.max(
-    0,
-    desiredUniversalCapacity - defaultUniversalCapacity,
-  );
+  const newStance = Math.max(0, desiredUniversalCapacity - defaultUniversalCapacity);
   const newUniversal = Math.max(0, totalNewUniversal - newStance);
 
   const excessClears = Math.max(

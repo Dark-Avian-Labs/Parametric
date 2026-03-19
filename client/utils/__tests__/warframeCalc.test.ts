@@ -36,9 +36,7 @@ describe('calculateWarframeStats', () => {
   });
 
   it('applies health mod correctly', () => {
-    const slots: ModSlot[] = [
-      { index: 0, type: 'general', mod: makeMod(['+100% Health']), rank: 0 },
-    ];
+    const slots: ModSlot[] = [{ index: 0, type: 'general', mod: makeMod(['+100% Health']), rank: 0 }];
     const result = calculateWarframeStats(makeWarframe(), slots);
     expect(result.health.modded).toBe(600);
   });
@@ -57,9 +55,7 @@ describe('calculateWarframeStats', () => {
   });
 
   it('applies armor mod correctly', () => {
-    const slots: ModSlot[] = [
-      { index: 0, type: 'general', mod: makeMod(['+100% Armor']), rank: 0 },
-    ];
+    const slots: ModSlot[] = [{ index: 0, type: 'general', mod: makeMod(['+100% Armor']), rank: 0 }];
     const result = calculateWarframeStats(makeWarframe(), slots);
     expect(result.armor.modded).toBe(400);
   });

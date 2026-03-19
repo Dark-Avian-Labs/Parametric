@@ -75,7 +75,7 @@ function identifyInnateElements(
       ? baseDamage
       : [
           ...baseDamage,
-          ...new Array(DAMAGE_TYPES.length - baseDamage.length).fill(0),
+          ...Array.from({ length: DAMAGE_TYPES.length - baseDamage.length }, () => 0),
         ];
 
   for (const element of PRIMARY_ELEMENTS) {
@@ -88,9 +88,7 @@ function identifyInnateElements(
   }
 
   result.sort((a, b) => {
-    return (
-      ELEMENT_PRIORITY.indexOf(a.element) - ELEMENT_PRIORITY.indexOf(b.element)
-    );
+    return ELEMENT_PRIORITY.indexOf(a.element) - ELEMENT_PRIORITY.indexOf(b.element);
   });
 
   return result;
@@ -174,9 +172,7 @@ function combineElements(sequence: ElementEntry[]): DamageEntry[] {
 }
 
 function findCombination(a: PrimaryElement, b: PrimaryElement): string | null {
-  for (const [result, { a: ea, b: eb }] of Object.entries(
-    ELEMENT_COMBINATIONS,
-  )) {
+  for (const [result, { a: ea, b: eb }] of Object.entries(ELEMENT_COMBINATIONS)) {
     if ((a === ea && b === eb) || (a === eb && b === ea)) {
       return result;
     }

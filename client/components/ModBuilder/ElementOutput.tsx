@@ -38,12 +38,8 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
   return (
     <div className="glass-panel p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted">
-          Damage Output
-        </h3>
-        <span className="text-sm font-bold text-foreground">
-          {formatDamage(totalDamage)}
-        </span>
+        <h3 className="text-muted text-sm font-semibold tracking-wider uppercase">Damage Output</h3>
+        <span className="text-foreground text-sm font-bold">{formatDamage(totalDamage)}</span>
       </div>
 
       <div className="space-y-1">
@@ -56,7 +52,7 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
           return (
             <div
               key={entry.type}
-              className="relative flex items-center gap-2 overflow-hidden rounded py-1 pl-1 pr-2"
+              className="relative flex items-center gap-2 overflow-hidden rounded py-1 pr-2 pl-1"
             >
               <div
                 className="absolute inset-y-0 left-0 rounded transition-all duration-300"
@@ -76,27 +72,21 @@ export function ElementOutput({ weapon, slots }: ElementOutputProps) {
                     draggable={false}
                   />
                 ) : (
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: color }}
-                  />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
                 )}
               </div>
 
-              <span
-                className="relative z-10 min-w-[70px] text-xs font-medium"
-                style={{ color }}
-              >
+              <span className="relative z-10 min-w-[70px] text-xs font-medium" style={{ color }}>
                 {entry.type}
               </span>
 
               <div className="relative z-10 flex-1" />
 
-              <span className="relative z-10 text-[10px] tabular-nums text-muted">
+              <span className="text-muted relative z-10 text-[10px] tabular-nums">
                 {pct.toFixed(1)}%
               </span>
 
-              <span className="relative z-10 min-w-[48px] text-right text-xs font-semibold tabular-nums text-foreground">
+              <span className="text-foreground relative z-10 min-w-[48px] text-right text-xs font-semibold tabular-nums">
                 {formatDamage(entry.value)}
               </span>
             </div>

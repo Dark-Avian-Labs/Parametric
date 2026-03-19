@@ -14,18 +14,13 @@ const SECONDARY_COMPANION_WEAPON_NAMES = new Set([
   'Stinger',
 ]);
 
-const MELEE_COMPANION_WEAPON_NAMES = new Set([
-  'Deconstructor',
-  'Deconstructor Prime',
-]);
+const MELEE_COMPANION_WEAPON_NAMES = new Set(['Deconstructor', 'Deconstructor Prime']);
 
 export function isCompanionWeapon(item: CompanionWeaponLike): boolean {
   return item.product_category === 'SentinelWeapons' || item.sentinel === 1;
 }
 
-export function getCompanionWeaponSelectionType(
-  item: CompanionWeaponLike,
-): EquipmentType | null {
+export function getCompanionWeaponSelectionType(item: CompanionWeaponLike): EquipmentType | null {
   if (!isCompanionWeapon(item)) return null;
 
   if (SECONDARY_COMPANION_WEAPON_NAMES.has(item.name)) return 'secondary';

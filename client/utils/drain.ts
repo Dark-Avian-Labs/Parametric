@@ -1,14 +1,6 @@
-import {
-  AP_ANY,
-  AP_UMBRA,
-  type ModSlot,
-  type SlotType,
-} from '../types/warframe';
+import { AP_ANY, AP_UMBRA, type ModSlot, type SlotType } from '../types/warframe';
 
-function polarityMatchResult(
-  a: string,
-  b: string,
-): 'match' | 'neutral' | 'mismatch' {
+function polarityMatchResult(a: string, b: string): 'match' | 'neutral' | 'mismatch' {
   if (a === b) return 'match';
   if (a === AP_ANY || b === AP_ANY) {
     if (a === AP_UMBRA || b === AP_UMBRA) return 'neutral';

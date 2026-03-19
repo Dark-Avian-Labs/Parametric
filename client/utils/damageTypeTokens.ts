@@ -48,9 +48,7 @@ export function sanitizeDisplayTextKeepDamageTokens(value: unknown): string {
   });
 }
 
-export function splitDisplayTextByDamageTokens(
-  text: string,
-): DisplayTextSegment[] {
+export function splitDisplayTextByDamageTokens(text: string): DisplayTextSegment[] {
   const segments: DisplayTextSegment[] = [];
   let lastIndex = 0;
 
@@ -74,10 +72,7 @@ export function splitDisplayTextByDamageTokens(
   return segments;
 }
 
-export function truncateDamageTokenText(
-  text: string,
-  maxVisibleChars: number,
-): string {
+export function truncateDamageTokenText(text: string, maxVisibleChars: number): string {
   if (maxVisibleChars <= 0 || !text) return '';
 
   let visibleChars = 0;

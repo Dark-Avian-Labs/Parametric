@@ -38,9 +38,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function scrapeItemPage(
-  entry: OverframeIndexEntry,
-): Promise<ScrapedItemData> {
+export async function scrapeItemPage(entry: OverframeIndexEntry): Promise<ScrapedItemData> {
   const url = `${BASE_URL}/build/new/${entry.overframeId}/${entry.slug}/`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
@@ -57,9 +55,7 @@ export async function scrapeItemPage(
     if (parsed && typeof parsed === 'object') {
       nextData = parsed as Record<string, unknown>;
     } else {
-      console.warn(
-        `[Scraper] __NEXT_DATA__ for ${url} was not an object; using empty data`,
-      );
+      console.warn(`[Scraper] __NEXT_DATA__ for ${url} was not an object; using empty data`);
     }
   } catch (err) {
     console.warn(
@@ -67,20 +63,15 @@ export async function scrapeItemPage(
       err instanceof Error ? err.message : err,
     );
   }
-  const itemData =
-    (nextData as NextDataShape).props?.pageProps?.item?.data || {};
+  const itemData = (nextData as NextDataShape).props?.pageProps?.item?.data || {};
 
   const artifactSlots = Array.isArray(itemData.ArtifactSlots)
-    ? itemData.ArtifactSlots.filter(
-        (slot): slot is string => typeof slot === 'string',
-      )
+    ? itemData.ArtifactSlots.filter((slot): slot is string => typeof slot === 'string')
     : [];
   const fireBehaviors = Array.isArray(itemData.Behaviors)
     ? itemData.Behaviors.filter(
         (behavior): behavior is Record<string, unknown> =>
-          !!behavior &&
-          typeof behavior === 'object' &&
-          !Array.isArray(behavior),
+          !!behavior && typeof behavior === 'object' && !Array.isArray(behavior),
       )
     : [];
 

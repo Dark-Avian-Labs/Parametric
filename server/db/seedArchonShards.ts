@@ -289,9 +289,9 @@ const SHARD_BUFFS: ShardBuff[] = [
 export function seedArchonShards(): void {
   const db = getDb();
 
-  const existing = db
-    .prepare('SELECT COUNT(*) as cnt FROM archon_shard_types')
-    .get() as { cnt: number };
+  const existing = db.prepare('SELECT COUNT(*) as cnt FROM archon_shard_types').get() as {
+    cnt: number;
+  };
   if (existing.cnt > 0) {
     console.log('[DB] Archon shard data already seeded, skipping');
     return;
@@ -307,16 +307,8 @@ export function seedArchonShards(): void {
   const seedAll = db.transaction(() => {
     const typeIdMap = new Map<string, number>();
     for (const st of SHARD_TYPES) {
-      const result = insertType.run(
-        st.name,
-        st.icon_path,
-        st.tauforged_icon_path,
-        st.sort_order,
-      );
-      typeIdMap.set(
-        st.id,
-        (result as { lastInsertRowid: number }).lastInsertRowid,
-      );
+      const result = insertType.run(st.name, st.icon_path, st.tauforged_icon_path, st.sort_order);
+      typeIdMap.set(st.id, (result as { lastInsertRowid: number }).lastInsertRowid);
     }
     for (const sb of SHARD_BUFFS) {
       const shardTypeId = typeIdMap.get(sb.shard_type_id);

@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { buildEditPath } from '../../app/paths';
 import { useBuildStorage } from '../../hooks/useBuildStorage';
-import {
-  useLoadoutStorage,
-  LOADOUT_SLOT_TYPES,
-  type Loadout,
-} from '../../hooks/useLoadoutStorage';
+import { useLoadoutStorage, LOADOUT_SLOT_TYPES, type Loadout } from '../../hooks/useLoadoutStorage';
 import {
   EQUIPMENT_TYPE_LABELS,
   EQUIPMENT_TYPE_ORDER,
@@ -18,11 +14,7 @@ import {
   type PolarityKey,
 } from '../../types/warframe';
 import { apiFetch } from '../../utils/api';
-import {
-  calculateFormaCount,
-  type FormaCount,
-  type SlotPolarity,
-} from '../../utils/formaCounter';
+import { calculateFormaCount, type FormaCount, type SlotPolarity } from '../../utils/formaCounter';
 import { matchesSpecialItemType } from '../../utils/specialItems';
 
 interface BuildsByCategory {
@@ -41,25 +33,19 @@ interface EquipmentPolaritySource {
 
 function getPolarizedSlotCount(build: StoredBuild): number {
   const slots = Array.isArray(build.slots) ? build.slots : [];
-  return slots.reduce(
-    (count, slot) => count + (typeof slot.polarity === 'string' ? 1 : 0),
-    0,
-  );
+  return slots.reduce((count, slot) => count + (typeof slot.polarity === 'string' ? 1 : 0), 0);
 }
 
 function buildDefaultPolarities(
   equipmentType: EquipmentType,
   equipment: EquipmentPolaritySource,
 ): SlotPolarity[] {
-  const config =
-    EQUIPMENT_SLOT_CONFIGS[equipmentType] || EQUIPMENT_SLOT_CONFIGS.warframe;
+  const config = EQUIPMENT_SLOT_CONFIGS[equipmentType] || EQUIPMENT_SLOT_CONFIGS.warframe;
   const defaults: SlotPolarity[] = [];
 
   const artifactSlots: string[] = (() => {
     try {
-      return equipment.artifact_slots
-        ? JSON.parse(equipment.artifact_slots)
-        : [];
+      return equipment.artifact_slots ? JSON.parse(equipment.artifact_slots) : [];
     } catch {
       return [];
     }
@@ -67,9 +53,7 @@ function buildDefaultPolarities(
 
   const polarityFromAP = (ap: string | undefined): string | undefined => {
     if (!ap || ap === 'AP_UNIVERSAL') return undefined;
-    return (POLARITIES as Record<string, string>)[ap as PolarityKey]
-      ? ap
-      : undefined;
+    return (POLARITIES as Record<string, string>)[ap as PolarityKey] ? ap : undefined;
   };
 
   const hasArtifactSlots = artifactSlots.length > 0;
@@ -81,9 +65,7 @@ function buildDefaultPolarities(
     defaults.push({ type: 'aura', polarity });
   }
   if (config.hasStance) {
-    const polarity = hasArtifactSlots
-      ? polarityFromAP(artifactSlots[8])
-      : undefined;
+    const polarity = hasArtifactSlots ? polarityFromAP(artifactSlots[8]) : undefined;
     defaults.push({ type: 'stance', polarity });
   }
   if (config.hasPosture) {
@@ -92,15 +74,10 @@ function buildDefaultPolarities(
 
   const generalPolarities: (string | undefined)[] = (() => {
     if (hasArtifactSlots) {
-      return artifactSlots
-        .slice(0, config.generalSlots)
-        .reverse()
-        .map(polarityFromAP);
+      return artifactSlots.slice(0, config.generalSlots).reverse().map(polarityFromAP);
     }
     try {
-      const parsed = equipment.polarities
-        ? JSON.parse(equipment.polarities)
-        : [];
+      const parsed = equipment.polarities ? JSON.parse(equipment.polarities) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
@@ -138,9 +115,7 @@ function getUsedFormaCost(
   }
 
   const defaults = buildDefaultPolarities(build.equipment_type, equipment);
-  const desired: SlotPolarity[] = (
-    Array.isArray(build.slots) ? build.slots : []
-  ).map((slot) => ({
+  const desired: SlotPolarity[] = (Array.isArray(build.slots) ? build.slots : []).map((slot) => ({
     type: slot.type,
     polarity: slot.polarity,
   }));
@@ -176,19 +151,16 @@ function getSlotLabel(slotType: string): string {
   if (slotType === 'special_secondary') return 'Secondary (Special)';
   if (slotType === 'special_melee') return 'Melee (Special)';
 
-  return (
-    LOADOUT_SLOT_TYPES.find((slot) => slot.key === slotType)?.label ?? slotType
-  );
+  return LOADOUT_SLOT_TYPES.find((slot) => slot.key === slotType)?.label ?? slotType;
 }
 
 export function BuildOverview() {
   const { builds, loading, deleteBuild } = useBuildStorage();
-  const { loadouts, createLoadout, deleteLoadout, linkBuild, unlinkBuild } =
-    useLoadoutStorage();
+  const { loadouts, createLoadout, deleteLoadout, linkBuild, unlinkBuild } = useLoadoutStorage();
   const navigate = useNavigate();
-  const [equipmentLookup, setEquipmentLookup] = useState<
-    Record<string, EquipmentPolaritySource>
-  >({});
+  const [equipmentLookup, setEquipmentLookup] = useState<Record<string, EquipmentPolaritySource>>(
+    {},
+  );
   const [showNewLoadout, setShowNewLoadout] = useState(false);
   const [newLoadoutName, setNewLoadoutName] = useState('');
   const [newLoadoutError, setNewLoadoutError] = useState<string | null>(null);
@@ -268,10 +240,7 @@ export function BuildOverview() {
       label: EQUIPMENT_TYPE_LABELS[t],
       builds: map
         .get(t)!
-        .sort(
-          (a, b) =>
-            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-        ),
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
     }));
   }, [builds]);
 
@@ -285,33 +254,24 @@ export function BuildOverview() {
       setNewLoadoutName('');
       setShowNewLoadout(false);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to create loadout';
+      const message = error instanceof Error ? error.message : 'Failed to create loadout';
       console.error('Failed to create loadout', error);
       setNewLoadoutError(message);
     }
   };
 
-  const getBuildById = useCallback(
-    (id: string) => builds.find((b) => b.id === id),
-    [builds],
-  );
+  const getBuildById = useCallback((id: string) => builds.find((b) => b.id === id), [builds]);
 
   const loadoutCompatibleBuilds = useMemo(() => {
     if (!linkingLoadout) return [] as StoredBuild[];
-    const usedSlotTypes = new Set(
-      linkingLoadout.builds.map((b) => b.slot_type),
-    );
+    const usedSlotTypes = new Set(linkingLoadout.builds.map((b) => b.slot_type));
     return builds
       .filter((build) => {
         const slotType = getSlotTypeForBuild(build);
         if (!slotType) return false;
         return !usedSlotTypes.has(slotType);
       })
-      .sort(
-        (a, b) =>
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
-      );
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }, [builds, linkingLoadout]);
 
   const handleLinkBuildToLoadout = async (loadoutId: string) => {
@@ -321,10 +281,7 @@ export function BuildOverview() {
       await linkBuild(loadoutId, linkingBuild.id, linkingBuild.equipment_type);
       setLinkingBuild(null);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Failed to link build to loadout';
+      const message = error instanceof Error ? error.message : 'Failed to link build to loadout';
       console.error('Failed to link build to loadout', error);
       window.alert(message);
     }
@@ -343,9 +300,7 @@ export function BuildOverview() {
       setLinkingLoadout(null);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'Failed to link build to loadout slot';
+        error instanceof Error ? error.message : 'Failed to link build to loadout slot';
       console.error('Failed to link build to loadout slot', error);
       window.alert(message);
     }
@@ -366,15 +321,13 @@ export function BuildOverview() {
       <div className="min-w-0 flex-1 space-y-4">
         {loadouts.length > 0 && (
           <div className="glass-shell overflow-hidden">
-            <div className="flex items-center justify-between border-b border-glass-divider bg-glass-hover/50 px-4 py-2.5">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+            <div className="border-glass-divider bg-glass-hover/50 flex items-center justify-between border-b px-4 py-2.5">
+              <h2 className="text-muted text-sm font-semibold tracking-wider uppercase">
                 Loadouts
-                <span className="ml-2 text-xs font-normal text-muted/60">
-                  ({loadouts.length})
-                </span>
+                <span className="text-muted/60 ml-2 text-xs font-normal">({loadouts.length})</span>
               </h2>
             </div>
-            <div className="divide-y divide-glass-divider">
+            <div className="divide-glass-divider divide-y">
               {loadouts.map((loadout) => (
                 <LoadoutRow
                   key={loadout.id}
@@ -388,9 +341,7 @@ export function BuildOverview() {
                       await deleteLoadout(loadout.id);
                     } catch (error) {
                       const message =
-                        error instanceof Error
-                          ? error.message
-                          : 'Failed to delete loadout';
+                        error instanceof Error ? error.message : 'Failed to delete loadout';
                       console.error('Failed to delete loadout', error);
                       window.alert(message);
                     }
@@ -404,10 +355,7 @@ export function BuildOverview() {
                         error instanceof Error
                           ? error.message
                           : 'Failed to unlink build from loadout';
-                      console.error(
-                        'Failed to unlink build from loadout',
-                        error,
-                      );
+                      console.error('Failed to unlink build from loadout', error);
                       window.alert(message);
                     }
                   }}
@@ -422,23 +370,23 @@ export function BuildOverview() {
 
         {builds.length === 0 ? (
           <div className="glass-shell flex h-64 flex-col items-center justify-center gap-4">
-            <p className="text-lg text-muted">No builds yet</p>
-            <p className="text-sm text-muted">
+            <p className="text-muted text-lg">No builds yet</p>
+            <p className="text-muted text-sm">
               Click "Add Build" in the header to create your first build.
             </p>
           </div>
         ) : (
           grouped.map((group) => (
             <div key={group.type} className="glass-shell overflow-hidden">
-              <div className="border-b border-glass-divider bg-glass-hover/50 px-4 py-2.5">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+              <div className="border-glass-divider bg-glass-hover/50 border-b px-4 py-2.5">
+                <h2 className="text-muted text-sm font-semibold tracking-wider uppercase">
                   {group.label}
-                  <span className="ml-2 text-xs font-normal text-muted/60">
+                  <span className="text-muted/60 ml-2 text-xs font-normal">
                     ({group.builds.length})
                   </span>
                 </h2>
               </div>
-              <div className="divide-y divide-glass-divider">
+              <div className="divide-glass-divider divide-y">
                 {group.builds.map((build) => (
                   <BuildRow
                     key={build.id}
@@ -454,8 +402,7 @@ export function BuildOverview() {
                     }
                     onClick={() => navigate(buildEditPath(build.id))}
                     onDelete={() => {
-                      if (confirm(`Delete "${build.name}"?`))
-                        void deleteBuild(build.id);
+                      if (confirm(`Delete "${build.name}"?`)) void deleteBuild(build.id);
                     }}
                     onLink={() => setLinkingBuild(build)}
                     hasLoadouts={loadouts.length > 0}
@@ -469,12 +416,8 @@ export function BuildOverview() {
 
       <div className="hidden w-80 shrink-0 space-y-4 lg:block">
         <div className="glass-surface p-4">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Loadouts
-          </h3>
-          <p className="mb-3 text-xs text-muted">
-            Group builds into complete character setups.
-          </p>
+          <h3 className="text-foreground mb-3 text-sm font-semibold">Loadouts</h3>
+          <p className="text-muted mb-3 text-xs">Group builds into complete character setups.</p>
           {showNewLoadout ? (
             <div className="space-y-2">
               <div className="flex gap-2">
@@ -512,9 +455,7 @@ export function BuildOverview() {
                   Cancel
                 </button>
               </div>
-              {newLoadoutError ? (
-                <p className="text-xs text-danger">{newLoadoutError}</p>
-              ) : null}
+              {newLoadoutError ? <p className="text-danger text-xs">{newLoadoutError}</p> : null}
             </div>
           ) : (
             <button
@@ -530,16 +471,14 @@ export function BuildOverview() {
         </div>
 
         <div className="glass-surface flex h-48 items-center justify-center">
-          <p className="text-sm text-muted/50">
-            Select a build to view details
-          </p>
+          <p className="text-muted/50 text-sm">Select a build to view details</p>
         </div>
       </div>
 
       {linkingBuild && loadouts.length > 0 && (
         <div className="modal-overlay" onClick={() => setLinkingBuild(null)}>
           <div
-            className="glass-modal-surface w-[90%] max-w-lg max-h-[90vh] overflow-y-auto p-6"
+            className="glass-modal-surface max-h-[90vh] w-[90%] max-w-lg overflow-y-auto p-6"
             tabIndex={0}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
@@ -549,11 +488,11 @@ export function BuildOverview() {
             }}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-foreground text-sm font-semibold">
                 Link "{linkingBuild.name}" to Loadout
               </h3>
               <button
-                className="text-lg text-muted hover:text-foreground"
+                className="text-muted hover:text-foreground text-lg"
                 onClick={() => setLinkingBuild(null)}
               >
                 &times;
@@ -566,12 +505,10 @@ export function BuildOverview() {
                   onClick={() => {
                     void handleLinkBuildToLoadout(loadout.id);
                   }}
-                  className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
+                  className="border-glass-border text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-all"
                 >
                   <span>{loadout.name}</span>
-                  <span className="text-xs text-muted/50">
-                    {loadout.builds.length} builds
-                  </span>
+                  <span className="text-muted/50 text-xs">{loadout.builds.length} builds</span>
                 </button>
               ))}
             </div>
@@ -582,15 +519,15 @@ export function BuildOverview() {
       {linkingLoadout && (
         <div className="modal-overlay" onClick={() => setLinkingLoadout(null)}>
           <div
-            className="glass-modal-surface w-[90%] max-w-lg max-h-[90vh] overflow-y-auto p-6"
+            className="glass-modal-surface max-h-[90vh] w-[90%] max-w-lg overflow-y-auto p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-foreground text-sm font-semibold">
                 Add Build to "{linkingLoadout.name}"
               </h3>
               <button
-                className="text-lg text-muted hover:text-foreground"
+                className="text-muted hover:text-foreground text-lg"
                 onClick={() => setLinkingLoadout(null)}
                 aria-label="Close add build dialog"
               >
@@ -598,9 +535,9 @@ export function BuildOverview() {
               </button>
             </div>
             {loadoutCompatibleBuilds.length === 0 ? (
-              <p className="text-sm text-muted">
-                No compatible builds available. This loadout already has all
-                supported categories filled.
+              <p className="text-muted text-sm">
+                No compatible builds available. This loadout already has all supported categories
+                filled.
               </p>
             ) : (
               <div className="space-y-2">
@@ -610,17 +547,15 @@ export function BuildOverview() {
                     onClick={() => {
                       void handleLinkCompatibleBuildClick(build);
                     }}
-                    className="flex w-full items-center justify-between rounded-lg border border-glass-border px-3 py-2 text-left text-sm text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
+                    className="border-glass-border text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-all"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-foreground">
+                      <div className="text-foreground truncate text-sm font-medium">
                         {build.name}
                       </div>
-                      <div className="truncate text-xs text-muted">
-                        {build.equipment_name}
-                      </div>
+                      <div className="text-muted truncate text-xs">{build.equipment_name}</div>
                     </div>
-                    <span className="ml-3 shrink-0 text-[10px] text-muted/50">
+                    <span className="text-muted/50 ml-3 shrink-0 text-[10px]">
                       {getSlotLabel(getSlotTypeForBuild(build) ?? '')}
                     </span>
                   </button>
@@ -675,7 +610,7 @@ function BuildRow({
 
   return (
     <div
-      className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-all hover:bg-glass-hover"
+      className="group hover:bg-glass-hover flex cursor-pointer items-center gap-3 px-4 py-3 transition-all"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -686,7 +621,7 @@ function BuildRow({
         }
       }}
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-glass">
+      <div className="bg-glass flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
         {build.equipment_image ? (
           <img
             src={build.equipment_image}
@@ -695,21 +630,17 @@ function BuildRow({
             draggable={false}
           />
         ) : (
-          <span className="text-xs text-muted/50">?</span>
+          <span className="text-muted/50 text-xs">?</span>
         )}
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium text-foreground">
-            {build.name}
-          </span>
+          <span className="text-foreground truncate text-sm font-medium">{build.name}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="truncate text-xs text-muted">
-            {build.equipment_name}
-          </span>
-          <span className="text-[10px] text-muted/40">
+          <span className="text-muted truncate text-xs">{build.equipment_name}</span>
+          <span className="text-muted/40 text-[10px]">
             {new Date(build.updated_at).toLocaleDateString()}
           </span>
         </div>
@@ -719,7 +650,7 @@ function BuildRow({
         {visibleFormaEntries.map((entry) => (
           <div
             key={entry.key}
-            className="flex h-10 min-w-14 items-center justify-center gap-1.5 rounded-lg bg-glass px-2"
+            className="bg-glass flex h-10 min-w-14 items-center justify-center gap-1.5 rounded-lg px-2"
           >
             <img
               src={entry.icon}
@@ -727,17 +658,15 @@ function BuildRow({
               className="h-6 w-6 object-contain"
               draggable={false}
             />
-            <span className="text-sm font-semibold text-foreground">
-              {entry.count}
-            </span>
+            <span className="text-foreground text-sm font-semibold">{entry.count}</span>
           </div>
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
         {hasLoadouts && (
           <button
-            className="rounded-lg p-1.5 text-xs text-muted/60 hover:bg-accent/10 hover:text-accent"
+            className="text-muted/60 hover:bg-accent/10 hover:text-accent rounded-lg p-1.5 text-xs"
             onClick={(e) => {
               e.stopPropagation();
               onLink();
@@ -749,7 +678,7 @@ function BuildRow({
           </button>
         )}
         <button
-          className="rounded-lg p-1.5 text-xs text-muted/40 hover:bg-danger/10 hover:text-danger"
+          className="text-muted/40 hover:bg-danger/10 hover:text-danger rounded-lg p-1.5 text-xs"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -786,21 +715,17 @@ function LoadoutRow({
         if (!build) return null;
         return { build, slotType: linked.slot_type };
       })
-      .filter((entry): entry is { build: StoredBuild; slotType: string } =>
-        Boolean(entry),
-      );
+      .filter((entry): entry is { build: StoredBuild; slotType: string } => Boolean(entry));
 
     return rows.sort(
-      (a, b) =>
-        new Date(b.build.updated_at).getTime() -
-        new Date(a.build.updated_at).getTime(),
+      (a, b) => new Date(b.build.updated_at).getTime() - new Date(a.build.updated_at).getTime(),
     );
   }, [loadout.builds, getBuildById]);
 
   return (
     <div>
       <div
-        className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition-all hover:bg-glass-hover"
+        className="group hover:bg-glass-hover flex cursor-pointer items-center gap-3 px-4 py-3 transition-all"
         onClick={() => setExpanded(!expanded)}
         role="button"
         aria-expanded={expanded}
@@ -812,17 +737,13 @@ function LoadoutRow({
           }
         }}
       >
-        <span className="text-xs text-muted/50">{expanded ? '▼' : '▶'}</span>
+        <span className="text-muted/50 text-xs">{expanded ? '▼' : '▶'}</span>
         <div className="min-w-0 flex-1">
-          <span className="text-sm font-medium text-foreground">
-            {loadout.name}
-          </span>
-          <span className="ml-2 text-xs text-muted/50">
-            {loadout.builds.length} builds
-          </span>
+          <span className="text-foreground text-sm font-medium">{loadout.name}</span>
+          <span className="text-muted/50 ml-2 text-xs">{loadout.builds.length} builds</span>
         </div>
         <button
-          className="shrink-0 rounded-lg p-1.5 text-xs text-muted/40 opacity-0 hover:bg-danger/10 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100"
+          className="text-muted/40 hover:bg-danger/10 hover:text-danger shrink-0 rounded-lg p-1.5 text-xs opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -834,22 +755,20 @@ function LoadoutRow({
       </div>
 
       {expanded && (
-        <div className="border-t border-glass-divider bg-glass/30 px-6 py-2">
+        <div className="border-glass-divider bg-glass/30 border-t px-6 py-2">
           {linkedBuildRows.length === 0 ? (
-            <div className="py-2 text-xs text-muted/40">
-              No builds added yet.
-            </div>
+            <div className="text-muted/40 py-2 text-xs">No builds added yet.</div>
           ) : (
             linkedBuildRows.map(({ build, slotType }) => (
               <div
                 key={`${slotType}:${build.id}`}
-                className="group flex items-center gap-3 rounded px-2 py-2 transition-all hover:bg-glass-hover"
+                className="group hover:bg-glass-hover flex items-center gap-3 rounded px-2 py-2 transition-all"
               >
                 <button
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   onClick={() => onNavigate(build.id)}
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded bg-glass">
+                  <div className="bg-glass flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded">
                     {build.equipment_image ? (
                       <img
                         src={build.equipment_image}
@@ -858,24 +777,20 @@ function LoadoutRow({
                         draggable={false}
                       />
                     ) : (
-                      <span className="text-[10px] text-muted/50">?</span>
+                      <span className="text-muted/50 text-[10px]">?</span>
                     )}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate text-xs font-medium text-foreground">
-                      {build.name}
-                    </div>
-                    <div className="truncate text-[11px] text-muted">
-                      {build.equipment_name}
-                    </div>
+                    <div className="text-foreground truncate text-xs font-medium">{build.name}</div>
+                    <div className="text-muted truncate text-[11px]">{build.equipment_name}</div>
                   </div>
                 </button>
-                <span className="shrink-0 rounded border border-glass-border px-1.5 py-0.5 text-[10px] text-muted/60">
+                <span className="border-glass-border text-muted/60 shrink-0 rounded border px-1.5 py-0.5 text-[10px]">
                   {getSlotLabel(slotType)}
                 </span>
                 <button
                   onClick={() => onUnlink(slotType)}
-                  className="text-muted/40 opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+                  className="text-muted/40 hover:text-danger opacity-0 transition-opacity group-hover:opacity-100"
                   aria-label={`Unlink ${getSlotLabel(slotType)}`}
                 >
                   &times;
@@ -886,7 +801,7 @@ function LoadoutRow({
           <div className="pt-2">
             <button
               onClick={onAddBuild}
-              className="rounded px-2 py-1 text-xs text-accent hover:bg-accent/10"
+              className="text-accent hover:bg-accent/10 rounded px-2 py-1 text-xs"
             >
               + Add Build
             </button>

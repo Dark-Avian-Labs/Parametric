@@ -20,16 +20,16 @@ const POLARITY_CYCLE_FULL: (string | undefined)[] = [
   AP_ANY,
 ];
 
-const POLARITY_CYCLE_NO_UMBRA: (string | undefined)[] =
-  POLARITY_CYCLE_FULL.filter((p) => p !== AP_UMBRA);
+const POLARITY_CYCLE_NO_UMBRA: (string | undefined)[] = POLARITY_CYCLE_FULL.filter(
+  (p) => p !== AP_UMBRA,
+);
 
 function getPolarityCycle(
   slotType: SlotType,
   equipmentType: EquipmentType,
 ): (string | undefined)[] {
   if (equipmentType !== 'warframe') return POLARITY_CYCLE_NO_UMBRA;
-  if (slotType === 'aura' || slotType === 'exilus')
-    return POLARITY_CYCLE_NO_UMBRA;
+  if (slotType === 'aura' || slotType === 'exilus') return POLARITY_CYCLE_NO_UMBRA;
   return POLARITY_CYCLE_FULL;
 }
 
@@ -51,10 +51,7 @@ const POLARITY_ICONS: Record<string, string> = {
 
 const CARD_HOVER_TILT_MAX_DEG = 15;
 
-function applyCardTiltFromMouse(
-  target: HTMLElement,
-  event: React.MouseEvent<HTMLElement>,
-): void {
+function applyCardTiltFromMouse(target: HTMLElement, event: React.MouseEvent<HTMLElement>): void {
   const rect = target.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return;
   const px = (event.clientX - rect.left) / rect.width;
@@ -143,9 +140,7 @@ export function ModSlotGrid({
     const cycle = getPolarityCycle(slotType, equipmentType);
     const currentIdx = cycle.indexOf(currentPolarity);
     const len = cycle.length;
-    const nextIdx = reverse
-      ? (currentIdx - 1 + len) % len
-      : (currentIdx + 1) % len;
+    const nextIdx = reverse ? (currentIdx - 1 + len) % len : (currentIdx + 1) % len;
     onPolarityChange(slotIndex, cycle[nextIdx]);
   };
 
@@ -168,14 +163,8 @@ export function ModSlotGrid({
               onDrop={(e) => handleDrop(specialSlots[0].index, e)}
               onRemove={() => onRemove(specialSlots[0].index)}
               onRankChange={(rank) => onRankChange(specialSlots[0].index, rank)}
-              onSetRankChange={(sr) =>
-                onSetRankChange(specialSlots[0].index, sr)
-              }
-              onEditRiven={
-                onEditRiven
-                  ? () => onEditRiven(specialSlots[0].index)
-                  : undefined
-              }
+              onSetRankChange={(sr) => onSetRankChange(specialSlots[0].index, sr)}
+              onEditRiven={onEditRiven ? () => onEditRiven(specialSlots[0].index) : undefined}
               onClick={() =>
                 formaMode
                   ? handleFormaClick(
@@ -193,10 +182,7 @@ export function ModSlotGrid({
                   true,
                 )
               }
-              label={
-                specialSlots[0].type.charAt(0).toUpperCase() +
-                specialSlots[0].type.slice(1)
-              }
+              label={specialSlots[0].type.charAt(0).toUpperCase() + specialSlots[0].type.slice(1)}
             />
           ) : (
             <div />
@@ -211,25 +197,14 @@ export function ModSlotGrid({
               onRemove={() => onRemove(exilusSlot.index)}
               onRankChange={(rank) => onRankChange(exilusSlot.index, rank)}
               onSetRankChange={(sr) => onSetRankChange(exilusSlot.index, sr)}
-              onEditRiven={
-                onEditRiven ? () => onEditRiven(exilusSlot.index) : undefined
-              }
+              onEditRiven={onEditRiven ? () => onEditRiven(exilusSlot.index) : undefined}
               onClick={() =>
                 formaMode
-                  ? handleFormaClick(
-                      exilusSlot.index,
-                      exilusSlot.polarity,
-                      exilusSlot.type,
-                    )
+                  ? handleFormaClick(exilusSlot.index, exilusSlot.polarity, exilusSlot.type)
                   : onSlotClick?.(exilusSlot.index, exilusSlot.type)
               }
               onRightClick={() =>
-                handleFormaClick(
-                  exilusSlot.index,
-                  exilusSlot.polarity,
-                  exilusSlot.type,
-                  true,
-                )
+                handleFormaClick(exilusSlot.index, exilusSlot.polarity, exilusSlot.type, true)
               }
               label="Exilus"
             />
@@ -254,17 +229,13 @@ export function ModSlotGrid({
                 onRemove={() => onRemove(slot.index)}
                 onRankChange={(rank) => onRankChange(slot.index, rank)}
                 onSetRankChange={(sr) => onSetRankChange(slot.index, sr)}
-                onEditRiven={
-                  onEditRiven ? () => onEditRiven(slot.index) : undefined
-                }
+                onEditRiven={onEditRiven ? () => onEditRiven(slot.index) : undefined}
                 onClick={() =>
                   formaMode
                     ? handleFormaClick(slot.index, slot.polarity, slot.type)
                     : onSlotClick?.(slot.index, slot.type)
                 }
-                onRightClick={() =>
-                  handleFormaClick(slot.index, slot.polarity, slot.type, true)
-                }
+                onRightClick={() => handleFormaClick(slot.index, slot.polarity, slot.type, true)}
               />
             ))}
           </div>
@@ -291,11 +262,9 @@ function PolarityIcon({
   let filterStyle = 'brightness(0) invert(1) opacity(0.7)';
   if (mod?.polarity) {
     if (mod.polarity === polarity) {
-      filterStyle =
-        'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(85deg)';
+      filterStyle = 'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(85deg)';
     } else {
-      filterStyle =
-        'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(-10deg)';
+      filterStyle = 'brightness(0) invert(0.5) sepia(1) saturate(5) hue-rotate(-10deg)';
     }
   }
 
@@ -354,9 +323,7 @@ function SlotCell({
     setIsDragging(false);
   }, [slot.mod?.unique_name]);
 
-  const polarityLabel = slot.polarity
-    ? POLARITY_LABELS[slot.polarity] || slot.polarity
-    : 'None';
+  const polarityLabel = slot.polarity ? POLARITY_LABELS[slot.polarity] || slot.polarity : 'None';
   const slotIconName =
     slot.type === 'aura'
       ? 'aura'
@@ -406,9 +373,9 @@ function SlotCell({
     <div
       ref={slotRef}
       style={{ width: SLOT_W, height: SLOT_H, marginBottom: 4 }}
-      className={`relative overflow-visible select-none rounded-lg transition-opacity ${
-        active && !formaMode ? 'ring-1 ring-accent' : ''
-      } ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-accent/60' : ''}`}
+      className={`relative overflow-visible rounded-lg transition-opacity select-none ${
+        active && !formaMode ? 'ring-accent ring-1' : ''
+      } ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-accent/60 ring-2' : ''}`}
       onDragOver={!formaMode ? handleLocalDragOver : undefined}
       onDragLeave={!formaMode ? handleLocalDragLeave : undefined}
       onDrop={!formaMode ? handleLocalDrop : undefined}
@@ -450,9 +417,7 @@ function SlotCell({
               <div
                 className="mod-slot-expanded relative"
                 style={{ width: SLOT_W }}
-                onMouseMove={(event) =>
-                  applyCardTiltFromMouse(event.currentTarget, event)
-                }
+                onMouseMove={(event) => applyCardTiltFromMouse(event.currentTarget, event)}
                 onMouseLeave={(event) => resetCardTilt(event.currentTarget)}
               >
                 <ModCard
@@ -469,9 +434,7 @@ function SlotCell({
                   style={{
                     top:
                       Math.round(
-                        (DEFAULT_LAYOUT.rankOffsetY +
-                          DEFAULT_LAYOUT.cardOffsetY) *
-                          SLOT_SCALE,
+                        (DEFAULT_LAYOUT.rankOffsetY + DEFAULT_LAYOUT.cardOffsetY) * SLOT_SCALE,
                       ) - 5,
                     height: 16,
                   }}
@@ -479,10 +442,8 @@ function SlotCell({
                 >
                   {(slot.mod.fusion_limit ?? 0) > 0 && (
                     <button
-                      onClick={() =>
-                        onRankChange(Math.max(0, (slot.rank ?? 0) - 1))
-                      }
-                      className="absolute left-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border border-glass-border bg-glass-active text-[9px] font-bold text-foreground backdrop-blur-md transition-colors hover:bg-glass-hover"
+                      onClick={() => onRankChange(Math.max(0, (slot.rank ?? 0) - 1))}
+                      className="border-glass-border bg-glass-active text-foreground hover:bg-glass-hover absolute left-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border text-[9px] font-bold backdrop-blur-md transition-colors"
                       title="Decrease rank"
                     >
                       −
@@ -491,55 +452,42 @@ function SlotCell({
                   {(slot.mod.fusion_limit ?? 0) > 0 && (
                     <button
                       onClick={() =>
-                        onRankChange(
-                          Math.min(
-                            slot.mod!.fusion_limit ?? 0,
-                            (slot.rank ?? 0) + 1,
-                          ),
-                        )
+                        onRankChange(Math.min(slot.mod!.fusion_limit ?? 0, (slot.rank ?? 0) + 1))
                       }
-                      className="absolute right-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border border-glass-border bg-glass-active text-[9px] font-bold text-foreground backdrop-blur-md transition-colors hover:bg-glass-hover"
+                      className="border-glass-border bg-glass-active text-foreground hover:bg-glass-hover absolute right-[32px] flex h-[14px] w-[22px] items-center justify-center rounded-full border text-[9px] font-bold backdrop-blur-md transition-colors"
                       title="Increase rank"
                     >
                       +
                     </button>
                   )}
-                  {slot.mod!.set_stats &&
-                    (slot.mod!.set_num_in_set ?? 0) > 0 && (
-                      <>
-                        <button
-                          onClick={() =>
-                            onSetRankChange(
-                              Math.max(1, (slot.setRank ?? 1) - 1),
-                            )
-                          }
-                          className="absolute left-[52px] flex h-[14px] w-[16px] items-center justify-center rounded-full border border-warning/30 bg-glass-active text-[9px] font-bold text-warning backdrop-blur-md transition-colors hover:bg-glass-hover"
-                          title="Decrease set rank"
-                        >
-                          −
-                        </button>
-                        <button
-                          onClick={() =>
-                            onSetRankChange(
-                              Math.min(
-                                slot.mod!.set_num_in_set ?? 0,
-                                (slot.setRank ?? 1) + 1,
-                              ),
-                            )
-                          }
-                          className="absolute right-[52px] flex h-[14px] w-[16px] items-center justify-center rounded-full border border-warning/30 bg-glass-active text-[9px] font-bold text-warning backdrop-blur-md transition-colors hover:bg-glass-hover"
-                          title="Increase set rank"
-                        >
-                          +
-                        </button>
-                      </>
-                    )}
+                  {slot.mod!.set_stats && (slot.mod!.set_num_in_set ?? 0) > 0 && (
+                    <>
+                      <button
+                        onClick={() => onSetRankChange(Math.max(1, (slot.setRank ?? 1) - 1))}
+                        className="border-warning/30 bg-glass-active text-warning hover:bg-glass-hover absolute left-[52px] flex h-[14px] w-[16px] items-center justify-center rounded-full border text-[9px] font-bold backdrop-blur-md transition-colors"
+                        title="Decrease set rank"
+                      >
+                        −
+                      </button>
+                      <button
+                        onClick={() =>
+                          onSetRankChange(
+                            Math.min(slot.mod!.set_num_in_set ?? 0, (slot.setRank ?? 1) + 1),
+                          )
+                        }
+                        className="border-warning/30 bg-glass-active text-warning hover:bg-glass-hover absolute right-[52px] flex h-[14px] w-[16px] items-center justify-center rounded-full border text-[9px] font-bold backdrop-blur-md transition-colors"
+                        title="Increase set rank"
+                      >
+                        +
+                      </button>
+                    </>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditRiven?.();
                     }}
-                    className={`absolute left-[12px] flex h-[15px] w-[15px] items-center justify-center rounded-full border border-glass-border bg-glass-active text-[7px] font-bold text-foreground backdrop-blur-md transition-colors hover:text-accent ${
+                    className={`border-glass-border bg-glass-active text-foreground hover:text-accent absolute left-[12px] flex h-[15px] w-[15px] items-center justify-center rounded-full border text-[7px] font-bold backdrop-blur-md transition-colors ${
                       isRivenMod(slot.mod) ? '' : 'hidden'
                     }`}
                     title="Edit Riven"
@@ -548,7 +496,7 @@ function SlotCell({
                   </button>
                   <button
                     onClick={onRemove}
-                    className="absolute right-[12px] flex h-[15px] w-[15px] items-center justify-center rounded-full border border-glass-border bg-glass-active text-[7px] font-bold text-foreground backdrop-blur-md transition-colors hover:text-danger"
+                    className="border-glass-border bg-glass-active text-foreground hover:text-danger absolute right-[12px] flex h-[15px] w-[15px] items-center justify-center rounded-full border text-[7px] font-bold backdrop-blur-md transition-colors"
                     title="Remove"
                   >
                     ✕
@@ -558,20 +506,18 @@ function SlotCell({
             )}
           </div>
           {slot.polarity && (
-            <div className="absolute right-1 top-1 z-10">
+            <div className="absolute top-1 right-1 z-10">
               <PolarityIcon polarity={slot.polarity} mod={slot.mod} size={12} />
             </div>
           )}
           {formaMode && (
-            <div className="absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-warning/60 bg-warning/15 transition-all hover:bg-warning/25">
+            <div className="border-warning/60 bg-warning/15 hover:bg-warning/25 absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all">
               {slot.polarity ? (
                 <PolarityIcon polarity={slot.polarity} size={20} />
               ) : (
-                <span className="text-sm text-muted/40">-</span>
+                <span className="text-muted/40 text-sm">-</span>
               )}
-              <span className="mt-0.5 text-[9px] font-medium text-warning/80">
-                {polarityLabel}
-              </span>
+              <span className="text-warning/80 mt-0.5 text-[9px] font-medium">{polarityLabel}</span>
             </div>
           )}
         </>
@@ -595,24 +541,20 @@ function SlotCell({
 
           {formaMode ? (
             <>
-              <div className="absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-warning/50 bg-warning/10 transition-all hover:bg-warning/20">
+              <div className="border-warning/50 bg-warning/10 hover:bg-warning/20 absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all">
                 {slot.polarity ? (
                   <PolarityIcon polarity={slot.polarity} size={24} />
                 ) : (
-                  <span className="text-lg text-muted/30">-</span>
+                  <span className="text-muted/30 text-lg">-</span>
                 )}
-                <span className="mt-0.5 text-[9px] text-warning/70">
-                  {polarityLabel}
-                </span>
-                {label && (
-                  <span className="text-[8px] text-muted/40">{label}</span>
-                )}
+                <span className="text-warning/70 mt-0.5 text-[9px]">{polarityLabel}</span>
+                {label && <span className="text-muted/40 text-[8px]">{label}</span>}
               </div>
               {slotIconName && !slot.polarity && (
                 <img
                   src={`/icons/icon-${slotIconName}.png`}
                   alt={slotIconName}
-                  className="invert-on-light pointer-events-none absolute left-1/2 top-1/3 z-10 -translate-x-1/2 -translate-y-1/2"
+                  className="invert-on-light pointer-events-none absolute top-1/3 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
                   style={{ height: 20, width: 'auto', opacity: 0.3 }}
                   draggable={false}
                 />
@@ -624,18 +566,18 @@ function SlotCell({
                 <img
                   src={`/icons/icon-${slotIconName}.png`}
                   alt={slotIconName}
-                  className="invert-on-light pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+                  className="invert-on-light pointer-events-none absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
                   style={{ height: 28, width: 'auto', opacity: 0.5 }}
                   draggable={false}
                 />
               )}
               {slot.polarity && (
-                <div className="pointer-events-none absolute right-1 top-1 z-10">
+                <div className="pointer-events-none absolute top-1 right-1 z-10">
                   <PolarityIcon polarity={slot.polarity} size={12} />
                 </div>
               )}
               {label && (
-                <span className="pointer-events-none absolute bottom-2 left-1/2 z-10 -translate-x-1/2 text-[10px] font-medium uppercase tracking-wider text-muted/40">
+                <span className="text-muted/40 pointer-events-none absolute bottom-2 left-1/2 z-10 -translate-x-1/2 text-[10px] font-medium tracking-wider uppercase">
                   {label}
                 </span>
               )}

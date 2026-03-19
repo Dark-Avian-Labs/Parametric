@@ -44,9 +44,7 @@ const OBJECT_KEY_TO_TABLE: Record<string, string> = {
   ExportRailjack: 'corpus_railjack_nodes',
 };
 
-type ColumnExtractor = (
-  item: Record<string, unknown>,
-) => Record<string, unknown>;
+type ColumnExtractor = (item: Record<string, unknown>) => Record<string, unknown>;
 
 function stableSerialize(value: unknown): string {
   function normalizeForStableStringify(input: unknown): unknown {
@@ -55,14 +53,11 @@ function stableSerialize(value: unknown): string {
     }
 
     if (input && typeof input === 'object') {
-      const entries = Object.entries(input as Record<string, unknown>).sort(
-        ([a], [b]) => a.localeCompare(b),
+      const entries = Object.entries(input as Record<string, unknown>).sort(([a], [b]) =>
+        a.localeCompare(b),
       );
       return Object.fromEntries(
-        entries.map(([key, entry]) => [
-          key,
-          normalizeForStableStringify(entry),
-        ]),
+        entries.map(([key, entry]) => [key, normalizeForStableStringify(entry)]),
       );
     }
 
@@ -72,14 +67,8 @@ function stableSerialize(value: unknown): string {
   return JSON.stringify(normalizeForStableStringify(value));
 }
 
-function deterministicUniqueName(
-  item: Record<string, unknown>,
-  prefix: string,
-): string {
-  const contentHash = createHash('sha1')
-    .update(stableSerialize(item))
-    .digest('hex')
-    .slice(0, 16);
+function deterministicUniqueName(item: Record<string, unknown>, prefix: string): string {
+  const contentHash = createHash('sha1').update(stableSerialize(item)).digest('hex').slice(0, 16);
   return `${prefix}_${contentHash}`;
 }
 
@@ -107,9 +96,7 @@ const EXTRACTORS: Record<string, ColumnExtractor> = {
     slot: item.slot ?? null,
     mastery_req: item.masteryReq ?? 0,
     total_damage: item.totalDamage ?? null,
-    damage_per_shot: item.damagePerShot
-      ? JSON.stringify(item.damagePerShot)
-      : null,
+    damage_per_shot: item.damagePerShot ? JSON.stringify(item.damagePerShot) : null,
     critical_chance: item.criticalChance ?? null,
     critical_multiplier: item.criticalMultiplier ?? null,
     proc_chance: item.procChance ?? null,
@@ -220,18 +207,12 @@ const EXTRACTORS: Record<string, ColumnExtractor> = {
   }),
 
   corpus_sortie_rewards: (item) => ({
-    unique_name:
-      item.uniqueName ||
-      item.rewardName ||
-      deterministicUniqueName(item, 'sortie'),
+    unique_name: item.uniqueName || item.rewardName || deterministicUniqueName(item, 'sortie'),
     name: item.name || item.rewardName || null,
   }),
 
   corpus_intrinsics: (item) => ({
-    unique_name:
-      item.uniqueName ||
-      item.name ||
-      deterministicUniqueName(item, 'intrinsic'),
+    unique_name: item.uniqueName || item.name || deterministicUniqueName(item, 'intrinsic'),
     name: item.name || null,
   }),
 
@@ -280,9 +261,7 @@ const EXTRACTORS: Record<string, ColumnExtractor> = {
     description: item.description || null,
     product_category: item.productCategory ?? null,
     total_damage: item.totalDamage ?? null,
-    damage_per_shot: item.damagePerShot
-      ? JSON.stringify(item.damagePerShot)
-      : null,
+    damage_per_shot: item.damagePerShot ? JSON.stringify(item.damagePerShot) : null,
     critical_chance: item.criticalChance ?? null,
     critical_multiplier: item.criticalMultiplier ?? null,
     proc_chance: item.procChance ?? null,
@@ -290,9 +269,7 @@ const EXTRACTORS: Record<string, ColumnExtractor> = {
   }),
 };
 
-function defaultExtractor(
-  item: Record<string, unknown>,
-): Record<string, unknown> {
+function defaultExtractor(item: Record<string, unknown>): Record<string, unknown> {
   return {
     unique_name: item.uniqueName,
     name: item.name || null,
@@ -368,9 +345,7 @@ export function importAllToCorpus(): ImportResult[] {
         if (Array.isArray(value)) {
           const tableName = EXPORT_KEY_TO_TABLE[key];
           if (!tableName) {
-            console.log(
-              `[Corpus] Skipping unknown export array: ${key} (${value.length} items)`,
-            );
+            console.log(`[Corpus] Skipping unknown export array: ${key} (${value.length} items)`);
             continue;
           }
 
@@ -389,9 +364,7 @@ export function importAllToCorpus(): ImportResult[] {
               `[Corpus] Imported ${count} items into ${tableName} from ${key} with ${failureCount} insert failures`,
             );
           } else {
-            console.log(
-              `[Corpus] Imported ${count} items into ${tableName} from ${key}`,
-            );
+            console.log(`[Corpus] Imported ${count} items into ${tableName} from ${key}`);
           }
         } else if (typeof value === 'object' && value !== null) {
           const tableName = OBJECT_KEY_TO_TABLE[key];

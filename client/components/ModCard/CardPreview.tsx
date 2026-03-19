@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 
 import {
+  getDamageTypeIconPath,
+  splitDisplayTextByDamageTokens,
+} from '../../utils/damageTypeTokens';
+import {
   type CardLayout,
   type Rarity,
   DEFAULT_LAYOUT,
@@ -8,10 +12,6 @@ import {
   getRarityBorderColor,
   getModAsset,
 } from './cardLayout';
-import {
-  getDamageTypeIconPath,
-  splitDisplayTextByDamageTokens,
-} from '../../utils/damageTypeTokens';
 
 export interface CardPreviewProps {
   layout?: CardLayout;
@@ -65,9 +65,7 @@ export function CardPreview({
   const h = collapsed ? L.collapsedHeight : L.cardHeight;
   const isEmptyCard = rarity === 'Empty';
   const slotRarity =
-    rarity === 'Common' || rarity === 'Uncommon' || rarity === 'Rare'
-      ? rarity
-      : 'Uncommon';
+    rarity === 'Common' || rarity === 'Uncommon' || rarity === 'Rare' ? rarity : 'Uncommon';
   const slotIconAsset = slotIcon
     ? `/icons/${slotRarity}${slotIcon.charAt(0).toUpperCase() + slotIcon.slice(1)}Icon.png`
     : '';
@@ -93,27 +91,16 @@ export function CardPreview({
 
   const effectiveContentY = collapsed ? L.contentAreaY : autoContentY;
 
-  const renderTextWithDamageIcons = (
-    text: string,
-    iconSize: number,
-  ): React.ReactNode => {
+  const renderTextWithDamageIcons = (text: string, iconSize: number): React.ReactNode => {
     return text.split('\n').map((line, lineIndex) => (
       <span key={lineIndex} className="block">
         {splitDisplayTextByDamageTokens(line).map((segment, segmentIndex) => {
           if (segment.kind === 'text') {
-            return (
-              <span key={`${lineIndex}-t-${segmentIndex}`}>
-                {segment.value}
-              </span>
-            );
+            return <span key={`${lineIndex}-t-${segmentIndex}`}>{segment.value}</span>;
           }
           const iconPath = getDamageTypeIconPath(segment.value);
           if (!iconPath) {
-            return (
-              <span key={`${lineIndex}-u-${segmentIndex}`}>
-                {segment.value}
-              </span>
-            );
+            return <span key={`${lineIndex}-u-${segmentIndex}`}>{segment.value}</span>;
           }
           return (
             <img
@@ -146,10 +133,7 @@ export function CardPreview({
         textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.5)',
       }}
     >
-      <div
-        className="absolute inset-0"
-        style={{ transform: `translateY(${L.cardOffsetY * s}px)` }}
-      >
+      <div className="absolute inset-0" style={{ transform: `translateY(${L.cardOffsetY * s}px)` }}>
         {!collapsed && (
           <img
             src={getModAsset(rarity, 'Background')}
@@ -177,14 +161,8 @@ export function CardPreview({
               width: L.artWidth * s,
               height: collapsed
                 ? L.collapsedArtHeight * s
-                : Math.min(
-                    L.artHeight,
-                    Math.max(0, effectiveContentY - L.artOffsetY + 30),
-                  ) * s,
-              outline:
-                showOutlines && !collapsed
-                  ? '1px dashed rgba(0,200,255,0.4)'
-                  : 'none',
+                : Math.min(L.artHeight, Math.max(0, effectiveContentY - L.artOffsetY + 30)) * s,
+              outline: showOutlines && !collapsed ? '1px dashed rgba(0,200,255,0.4)' : 'none',
               maskImage: collapsed
                 ? 'none'
                 : `linear-gradient(to bottom, black calc(100% - ${10 * s}px), transparent 100%)`,
@@ -296,11 +274,9 @@ export function CardPreview({
             zIndex: 3,
             transform: 'translateX(-50%)',
             marginLeft: L.frameBotOffsetX * s,
-            top:
-              (collapsed ? L.collapsedFrameBotOffsetY : L.frameBotOffsetY) * s,
+            top: (collapsed ? L.collapsedFrameBotOffsetY : L.frameBotOffsetY) * s,
             width: L.frameBotWidth * s,
-            height:
-              (collapsed ? L.collapsedFrameBotHeight : L.frameBotHeight) * s,
+            height: (collapsed ? L.collapsedFrameBotHeight : L.frameBotHeight) * s,
           }}
           draggable={false}
         />
@@ -405,7 +381,7 @@ export function CardPreview({
 
         {!collapsed && modType && (
           <div
-            className="absolute left-1/2 flex items-center justify-center font-semibold uppercase tracking-wider"
+            className="absolute left-1/2 flex items-center justify-center font-semibold tracking-wider uppercase"
             style={{
               zIndex: 4,
               transform: 'translateX(-50%)',
@@ -444,8 +420,7 @@ export function CardPreview({
                 className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center"
                 style={{
                   zIndex: 4,
-                  top:
-                    (L.collapsedNameOffsetY + L.collapsedNameFontSize + 10) * s,
+                  top: (L.collapsedNameOffsetY + L.collapsedNameFontSize + 10) * s,
                   gap: 3 * s,
                 }}
               >
@@ -503,10 +478,7 @@ export function CardPreview({
                   textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                 }}
               >
-                {renderTextWithDamageIcons(
-                  modDescription,
-                  L.descFontSize * s * 1.05,
-                )}
+                {renderTextWithDamageIcons(modDescription, L.descFontSize * s * 1.05)}
               </div>
             )}
             {setTotal > 0 && setDescription && (
@@ -544,15 +516,11 @@ export function CardPreview({
                     fontSize: L.descFontSize * s * 0.9,
                     fontWeight: 400,
                     lineHeight: 1.3,
-                    color:
-                      'color-mix(in srgb, var(--color-warning) 80%, transparent)',
+                    color: 'color-mix(in srgb, var(--color-warning) 80%, transparent)',
                     textShadow: '0 1px 2px rgba(0,0,0,0.8)',
                   }}
                 >
-                  {renderTextWithDamageIcons(
-                    setDescription,
-                    L.descFontSize * s * 0.95,
-                  )}
+                  {renderTextWithDamageIcons(setDescription, L.descFontSize * s * 0.95)}
                 </div>
               </>
             )}
@@ -568,14 +536,9 @@ export function CardPreview({
             top: (collapsed ? L.collapsedRankOffsetY : L.rankOffsetY) * s,
           }}
         >
-          <div
-            className="relative flex items-center"
-            style={{ gap: L.rankStarGap * s }}
-          >
+          <div className="relative flex items-center" style={{ gap: L.rankStarGap * s }}>
             {Array.from({ length: maxRank }, (_, i) => {
-              const starSize = collapsed
-                ? L.collapsedRankStarSize
-                : L.rankStarSize;
+              const starSize = collapsed ? L.collapsedRankStarSize : L.rankStarSize;
               const active = i < rank;
               return (
                 <div
@@ -616,11 +579,11 @@ export function CardPreview({
       {showGuides && (
         <>
           <div
-            className="absolute left-1/2 top-0 h-full"
+            className="absolute top-0 left-1/2 h-full"
             style={{ width: 1, background: 'rgba(255,0,0,0.2)' }}
           />
           <div
-            className="absolute left-0 top-1/2 w-full"
+            className="absolute top-1/2 left-0 w-full"
             style={{ height: 1, background: 'rgba(255,0,0,0.2)' }}
           />
         </>

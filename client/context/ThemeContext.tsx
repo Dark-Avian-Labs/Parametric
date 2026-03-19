@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -18,8 +11,7 @@ interface ThemeContextValue {
 const THEME_STORAGE_KEY = 'parametric.theme.mode';
 const SHARED_THEME_STORAGE_KEY = 'dal.theme.mode';
 const SHARED_THEME_COOKIE = 'dal.theme.mode';
-const SHARED_THEME_COOKIE_DOMAIN =
-  import.meta.env.VITE_SHARED_THEME_COOKIE_DOMAIN || '';
+const SHARED_THEME_COOKIE_DOMAIN = import.meta.env.VITE_SHARED_THEME_COOKIE_DOMAIN || '';
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -71,9 +63,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [mode],
   );
 
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

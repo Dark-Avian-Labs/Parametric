@@ -1,5 +1,5 @@
-import type { ScrapedItemData } from './itemScraper.js';
 import { getDb } from '../db/connection.js';
+import type { ScrapedItemData } from './itemScraper.js';
 
 interface AbilityTypeEntry {
   path?: string;
@@ -37,9 +37,7 @@ export function mergeScrapedData(
   const updateCompanion = db.prepare(
     'UPDATE companions SET artifact_slots = ? WHERE unique_name = ?',
   );
-  const updateAbility = db.prepare(
-    'UPDATE abilities SET ability_stats = ? WHERE unique_name = ?',
-  );
+  const updateAbility = db.prepare('UPDATE abilities SET ability_stats = ? WHERE unique_name = ?');
   const updateAbilityHelminth = db.prepare(
     'UPDATE abilities SET is_helminth_extractable = MAX(is_helminth_extractable, ?) WHERE unique_name = ?',
   );
@@ -63,9 +61,7 @@ export function mergeScrapedData(
       const table = rows[0]?.tbl;
 
       if (!table) {
-        onProgress?.(
-          `No DB row found for ${item.entry.name} (${uniqueName}), skipping`,
-        );
+        onProgress?.(`No DB row found for ${item.entry.name} (${uniqueName}), skipping`);
         continue;
       }
 
@@ -76,11 +72,7 @@ export function mergeScrapedData(
         if (changes.changes > 0) result.warframesUpdated++;
       } else if (table === 'weapons') {
         const fireBehaviorsJson = JSON.stringify(item.fireBehaviors);
-        const changes = updateWeapon.run(
-          artifactSlotsJson,
-          fireBehaviorsJson,
-          uniqueName,
-        );
+        const changes = updateWeapon.run(artifactSlotsJson, fireBehaviorsJson, uniqueName);
         if (changes.changes > 0) result.weaponsUpdated++;
       } else if (table === 'companions') {
         const changes = updateCompanion.run(artifactSlotsJson, uniqueName);
@@ -88,8 +80,9 @@ export function mergeScrapedData(
       }
 
       if (item.itemData) {
-        const abilityTypes = (item.itemData as Record<string, unknown>)
-          .AbilityTypes as AbilityTypeEntry[] | undefined;
+        const abilityTypes = (item.itemData as Record<string, unknown>).AbilityTypes as
+          | AbilityTypeEntry[]
+          | undefined;
 
         if (abilityTypes) {
           for (let i = 0; i < abilityTypes.length; i++) {
@@ -99,18 +92,13 @@ export function mergeScrapedData(
             if (!abilityPath) continue;
 
             const isHelminth = Number(abilityType.IsHelminth) === 1 ? 1 : 0;
-            const helminthChanges = updateAbilityHelminth.run(
-              isHelminth,
-              abilityPath,
-            );
+            const helminthChanges = updateAbilityHelminth.run(isHelminth, abilityPath);
             if (helminthChanges.changes > 0) result.helminthUpdated++;
 
             if (!scrapedAbility) continue;
 
             const statsJson =
-              scrapedAbility.stats.length > 0
-                ? JSON.stringify(scrapedAbility.stats)
-                : null;
+              scrapedAbility.stats.length > 0 ? JSON.stringify(scrapedAbility.stats) : null;
 
             if (statsJson) {
               const changes = updateAbility.run(statsJson, abilityPath);

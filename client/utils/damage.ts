@@ -1,6 +1,3 @@
-import { calculateFinalDamage, type DamageEntry } from './elements';
-import { aggregateAllMods, type StatEffects } from './modStatParser';
-import { isRivenMod } from './riven';
 import {
   DAMAGE_TYPES,
   PRIMARY_ELEMENTS,
@@ -8,21 +5,23 @@ import {
   type ModSlot,
   type Weapon,
 } from '../types/warframe';
+import { calculateFinalDamage, type DamageEntry } from './elements';
+import { aggregateAllMods, type StatEffects } from './modStatParser';
+import { isRivenMod } from './riven';
 
 export function parseDamageArray(weapon: Weapon): number[] {
-  if (!weapon.damage_per_shot) return new Array(20).fill(0);
+  const emptyDamageArray = Array.from({ length: 20 }, () => 0);
+  if (!weapon.damage_per_shot) return emptyDamageArray;
   try {
     const arr = JSON.parse(weapon.damage_per_shot);
     if (Array.isArray(arr)) return arr;
-    return new Array(20).fill(0);
+    return emptyDamageArray;
   } catch {
-    return new Array(20).fill(0);
+    return emptyDamageArray;
   }
 }
 
-export function getInnateSecondaryElements(
-  baseDamage: number[],
-): DamageEntry[] {
+export function getInnateSecondaryElements(baseDamage: number[]): DamageEntry[] {
   const result: DamageEntry[] = [];
   const secondaryIndices = [7, 8, 9, 10, 11, 12];
   for (const idx of secondaryIndices) {
@@ -57,44 +56,29 @@ export function extractElementMods(slots: ModSlot[]): Array<{
       const descriptions: string[] = JSON.parse(modDesc);
       if (!Array.isArray(descriptions) || descriptions.length === 0) continue;
 
-      const currentRank = (slot as ModSlot & { currentRank?: number })
-        .currentRank;
+      const currentRank = (slot as ModSlot & { currentRank?: number }).currentRank;
       const rankValue =
         typeof slot.rank === 'number'
           ? slot.rank
           : typeof currentRank === 'number'
             ? currentRank
             : descriptions.length - 1;
-      const rankIndex = Math.min(
-        Math.max(Math.trunc(rankValue), 0),
-        descriptions.length - 1,
-      );
+      const rankIndex = Math.min(Math.max(Math.trunc(rankValue), 0), descriptions.length - 1);
       const desc = descriptions[rankIndex];
       if (typeof desc !== 'string') continue;
 
       const lower = desc.toLowerCase();
       for (const element of PRIMARY_ELEMENTS) {
         const elementLower = element.toLowerCase();
-        if (
-          !lower.includes(`${elementLower} damage`) &&
-          !lower.includes(elementLower)
-        ) {
+        if (!lower.includes(`${elementLower} damage`) && !lower.includes(elementLower)) {
           continue;
         }
 
         const escapedElement = element.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const elementSpecificMatch =
+          desc.match(new RegExp(`${escapedElement}\\s+damage[^\\d+\\-]*\\+?([\\d.]+)%`, 'i')) ??
           desc.match(
-            new RegExp(
-              `${escapedElement}\\s+damage[^\\d+\\-]*\\+?([\\d.]+)%`,
-              'i',
-            ),
-          ) ??
-          desc.match(
-            new RegExp(
-              `\\+?([\\d.]+)%\\s*(?:<[^>]+>\\s*)?${escapedElement}(?:\\s+damage)?`,
-              'i',
-            ),
+            new RegExp(`\\+?([\\d.]+)%\\s*(?:<[^>]+>\\s*)?${escapedElement}(?:\\s+damage)?`, 'i'),
           );
 
         const match = elementSpecificMatch ?? desc.match(/\+?([\d.]+)%/);
@@ -131,11 +115,7 @@ export function calculateBuildDamage(
   const disposition = weapon.riven_disposition ?? weapon.omega_attenuation ?? 1;
   const elementMods = extractElementMods(slots).map((entry) => {
     const sourceSlot = slots.find((slot) => slot.index === entry.slotIndex);
-    if (
-      sourceSlot?.mod &&
-      sourceSlot.riven_config &&
-      isRivenMod(sourceSlot.mod)
-    ) {
+    if (sourceSlot?.mod && sourceSlot.riven_config && isRivenMod(sourceSlot.mod)) {
       return { ...entry, value: entry.value * disposition };
     }
     return entry;
@@ -157,11 +137,7 @@ export function calculateBuildDamage(
     if (mult !== 0) damageMultipliers[dt] = mult;
   }
 
-  const damageBreakdown = calculateFinalDamage(
-    baseDamage,
-    elementMods,
-    damageMultipliers,
-  );
+  const damageBreakdown = calculateFinalDamage(baseDamage, elementMods, damageMultipliers);
 
   for (const innate of innateSecondary) {
     const existing = damageBreakdown.find((d) => d.type === innate.type);

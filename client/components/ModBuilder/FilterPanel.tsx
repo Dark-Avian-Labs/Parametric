@@ -1,24 +1,9 @@
-import {
-  memo,
-  useState,
-  useMemo,
-  useRef,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-} from 'react';
+import { memo, useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 
 import { useApi } from '../../hooks/useApi';
 import type { Mod, ModRarity, EquipmentType } from '../../types/warframe';
-import {
-  filterCompatibleMods,
-  isModLockedOut,
-  isPostureMod,
-} from '../../utils/modFiltering';
-import {
-  createRivenPlaceholderMod,
-  getRivenWeaponType,
-} from '../../utils/riven';
+import { filterCompatibleMods, isModLockedOut, isPostureMod } from '../../utils/modFiltering';
+import { createRivenPlaceholderMod, getRivenWeaponType } from '../../utils/riven';
 import { getRequiredExaltedStanceName } from '../../utils/specialItems';
 import { ModCard, CardPreview, DEFAULT_LAYOUT } from '../ModCard';
 
@@ -110,9 +95,7 @@ const RARITIES: { value: ModRarity | 'ALL'; label: string }[] = [
 ];
 
 function isImportedRivenPlaceholder(mod: Mod): boolean {
-  return (
-    /\bRiven Mod$/i.test(mod.name) && (mod.type || '').toUpperCase() !== 'RIVEN'
-  );
+  return /\bRiven Mod$/i.test(mod.name) && (mod.type || '').toUpperCase() !== 'RIVEN';
 }
 
 function getRivenArtNameForType(equipmentType: EquipmentType): string | null {
@@ -130,10 +113,7 @@ function getRivenArtNameForType(equipmentType: EquipmentType): string | null {
   }
 }
 
-function cleanupDragCloneOnEnd(
-  sourceEl: HTMLElement,
-  clone: HTMLElement,
-): void {
+function cleanupDragCloneOnEnd(sourceEl: HTMLElement, clone: HTMLElement): void {
   let cleaned = false;
 
   const cleanup = () => {
@@ -200,10 +180,7 @@ export function FilterPanel({
     `/api/mods?types=${encodeURIComponent(modTypes)}`,
   );
   const rawMods = data?.items || [];
-  const importedRivenMods = useMemo(
-    () => rawMods.filter(isImportedRivenPlaceholder),
-    [rawMods],
-  );
+  const importedRivenMods = useMemo(() => rawMods.filter(isImportedRivenPlaceholder), [rawMods]);
   const baseMods = useMemo(
     () => rawMods.filter((mod) => !isImportedRivenPlaceholder(mod)),
     [rawMods],
@@ -231,17 +208,14 @@ export function FilterPanel({
 
     let slotFiltered = compatMods;
     if (targetSlotType === 'aura') {
-      slotFiltered = compatMods.filter(
-        (m) => (m.type || '').toUpperCase() === 'AURA',
-      );
+      slotFiltered = compatMods.filter((m) => (m.type || '').toUpperCase() === 'AURA');
     } else if (targetSlotType === 'stance') {
       slotFiltered = compatMods.filter(
         (m) =>
           (m.type || '').toUpperCase() === 'STANCE' &&
           !isPostureMod(m) &&
           (!requiredExaltedStanceName ||
-            m.name.trim().toLowerCase() ===
-              requiredExaltedStanceName.toLowerCase()),
+            m.name.trim().toLowerCase() === requiredExaltedStanceName.toLowerCase()),
       );
     } else if (targetSlotType === 'posture') {
       slotFiltered = compatMods.filter(
@@ -260,8 +234,7 @@ export function FilterPanel({
 
     const textFiltered = slotFiltered.filter((mod) => {
       if (rarity !== 'ALL' && mod.rarity !== rarity) return false;
-      if (search && !mod.name.toLowerCase().includes(search.toLowerCase()))
-        return false;
+      if (search && !mod.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
 
@@ -287,9 +260,7 @@ export function FilterPanel({
     search,
   ]);
 
-  const displayMods = showLockedOut
-    ? [...compatible, ...lockedOut]
-    : compatible;
+  const displayMods = showLockedOut ? [...compatible, ...lockedOut] : compatible;
   const handleModPick = useCallback(
     (mod: Mod, locked: boolean) => {
       if (!locked) {
@@ -310,21 +281,18 @@ export function FilterPanel({
     }
     return importedRivenMods.find((mod) => !!mod.image_path)?.image_path;
   }, [equipmentType, importedRivenMods]);
-  const rivenPlaceholderMod = useMemo(
-    () => createRivenPlaceholderMod(rivenArt),
-    [rivenArt],
-  );
+  const rivenPlaceholderMod = useMemo(() => createRivenPlaceholderMod(rivenArt), [rivenArt]);
 
   return (
     <div className="glass-panel p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Mods</h2>
+        <h2 className="text-foreground text-lg font-semibold">Mods</h2>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setShowLockedOut((v) => !v)}
             aria-pressed={showLockedOut}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-glass-border px-2 py-1 text-xs text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
+            className="border-glass-border text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs transition-all"
             title="Toggle showing locked mods"
           >
             <span
@@ -343,7 +311,7 @@ export function FilterPanel({
             type="button"
             onClick={() => setExpandMods((v) => !v)}
             aria-pressed={expandMods}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-glass-border px-2 py-1 text-xs text-muted transition-all hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground"
+            className="border-glass-border text-muted hover:border-glass-border-hover hover:bg-glass-hover hover:text-foreground inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs transition-all"
             title="Toggle expanded mod cards"
           >
             <span
@@ -373,7 +341,7 @@ export function FilterPanel({
           <button
             type="button"
             onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-xs text-muted transition-colors hover:bg-glass-hover hover:text-foreground"
+            className="text-muted hover:bg-glass-hover hover:text-foreground absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-xs transition-colors"
           >
             ✕
           </button>
@@ -397,131 +365,113 @@ export function FilterPanel({
         ))}
       </div>
 
-      <div className="mb-2 text-xs text-muted">
+      <div className="text-muted mb-2 text-xs">
         {compatible.length} available
         {lockedOut.length > 0 && (
-          <span className="ml-1 text-warning">
-            ({lockedOut.length} locked out)
-          </span>
+          <span className="text-warning ml-1">({lockedOut.length} locked out)</span>
         )}
         {(search || rarity !== 'ALL') && ' (filtered)'}
       </div>
 
       {targetSlotType && targetSlotType !== 'general' && (
-        <div className="mb-2 rounded-md bg-accent-weak/20 px-2 py-1 text-xs text-accent">
+        <div className="bg-accent-weak/20 text-accent mb-2 rounded-md px-2 py-1 text-xs">
           Showing {targetSlotType} mods
         </div>
       )}
 
-      <div className="max-h-[calc(100vh-420px)] overflow-y-auto custom-scroll">
-        {loading && <p className="text-sm text-muted">Loading mods...</p>}
+      <div className="custom-scroll max-h-[calc(100vh-420px)] overflow-y-auto">
+        {loading && <p className="text-muted text-sm">Loading mods...</p>}
         {!loading && displayMods.length === 0 && (
-          <p className="text-sm text-muted">
+          <p className="text-muted text-sm">
             {allMods.length === 0
               ? 'No mods in database. Import and process data first.'
               : 'No mods match the current filters.'}
           </p>
         )}
         <div ref={gridRef} className="grid grid-cols-4">
-          {cardScale > 0 &&
-            !loading &&
-            (displayMods.length > 0 || !!rivenWeaponType) && (
-              <>
-                {!search && (
-                  <div
-                    onClick={onModRemove}
+          {cardScale > 0 && !loading && (displayMods.length > 0 || !!rivenWeaponType) && (
+            <>
+              {!search && (
+                <div
+                  onClick={onModRemove}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify({ __remove: true }));
+                    e.dataTransfer.effectAllowed = 'move';
+                    const el = e.currentTarget;
+                    const clone = el.cloneNode(true) as HTMLElement;
+                    clone.style.position = 'fixed';
+                    clone.style.top = '-9999px';
+                    clone.style.left = '-9999px';
+                    clone.style.zIndex = '-1';
+                    clone.style.pointerEvents = 'none';
+                    document.body.appendChild(clone);
+                    const rect = el.getBoundingClientRect();
+                    e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+                    cleanupDragCloneOnEnd(el, clone);
+                  }}
+                  className="cursor-grab"
+                >
+                  <CardPreview
+                    layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
+                    rarity="Empty"
+                    polarity=""
+                    modArt=""
+                    modName="Remove"
+                    modType=""
+                    modDescription=""
+                    drain={0}
+                    rank={0}
+                    maxRank={0}
+                    collapsed={!expandMods}
+                  />
+                </div>
+              )}
+              {rivenWeaponType && !search && (
+                <div
+                  onClick={() => onModSelect(rivenPlaceholderMod)}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify(rivenPlaceholderMod));
+                    e.dataTransfer.effectAllowed = 'move';
+                    const el = e.currentTarget;
+                    const clone = el.cloneNode(true) as HTMLElement;
+                    clone.style.position = 'fixed';
+                    clone.style.top = '-9999px';
+                    clone.style.left = '-9999px';
+                    clone.style.zIndex = '-1';
+                    clone.style.pointerEvents = 'none';
+                    document.body.appendChild(clone);
+                    const rect = el.getBoundingClientRect();
+                    e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+                    cleanupDragCloneOnEnd(el, clone);
+                  }}
+                  className="cursor-grab"
+                >
+                  <ModCard
+                    mod={rivenPlaceholderMod}
+                    rank={0}
                     draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData(
-                        'application/json',
-                        JSON.stringify({ __remove: true }),
-                      );
-                      e.dataTransfer.effectAllowed = 'move';
-                      const el = e.currentTarget;
-                      const clone = el.cloneNode(true) as HTMLElement;
-                      clone.style.position = 'fixed';
-                      clone.style.top = '-9999px';
-                      clone.style.left = '-9999px';
-                      clone.style.zIndex = '-1';
-                      clone.style.pointerEvents = 'none';
-                      document.body.appendChild(clone);
-                      const rect = el.getBoundingClientRect();
-                      e.dataTransfer.setDragImage(
-                        clone,
-                        rect.width / 2,
-                        rect.height / 2,
-                      );
-                      cleanupDragCloneOnEnd(el, clone);
-                    }}
-                    className="cursor-grab"
-                  >
-                    <CardPreview
-                      layout={{ ...DEFAULT_LAYOUT, scale: cardScale }}
-                      rarity="Empty"
-                      polarity=""
-                      modArt=""
-                      modName="Remove"
-                      modType=""
-                      modDescription=""
-                      drain={0}
-                      rank={0}
-                      maxRank={0}
-                      collapsed={!expandMods}
-                    />
-                  </div>
-                )}
-                {rivenWeaponType && !search && (
-                  <div
-                    onClick={() => onModSelect(rivenPlaceholderMod)}
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData(
-                        'application/json',
-                        JSON.stringify(rivenPlaceholderMod),
-                      );
-                      e.dataTransfer.effectAllowed = 'move';
-                      const el = e.currentTarget;
-                      const clone = el.cloneNode(true) as HTMLElement;
-                      clone.style.position = 'fixed';
-                      clone.style.top = '-9999px';
-                      clone.style.left = '-9999px';
-                      clone.style.zIndex = '-1';
-                      clone.style.pointerEvents = 'none';
-                      document.body.appendChild(clone);
-                      const rect = el.getBoundingClientRect();
-                      e.dataTransfer.setDragImage(
-                        clone,
-                        rect.width / 2,
-                        rect.height / 2,
-                      );
-                      cleanupDragCloneOnEnd(el, clone);
-                    }}
-                    className="cursor-grab"
-                  >
-                    <ModCard
-                      mod={rivenPlaceholderMod}
-                      rank={0}
-                      draggable
-                      scale={cardScale}
-                      collapsed={!expandMods}
-                    />
-                  </div>
-                )}
-                {displayMods.map((mod) => {
-                  const locked = lockedOut.includes(mod);
-                  return (
-                    <ModPickerCard
-                      key={mod.unique_name}
-                      mod={mod}
-                      locked={locked}
-                      expanded={expandMods}
-                      scale={cardScale}
-                      onPick={handleModPick}
-                    />
-                  );
-                })}
-              </>
-            )}
+                    scale={cardScale}
+                    collapsed={!expandMods}
+                  />
+                </div>
+              )}
+              {displayMods.map((mod) => {
+                const locked = lockedOut.includes(mod);
+                return (
+                  <ModPickerCard
+                    key={mod.unique_name}
+                    mod={mod}
+                    locked={locked}
+                    expanded={expandMods}
+                    scale={cardScale}
+                    onPick={handleModPick}
+                  />
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
     </div>

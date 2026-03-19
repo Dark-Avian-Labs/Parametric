@@ -23,14 +23,7 @@ export function collectDbUniqueNames(): Set<string> {
   const db = getDb();
   const names = new Set<string>();
 
-  const tables = [
-    'warframes',
-    'weapons',
-    'companions',
-    'mods',
-    'arcanes',
-    'abilities',
-  ];
+  const tables = ['warframes', 'weapons', 'companions', 'mods', 'arcanes', 'abilities'];
   for (const table of tables) {
     const rows = db.prepare(`SELECT unique_name FROM ${table}`).all() as {
       unique_name: string;
@@ -88,12 +81,9 @@ function getImagePaths(entry: ManifestImageEntry): {
 
 async function downloadSingleImage(
   entry: ManifestImageEntry,
-): Promise<
-  { dbImagePath: string; status: 'downloaded' | 'skipped' } | { error: string }
-> {
+): Promise<{ dbImagePath: string; status: 'downloaded' | 'skipped' } | { error: string }> {
   const { textureLocation } = entry;
-  const { localPath, localDir, hash, hashPath, dbImagePath } =
-    getImagePaths(entry);
+  const { localPath, localDir, hash, hashPath, dbImagePath } = getImagePaths(entry);
 
   if (hash && fs.existsSync(localPath) && fs.existsSync(hashPath)) {
     const existingHash = fs.readFileSync(hashPath, 'utf-8').trim();
@@ -154,9 +144,7 @@ export async function downloadImages(
 
   for (let i = 0; i < toDownload.length; i += CONCURRENCY) {
     const batch = toDownload.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(
-      batch.map((entry) => downloadSingleImage(entry)),
-    );
+    const results = await Promise.all(batch.map((entry) => downloadSingleImage(entry)));
 
     for (let j = 0; j < results.length; j++) {
       const res = results[j];
@@ -176,11 +164,7 @@ export async function downloadImages(
       }
     }
 
-    onProgress?.(
-      completed,
-      toDownload.length,
-      batch[batch.length - 1]?.uniqueName || '',
-    );
+    onProgress?.(completed, toDownload.length, batch[batch.length - 1]?.uniqueName || '');
   }
 
   updateDbImagePaths(imagePathMap);
@@ -190,14 +174,7 @@ export async function downloadImages(
 
 function updateDbImagePaths(pathMap: Map<string, string>): void {
   const db = getDb();
-  const tables = [
-    'warframes',
-    'weapons',
-    'companions',
-    'mods',
-    'arcanes',
-    'abilities',
-  ];
+  const tables = ['warframes', 'weapons', 'companions', 'mods', 'arcanes', 'abilities'];
 
   const stmts = tables.map((table) =>
     db.prepare(`UPDATE ${table} SET image_path = ? WHERE unique_name = ?`),
