@@ -1483,12 +1483,14 @@ export function ModBuilder() {
           open
           onClose={() => setShowShareModal(false)}
           buildName={buildName}
+          equipment={selectedEquipment as Warframe | Weapon}
           equipmentName={selectedEquipment.name}
           equipmentType={equipmentType}
           equipmentImagePath={selectedEquipmentImagePath}
           slots={slots}
           arcaneSlots={arcaneSlots}
           shardSlots={shardSlots}
+          shardTypes={equipmentType === 'warframe' ? shardTypes : []}
           orokinReactor={orokinReactor}
         />
       )}

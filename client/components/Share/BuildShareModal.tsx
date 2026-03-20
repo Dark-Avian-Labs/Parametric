@@ -1,34 +1,34 @@
 import { toPng } from 'html-to-image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
-import type { EquipmentType, ModSlot } from '../../types/warframe';
+import type { EquipmentType, ModSlot, Warframe, Weapon } from '../../types/warframe';
+import { getMaxRank } from '../../utils/arcaneUtils';
+import { extractArchonShardBonuses } from '../../utils/archonShardBonuses';
+import { formatPercent } from '../../utils/damage';
+import { calculateWeaponDps } from '../../utils/damageCalc';
+import { formatShardBuffDescription } from '../../utils/shardBuffFormat';
+import { calculateWarframeStats } from '../../utils/warframeCalc';
+import type { ArcaneSlot } from '../ModBuilder/ArcaneSlots';
+import type { ShardSlotConfig, ShardType } from '../ModBuilder/ArchonShardSlots';
+import { ArcaneCardPreview } from '../ModCard/ArcaneCardPreview';
+import { DEFAULT_ARCANE_LAYOUT, normalizeArcaneRarity } from '../ModCard/cardLayout';
+import { ModCard } from '../ModCard/ModCard';
 import { Modal } from '../ui/Modal';
 
 type ShareAspect = 'wide' | 'portrait';
-
-interface ShareArcaneSlot {
-  arcane?: {
-    name: string;
-  };
-  rank: number;
-}
-
-interface ShareShardSlot {
-  shard_type_id?: string | number;
-  buff_id?: string | number;
-  tauforged: boolean;
-}
 
 interface BuildShareModalProps {
   open: boolean;
   onClose: () => void;
   buildName: string;
+  equipment: Warframe | Weapon;
   equipmentName: string;
   equipmentType: EquipmentType;
   equipmentImagePath?: string;
   slots: ModSlot[];
-  arcaneSlots: ShareArcaneSlot[];
-  shardSlots: ShareShardSlot[];
+  arcaneSlots: ArcaneSlot[];
+  shardSlots: ShardSlotConfig[];
+  shardTypes: ShardType[];
   orokinReactor: boolean;
 }
 
@@ -43,20 +43,171 @@ function sanitizeFileBaseName(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatCompactNumber(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 10_000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
+  if (n >= 100) return n.toFixed(1);
+  return n.toFixed(2);
+}
+
+function abilityBarPct(modded: number): number {
+  return Math.min(100, Math.max(4, (modded / 280) * 100));
+}
+
+function ratioBarPct(base: number, modded: number): number {
+  if (!Number.isFinite(base) || base <= 0) return Math.min(100, Math.max(4, modded > 0 ? 60 : 4));
+  const r = modded / base;
+  return Math.min(100, Math.max(4, (r / 2.5) * 100));
+}
+
+function ShareStatBar({
+  label,
+  display,
+  fillPct,
+}: {
+  label: string;
+  display: string;
+  fillPct: number;
+}) {
+  const w = Math.round(Math.min(100, Math.max(0, fillPct)));
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between gap-2 text-[11px]">
+        <span className="text-[#a8b8e8]">{label}</span>
+        <span className="shrink-0 font-medium text-[#f0f4ff]">{display}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#5b7cff] to-[#46d6be]"
+          style={{ width: `${w}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ShareShardStrip({ slots, shards }: { slots: ShardSlotConfig[]; shards: ShardType[] }) {
+  const V_OFFSETS = [0, 10, 20, 10, 0];
+
+  const buffLines: { key: string; name: string; tau: boolean; buff: string }[] = [];
+  for (let i = 0; i < 5; i++) {
+    const slot = slots[i] ?? { tauforged: false };
+    if (!slot.shard_type_id) continue;
+    const shard = shards.find((s) => String(s.id) === String(slot.shard_type_id));
+    if (!shard) continue;
+    const buff = shard.buffs.find((b) => String(b.id) === String(slot.buff_id));
+    const buffText = formatShardBuffDescription(buff, slot.tauforged === true);
+    buffLines.push({
+      key: `shard-${i}-${String(slot.shard_type_id)}`,
+      name: shard.name,
+      tau: slot.tauforged === true,
+      buff: buffText,
+    });
+  }
+
+  return (
+    <div>
+      <div className="flex items-start justify-end gap-0.5">
+        {Array.from({ length: 5 }, (_, i) => {
+          const slot = slots[i] ?? { tauforged: false };
+          const vOffset = V_OFFSETS[i];
+          if (!slot.shard_type_id) {
+            return (
+              <div
+                key={i}
+                className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg"
+                style={{ marginTop: vOffset }}
+              >
+                <img
+                  src="/icons/shards/emptyBackground.png"
+                  alt=""
+                  className="invert-on-light absolute inset-0 h-full w-full object-cover"
+                  draggable={false}
+                />
+              </div>
+            );
+          }
+          const shard = shards.find((s) => String(s.id) === String(slot.shard_type_id));
+          if (!shard) {
+            return (
+              <div
+                key={i}
+                className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10"
+                style={{ marginTop: vOffset }}
+              />
+            );
+          }
+          const iconPath = slot.tauforged ? shard.tauforged_icon_path : shard.icon_path;
+          return (
+            <div
+              key={i}
+              className="relative flex h-11 w-11 shrink-0 flex-col items-center"
+              style={{ marginTop: vOffset }}
+            >
+              <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg">
+                <img
+                  src="/icons/shards/filledBackground.png"
+                  alt=""
+                  className={`absolute inset-0 h-full w-full object-cover ${slot.tauforged ? 'archon-shard-filled-bg--tau' : 'invert-on-light'}`}
+                  draggable={false}
+                />
+                <img
+                  src={iconPath}
+                  alt=""
+                  className="invert-on-light absolute inset-0 h-full w-full object-cover"
+                  draggable={false}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {buffLines.length > 0 ? (
+        <ul className="mt-2.5 space-y-1 border-t border-white/10 pt-2.5 text-left">
+          {buffLines.map((line) => (
+            <li key={line.key} className="text-[10px] leading-snug text-[#d6e0ff]">
+              <span className="font-semibold text-[#f0f4ff]">{line.name}</span>
+              {line.tau ? (
+                <span className="ml-1 text-[9px] tracking-wide text-cyan-200/90 uppercase">
+                  Tau
+                </span>
+              ) : null}
+              {line.buff ? <span className="text-[#b6c5ed]"> — {line.buff}</span> : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 export function BuildShareModal({
   open,
   onClose,
   buildName,
+  equipment,
   equipmentName,
   equipmentType,
   equipmentImagePath,
   slots,
   arcaneSlots,
   shardSlots,
+  shardTypes,
   orokinReactor,
 }: BuildShareModalProps) {
   const exportRef = useRef<HTMLDivElement | null>(null);
-  const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
   const [uploadName, setUploadName] = useState<string>('');
   const [bgOpacity, setBgOpacity] = useState(36);
   const [bgScale, setBgScale] = useState(1);
@@ -64,53 +215,39 @@ export function BuildShareModal({
   const [isRendering, setIsRendering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (uploadUrl) {
-        URL.revokeObjectURL(uploadUrl);
-      }
-    };
-  }, [uploadUrl]);
+  const isWarframe = equipmentType === 'warframe';
+  const warframeCalc = useMemo(() => {
+    if (!isWarframe) return null;
+    const bonuses = extractArchonShardBonuses(shardSlots, shardTypes);
+    return calculateWarframeStats(equipment as Warframe, slots, bonuses);
+  }, [equipment, isWarframe, shardSlots, shardTypes, slots]);
 
-  const equippedMods = useMemo(
-    () =>
-      slots
-        .filter((slot) => slot.mod)
-        .map((slot) => ({
-          slotType: slot.type,
-          modName: slot.mod?.name ?? 'Unknown Mod',
-          rank: slot.rank ?? 0,
-        })),
-    [slots],
-  );
+  const weaponCalc = useMemo(() => {
+    if (isWarframe) return null;
+    try {
+      return calculateWeaponDps(equipment as Weapon, slots);
+    } catch {
+      return null;
+    }
+  }, [equipment, isWarframe, slots]);
 
-  const listedArcanes = useMemo(
-    () =>
-      arcaneSlots
-        .filter((slot) => slot.arcane)
-        .map((slot) => `${slot.arcane?.name ?? 'Arcane'} R${slot.rank}`),
-    [arcaneSlots],
-  );
+  const equippedSlots = useMemo(() => slots.filter((s) => s.mod), [slots]);
+  const filledArcanes = useMemo(() => arcaneSlots.filter((s) => s.arcane), [arcaneSlots]);
 
-  const shardSummary = useMemo(() => {
-    const filled = shardSlots.filter((slot) => slot.shard_type_id != null).length;
-    const tau = shardSlots.filter((slot) => slot.shard_type_id != null && slot.tauforged).length;
-    return { filled, tau };
-  }, [shardSlots]);
-
-  function handleUploadChange(file: File | null): void {
+  async function handleUploadChange(file: File | null): Promise<void> {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setError('Please choose an image file.');
       return;
     }
-    if (uploadUrl) {
-      URL.revokeObjectURL(uploadUrl);
-    }
-    const nextUrl = URL.createObjectURL(file);
-    setUploadUrl(nextUrl);
-    setUploadName(file.name);
     setError(null);
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setBgDataUrl(dataUrl);
+      setUploadName(file.name);
+    } catch {
+      setError('Could not read that image file.');
+    }
   }
 
   async function handleExport(): Promise<void> {
@@ -132,7 +269,7 @@ export function BuildShareModal({
       a.click();
     } catch (renderError) {
       console.error('[BuildShareModal] Failed to render share image', renderError);
-      setError('Failed to export image. Try a different background image.');
+      setError('Failed to export image. If this persists, try removing the background image.');
     } finally {
       setIsRendering(false);
     }
@@ -141,9 +278,15 @@ export function BuildShareModal({
   if (!open) return null;
 
   const isWide = aspect === 'wide';
-  const canvasWidth = isWide ? 1200 : 1080;
-  const canvasHeight = isWide ? 628 : 1350;
-  const previewAspectClass = isWide ? 'aspect-[1200/628]' : 'aspect-[1080/1350]';
+  const canvasWidth = isWide ? 1600 : 1080;
+  const canvasHeight = isWide ? 900 : 1350;
+  const modScale = isWide ? 0.36 : 0.42;
+  const arcaneScale = isWide ? 0.42 : 0.48;
+
+  const shardSummary = {
+    filled: shardSlots.filter((s) => s.shard_type_id != null).length,
+    tau: shardSlots.filter((s) => s.shard_type_id != null && s.tauforged).length,
+  };
 
   return (
     <Modal open onClose={onClose} ariaLabelledBy="share-build-title" className="max-w-[1120px]">
@@ -185,7 +328,7 @@ export function BuildShareModal({
               className="form-input"
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0] ?? null;
-                handleUploadChange(file);
+                void handleUploadChange(file);
               }}
             />
             {uploadName ? (
@@ -216,13 +359,12 @@ export function BuildShareModal({
                 className="mt-1 w-full"
               />
             </label>
-            {uploadUrl ? (
+            {bgDataUrl ? (
               <button
                 type="button"
                 className="btn btn-secondary w-full"
                 onClick={() => {
-                  if (uploadUrl) URL.revokeObjectURL(uploadUrl);
-                  setUploadUrl(null);
+                  setBgDataUrl(null);
                   setUploadName('');
                 }}
               >
@@ -252,57 +394,58 @@ export function BuildShareModal({
 
         <section className="space-y-3">
           <div className="text-muted text-xs tracking-[0.16em] uppercase">
-            Preview ({canvasWidth} x {canvasHeight})
+            Preview ({canvasWidth} × {canvasHeight}) — scroll if clipped
           </div>
-          <div className={`mx-auto w-full max-w-[760px] ${previewAspectClass}`}>
+          <div className="max-h-[min(720px,82vh)] w-full overflow-auto rounded-xl border border-white/10 bg-black/20 p-2">
             <div
               ref={exportRef}
-              className="relative h-full w-full overflow-hidden rounded-[28px] border border-white/15 bg-[#090d18] text-[#edf2ff]"
+              style={{ width: canvasWidth, height: canvasHeight }}
+              className="relative flex shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/15 bg-[#090d18] text-[#edf2ff]"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(120,154,255,0.35),transparent_38%),radial-gradient(circle_at_85%_78%,rgba(70,214,190,0.24),transparent_45%),linear-gradient(130deg,#0a1020_0%,#12172d_45%,#090d18_100%)]" />
-              {uploadUrl ? (
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(120,154,255,0.35),transparent_38%),radial-gradient(circle_at_85%_78%,rgba(70,214,190,0.24),transparent_45%),linear-gradient(130deg,#0a1020_0%,#12172d_45%,#090d18_100%)]" />
+              {bgDataUrl ? (
                 <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{
-                    clipPath: 'polygon(44% 0%, 100% 0%, 100% 100%, 17% 100%, 34% 70%)',
-                    opacity: bgOpacity / 100,
-                  }}
+                  className="pointer-events-none absolute inset-0 overflow-hidden"
+                  style={{ opacity: bgOpacity / 100 }}
                 >
                   <img
-                    src={uploadUrl}
+                    src={bgDataUrl}
                     alt=""
                     className="h-full w-full object-cover"
                     style={{ transform: `scale(${bgScale})` }}
+                    draggable={false}
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(9,13,24,0.88),rgba(9,13,24,0.18))]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(9,13,24,0.82),rgba(9,13,24,0.35),rgba(9,13,24,0.55))]" />
                 </div>
               ) : null}
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,transparent_25%,transparent_70%,rgba(0,0,0,0.44)_100%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,transparent_25%,transparent_70%,rgba(0,0,0,0.44)_100%)]" />
 
-              <div className="relative z-10 flex h-full flex-col p-9">
-                <div className="flex items-start justify-between gap-5">
-                  <div className="min-w-0">
+              <div className="relative z-10 flex min-h-0 flex-1 flex-col px-8 pt-8 pb-5">
+                <div className="flex shrink-0 items-start justify-between gap-6">
+                  <div className="min-w-0 flex-1">
                     <p className="text-[12px] tracking-[0.22em] text-[#b7c7ff]/90 uppercase">
                       Parametric Build Export
                     </p>
-                    <h4 className="mt-1 truncate text-[42px] leading-none font-semibold">
+                    <h4 className="mt-1 text-[40px] leading-[1.05] font-semibold tracking-tight">
                       {buildName}
                     </h4>
-                    <p className="mt-2 text-[18px] text-[#c9d6ff]">
+                    <p className="mt-2 text-[17px] text-[#c9d6ff]">
                       {equipmentName} · {formatEquipmentType(equipmentType)}
                     </p>
                   </div>
-                  <div className="glass-panel overflow-hidden rounded-2xl border border-white/18 bg-white/5 p-0">
-                    <div className="h-28 w-28">
+                  <div className="glass-panel shrink-0 overflow-hidden rounded-2xl border border-white/18 bg-white/5 p-1">
+                    <div
+                      className={`flex items-center justify-center overflow-hidden rounded-xl bg-black/30 ${isWide ? 'h-36 w-36' : 'h-40 w-40'}`}
+                    >
                       {equipmentImagePath ? (
                         <img
                           src={equipmentImagePath}
                           alt=""
-                          className="h-full w-full object-cover"
+                          className="max-h-full max-w-full object-contain"
                           draggable={false}
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
+                        <div className="flex h-full w-full items-center justify-center px-2 text-center text-sm text-white/60">
                           No Art
                         </div>
                       )}
@@ -310,68 +453,388 @@ export function BuildShareModal({
                   </div>
                 </div>
 
-                <div className="mt-7 grid flex-1 grid-cols-12 gap-4">
-                  <div className="glass-panel col-span-8 rounded-2xl border border-white/12 bg-black/22 p-4">
-                    <p className="mb-3 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
-                      Equipped Mods ({equippedMods.length})
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {equippedMods.slice(0, 12).map((entry, index) => (
-                        <div
-                          key={`${entry.modName}-${index}`}
-                          className="rounded-lg border border-white/8 bg-white/5 px-2.5 py-2"
-                        >
-                          <div className="truncate text-[13px] font-medium">{entry.modName}</div>
-                          <div className="mt-0.5 text-[11px] text-[#b6c5ed]">
-                            {entry.slotType.toUpperCase()} · R{entry.rank}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="col-span-4 space-y-4">
-                    <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
-                      <p className="text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
-                        Build Flags
+                {isWide ? (
+                  <div className="mt-6 grid min-h-0 flex-1 grid-cols-12 gap-5">
+                    <div className="glass-panel col-span-7 flex min-h-0 flex-col rounded-2xl border border-white/12 bg-black/22 p-4">
+                      <p className="mb-3 shrink-0 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                        Equipped Mods ({equippedSlots.length})
                       </p>
-                      <div className="mt-3 space-y-2 text-[13px]">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[#b6c5ed]">Reactor/Catalyst</span>
-                          <span>{orokinReactor ? 'Enabled' : 'Disabled'}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[#b6c5ed]">Arcanes</span>
-                          <span>{listedArcanes.length}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[#b6c5ed]">Archon Shards</span>
-                          <span>
-                            {shardSummary.filled}
-                            {shardSummary.tau > 0 ? ` (${shardSummary.tau} tau)` : ''}
-                          </span>
-                        </div>
+                      <div className="flex min-h-0 flex-wrap content-start gap-x-2 gap-y-2">
+                        {equippedSlots.map((slot) => (
+                          <ModCard
+                            key={`${slot.index}-${slot.mod?.unique_name ?? 'm'}`}
+                            mod={slot.mod!}
+                            rank={slot.rank ?? 0}
+                            setRank={slot.setRank}
+                            slotType={slot.type}
+                            slotPolarity={slot.polarity}
+                            collapsed
+                            scale={modScale}
+                          />
+                        ))}
                       </div>
                     </div>
 
-                    {listedArcanes.length > 0 ? (
+                    <div className="col-span-5 flex min-h-0 flex-col gap-4">
+                      <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                        <p className="mb-3 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                          {isWarframe ? 'Frame & ability stats' : 'Weapon stats'}
+                        </p>
+                        <div className="space-y-2.5">
+                          {isWarframe && warframeCalc ? (
+                            <>
+                              <ShareStatBar
+                                label="Health"
+                                display={`${warframeCalc.health.modded.toFixed(0)}`}
+                                fillPct={ratioBarPct(
+                                  warframeCalc.health.base,
+                                  warframeCalc.health.modded,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Armor"
+                                display={`${warframeCalc.armor.modded.toFixed(0)}`}
+                                fillPct={ratioBarPct(
+                                  warframeCalc.armor.base,
+                                  warframeCalc.armor.modded,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Energy"
+                                display={`${warframeCalc.energy.modded.toFixed(0)}`}
+                                fillPct={ratioBarPct(
+                                  warframeCalc.energy.base,
+                                  warframeCalc.energy.modded,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Strength"
+                                display={`${warframeCalc.abilityStrength.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityStrength.modded)}
+                              />
+                              <ShareStatBar
+                                label="Duration"
+                                display={`${warframeCalc.abilityDuration.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityDuration.modded)}
+                              />
+                              <ShareStatBar
+                                label="Efficiency"
+                                display={`${warframeCalc.abilityEfficiency.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityEfficiency.modded)}
+                              />
+                              <ShareStatBar
+                                label="Range"
+                                display={`${warframeCalc.abilityRange.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityRange.modded)}
+                              />
+                            </>
+                          ) : null}
+                          {!isWarframe && weaponCalc ? (
+                            <>
+                              <ShareStatBar
+                                label="Damage"
+                                display={weaponCalc.modded.totalDamage.toFixed(1)}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.totalDamage,
+                                  weaponCalc.modded.totalDamage,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Crit chance"
+                                display={formatPercent(weaponCalc.modded.critChance)}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.critChance,
+                                  weaponCalc.modded.critChance,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Crit mult"
+                                display={`${weaponCalc.modded.critMultiplier.toFixed(2)}×`}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.critMultiplier,
+                                  weaponCalc.modded.critMultiplier,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Status"
+                                display={formatPercent(weaponCalc.modded.statusChance)}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.statusChance,
+                                  weaponCalc.modded.statusChance,
+                                )}
+                              />
+                              <ShareStatBar
+                                label={weaponCalc.isMelee ? 'Attack speed' : 'Fire rate'}
+                                display={weaponCalc.modded.fireRate.toFixed(2)}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.fireRate,
+                                  weaponCalc.modded.fireRate,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Sustained DPS"
+                                display={formatCompactNumber(weaponCalc.sustainedDps)}
+                                fillPct={Math.min(
+                                  100,
+                                  Math.max(8, (weaponCalc.sustainedDps / 50000) * 100),
+                                )}
+                              />
+                            </>
+                          ) : null}
+                          {!isWarframe && !weaponCalc ? (
+                            <p className="text-[12px] text-[#b6c5ed]">Stats unavailable.</p>
+                          ) : null}
+                        </div>
+                      </div>
+
                       <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
                         <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
-                          Arcanes
+                          Build Summary
                         </p>
-                        <div className="space-y-1.5 text-[12px] text-[#d6e0ff]">
-                          {listedArcanes.slice(0, 3).map((label) => (
-                            <div key={label} className="truncate">
-                              {label}
-                            </div>
-                          ))}
+                        <div className="space-y-1.5 text-[12px]">
+                          <div className="flex justify-between gap-2">
+                            <span className="text-[#b6c5ed]">Reactor/Catalyst</span>
+                            <span>{orokinReactor ? 'Yes' : 'No'}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-[#b6c5ed]">Arcanes</span>
+                            <span>{filledArcanes.length}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-[#b6c5ed]">Archon Shards</span>
+                            <span>
+                              {shardSummary.filled}
+                              {shardSummary.tau > 0 ? ` (${shardSummary.tau} tau)` : ''}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    ) : null}
-                  </div>
-                </div>
 
-                <div className="mt-4 flex items-center justify-between text-[11px] text-[#c4d2f8]">
+                      {isWarframe && (filledArcanes.length > 0 || shardSummary.filled > 0) ? (
+                        <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                          {filledArcanes.length > 0 ? (
+                            <>
+                              <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                                Arcanes
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {filledArcanes.map((slot, i) => {
+                                  const a = slot.arcane!;
+                                  const maxRank = getMaxRank(a);
+                                  const art = a.image_path ? `/images${a.image_path}` : '';
+                                  return (
+                                    <ArcaneCardPreview
+                                      key={`${a.unique_name}-${i}`}
+                                      layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale }}
+                                      rarity={normalizeArcaneRarity(a.rarity)}
+                                      arcaneArt={art}
+                                      arcaneName={a.name}
+                                      rank={slot.rank}
+                                      maxRank={maxRank}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </>
+                          ) : null}
+                          {shardSummary.filled > 0 ? (
+                            <div className={filledArcanes.length > 0 ? 'mt-4' : ''}>
+                              <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                                Archon Shards
+                              </p>
+                              <ShareShardStrip slots={shardSlots} shards={shardTypes} />
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {!isWarframe && filledArcanes.length > 0 ? (
+                        <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                          <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                            Arcanes
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {filledArcanes.map((slot, i) => {
+                              const a = slot.arcane!;
+                              const maxRank = getMaxRank(a);
+                              const art = a.image_path ? `/images${a.image_path}` : '';
+                              return (
+                                <ArcaneCardPreview
+                                  key={`${a.unique_name}-${i}`}
+                                  layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale }}
+                                  rarity={normalizeArcaneRarity(a.rarity)}
+                                  arcaneArt={art}
+                                  arcaneName={a.name}
+                                  rank={slot.rank}
+                                  maxRank={maxRank}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">
+                    <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                      <p className="mb-3 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                        Equipped Mods ({equippedSlots.length})
+                      </p>
+                      <div className="flex flex-wrap content-start gap-x-2 gap-y-2">
+                        {equippedSlots.map((slot) => (
+                          <ModCard
+                            key={`${slot.index}-${slot.mod?.unique_name ?? 'm'}`}
+                            mod={slot.mod!}
+                            rank={slot.rank ?? 0}
+                            setRank={slot.setRank}
+                            slotType={slot.type}
+                            slotPolarity={slot.polarity}
+                            collapsed
+                            scale={modScale}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid flex-1 grid-cols-2 gap-4">
+                      <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                        <p className="mb-3 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                          {isWarframe ? 'Stats' : 'Weapon Stats'}
+                        </p>
+                        <div className="space-y-2">
+                          {isWarframe && warframeCalc ? (
+                            <>
+                              <ShareStatBar
+                                label="Strength"
+                                display={`${warframeCalc.abilityStrength.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityStrength.modded)}
+                              />
+                              <ShareStatBar
+                                label="Duration"
+                                display={`${warframeCalc.abilityDuration.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityDuration.modded)}
+                              />
+                              <ShareStatBar
+                                label="Efficiency"
+                                display={`${warframeCalc.abilityEfficiency.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityEfficiency.modded)}
+                              />
+                              <ShareStatBar
+                                label="Range"
+                                display={`${warframeCalc.abilityRange.modded.toFixed(0)}%`}
+                                fillPct={abilityBarPct(warframeCalc.abilityRange.modded)}
+                              />
+                              <ShareStatBar
+                                label="Health"
+                                display={`${warframeCalc.health.modded.toFixed(0)}`}
+                                fillPct={ratioBarPct(
+                                  warframeCalc.health.base,
+                                  warframeCalc.health.modded,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Energy"
+                                display={`${warframeCalc.energy.modded.toFixed(0)}`}
+                                fillPct={ratioBarPct(
+                                  warframeCalc.energy.base,
+                                  warframeCalc.energy.modded,
+                                )}
+                              />
+                            </>
+                          ) : null}
+                          {!isWarframe && weaponCalc ? (
+                            <>
+                              <ShareStatBar
+                                label="Damage"
+                                display={weaponCalc.modded.totalDamage.toFixed(1)}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.totalDamage,
+                                  weaponCalc.modded.totalDamage,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="Crit"
+                                display={formatPercent(weaponCalc.modded.critChance)}
+                                fillPct={ratioBarPct(
+                                  weaponCalc.base.critChance,
+                                  weaponCalc.modded.critChance,
+                                )}
+                              />
+                              <ShareStatBar
+                                label="DPS"
+                                display={formatCompactNumber(weaponCalc.sustainedDps)}
+                                fillPct={Math.min(
+                                  100,
+                                  Math.max(8, (weaponCalc.sustainedDps / 50000) * 100),
+                                )}
+                              />
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                          <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                            Build Summary
+                          </p>
+                          <div className="space-y-1.5 text-[12px]">
+                            <div className="flex justify-between">
+                              <span className="text-[#b6c5ed]">Reactor</span>
+                              <span>{orokinReactor ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[#b6c5ed]">Arcanes</span>
+                              <span>{filledArcanes.length}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[#b6c5ed]">Shards</span>
+                              <span>{shardSummary.filled}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {filledArcanes.length > 0 ? (
+                          <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                            <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                              Arcanes
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {filledArcanes.map((slot, i) => {
+                                const a = slot.arcane!;
+                                const maxRank = getMaxRank(a);
+                                const art = a.image_path ? `/images${a.image_path}` : '';
+                                return (
+                                  <ArcaneCardPreview
+                                    key={`${a.unique_name}-${i}`}
+                                    layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale }}
+                                    rarity={normalizeArcaneRarity(a.rarity)}
+                                    arcaneArt={art}
+                                    arcaneName={a.name}
+                                    rank={slot.rank}
+                                    maxRank={maxRank}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {isWarframe && shardSummary.filled > 0 ? (
+                          <div className="glass-panel rounded-2xl border border-white/12 bg-black/22 p-4">
+                            <p className="mb-2 text-[11px] tracking-[0.2em] text-[#c7d5ff] uppercase">
+                              Archon Shards
+                            </p>
+                            <ShareShardStrip slots={shardSlots} shards={shardTypes} />
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-auto flex shrink-0 items-center justify-between border-t border-white/10 pt-3 text-[11px] text-[#c4d2f8]">
                   <span>darkavianlabs.com/parametric</span>
                   <span>Generated in Parametric</span>
                 </div>

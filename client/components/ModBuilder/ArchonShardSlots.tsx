@@ -1,3 +1,4 @@
+import { formatShardBuffDescription } from '../../utils/shardBuffFormat';
 import { GlassTooltip } from '../GlassTooltip';
 
 export interface ShardSlotConfig {
@@ -62,7 +63,7 @@ export function ArchonShardSlots({
           if (info) {
             const iconPath = slot.tauforged ? info.shard.tauforged_icon_path : info.shard.icon_path;
             const shardLabel = slot.tauforged ? `${info.shard.name} (Tauforged)` : info.shard.name;
-            const buffText = formatBuffDescription(info.buff, slot.tauforged);
+            const buffText = formatShardBuffDescription(info.buff, slot.tauforged);
 
             return (
               <div
@@ -137,12 +138,5 @@ export function ArchonShardSlots({
         })}
       </div>
     </div>
-  );
-}
-
-function formatBuffDescription(buff: ShardBuff | undefined, tauforged: boolean): string {
-  if (!buff) return '';
-  return buff.description.replace(/([+-]?\d+\.?\d*%?)\s*\(([+-]?\d+\.?\d*%?)\)/g, (_, base, tau) =>
-    tauforged ? tau : base,
   );
 }
