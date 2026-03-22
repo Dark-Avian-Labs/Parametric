@@ -10,6 +10,25 @@ interface ShareRadarChartProps {
   className?: string;
 }
 
+/** Word-wrap for corner labels (narrower when more vertices). */
+function wrapRadarLabelLines(label: string, maxCharsPerLine: number): string[] {
+  const words = label.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [label];
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (next.length <= maxCharsPerLine) {
+      cur = next;
+    } else {
+      if (cur) lines.push(cur);
+      cur = w.length > maxCharsPerLine ? `${w.slice(0, maxCharsPerLine - 1)}…` : w;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
 export function ShareRadarChart({
   size,
   labels,
@@ -26,8 +45,8 @@ export function ShareRadarChart({
 
   const cx = size / 2;
   const cy = size / 2;
-  const maxR = size * 0.3;
-  const labelR = size * 0.42;
+  const maxR = size * 0.26;
+  const labelR = size * 0.46;
   const vmax = Math.max(...values.map((v) => (Number.isFinite(v) ? Math.abs(v) : 0)), 1e-9);
   const norm = values.map((v) => {
     const t = Number.isFinite(v) ? Math.abs(v) / vmax : 0;
@@ -64,29 +83,37 @@ export function ShareRadarChart({
     );
   });
 
+  const maxChars = n >= 6 ? 10 : n >= 5 ? 11 : 12;
+  const fs = Math.max(6.5, size * 0.024);
+  const lineHeight = fs * 1.12;
+
   const labelEls = labels.map((label, i) => {
     const a = angleAt(i);
     const lx = cx + Math.cos(a) * labelR;
     const ly = cy + Math.sin(a) * labelR;
-    const short = label.length > 11 ? `${label.slice(0, 10)}…` : label;
-    const fs = Math.max(7, size * 0.028);
+    const lines = wrapRadarLabelLines(label, maxChars);
+    const blockHalf = ((lines.length - 1) * lineHeight) / 2;
     return (
-      <text
-        key={`lb-${i}`}
-        x={lx}
-        y={ly}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        style={{
-          fill: '#c8d4f0',
-          fontSize: fs,
-          fontFamily: 'system-ui, Segoe UI, sans-serif',
-          fontWeight: 600,
-          letterSpacing: '0.04em',
-        }}
-      >
-        {short}
-      </text>
+      <g key={`lb-${i}`}>
+        {lines.map((line, li) => (
+          <text
+            key={li}
+            x={lx}
+            y={ly - blockHalf + li * lineHeight}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            style={{
+              fill: '#c8d4f0',
+              fontSize: fs,
+              fontFamily: 'system-ui, Segoe UI, sans-serif',
+              fontWeight: 600,
+              letterSpacing: '0.03em',
+            }}
+          >
+            {line}
+          </text>
+        ))}
+      </g>
     );
   });
 

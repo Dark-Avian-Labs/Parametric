@@ -117,14 +117,34 @@ function chunkEquippedModsForLayout(slots: ModSlot[]): ModSlot[][] {
   return rows;
 }
 
-function ModShareGrid({ slots, modScale }: { slots: ModSlot[]; modScale: number }) {
+function ModShareGrid({
+  slots,
+  modScale,
+  fillSpace,
+}: {
+  slots: ModSlot[];
+  modScale: number;
+  fillSpace?: boolean;
+}) {
   const rows = chunkEquippedModsForLayout(slots);
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className={
+        fillSpace ? 'flex min-h-0 flex-1 flex-col justify-evenly gap-3 py-1' : 'flex flex-col gap-2'
+      }
+    >
       {rows.map((row, ri) => (
         <div
           key={ri}
-          className={`flex flex-wrap gap-x-2 gap-y-2 ${ri === 0 ? 'justify-center' : 'justify-start'}`}
+          className={`flex flex-wrap gap-x-3 gap-y-2 ${
+            fillSpace
+              ? ri === 0
+                ? 'w-full justify-center'
+                : 'w-full justify-between px-0.5'
+              : ri === 0
+                ? 'justify-center'
+                : 'justify-start'
+          }`}
         >
           {row.map((slot) => (
             <ModCard
@@ -307,7 +327,7 @@ function ShareSkillsPanel({
       ? selectedReplacement.description
       : ownAbilities.find((a) => a.description)?.description;
 
-  const shortDesc = desc ? (desc.length > 220 ? `${desc.slice(0, 217)}…` : desc) : null;
+  const displayDesc = desc != null && desc.length > 900 ? `${desc.slice(0, 897).trim()}…` : desc;
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -356,10 +376,12 @@ function ShareSkillsPanel({
           );
         })}
       </div>
-      {shortDesc ? (
-        <p className="text-[9px] leading-relaxed text-[#b8c8ec]">{shortDesc}</p>
+      {displayDesc ? (
+        <p className="line-clamp-[10] text-[10px] leading-snug break-words text-[#b8c8ec]">
+          {displayDesc}
+        </p>
       ) : (
-        <p className="text-[9px] text-[#7e8fb8]">No ability description loaded.</p>
+        <p className="text-[10px] text-[#7e8fb8]">No ability description loaded.</p>
       )}
     </div>
   );
@@ -532,10 +554,10 @@ export function BuildShareModal({
   const isWide = aspect === 'wide';
   const canvasWidth = isWide ? 1280 : 720;
   const canvasHeight = isWide ? 720 : 1280;
-  const modScale = isWide ? 0.36 : 0.29;
-  const arcaneScale = isWide ? 0.52 : 0.45;
-  const radarMain = isWide ? 188 : 148;
-  const radarSecondary = isWide ? 168 : 132;
+  const modScale = isWide ? 0.44 : 0.36;
+  const arcaneScale = isWide ? 0.64 : 0.54;
+  const radarMain = isWide ? 200 : 156;
+  const radarSecondary = isWide ? 178 : 140;
   const skillIconPx = isWide ? 40 : 36;
 
   return (
@@ -685,7 +707,9 @@ export function BuildShareModal({
                       <p className="text-[9px] tracking-[0.2em] text-[#9fb2e8]/95 uppercase">
                         Parametric
                       </p>
-                      <h4 className="mt-0.5 text-[26px] leading-[1.08] font-semibold tracking-tight text-[#f6f8ff]">
+                      <h4
+                        className={`mt-0.5 leading-[1.06] font-semibold tracking-tight text-[#f6f8ff] ${isWide ? 'text-[34px]' : 'text-[30px]'}`}
+                      >
                         {buildName}
                       </h4>
                       <p className="mt-1 text-[13px] font-medium text-[#d0ddf8]">{equipmentName}</p>
@@ -727,17 +751,17 @@ export function BuildShareModal({
                         <p className="mb-2 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
                           Mods ({equippedSlots.length})
                         </p>
-                        <div className="min-h-0 overflow-hidden">
-                          <ModShareGrid slots={equippedSlots} modScale={modScale} />
+                        <div className="flex min-h-0 flex-1 flex-col">
+                          <ModShareGrid slots={equippedSlots} modScale={modScale} fillSpace />
                         </div>
                       </div>
                       {isWarframe ? (
                         <div className="grid shrink-0 grid-cols-12 gap-2">
-                          <div className="glass-panel col-span-3 rounded-xl p-2">
-                            <p className="mb-1.5 text-[9px] tracking-[0.14em] text-[#c7d5ff] uppercase">
+                          <div className="glass-panel col-span-3 flex min-h-0 flex-col rounded-xl p-2">
+                            <p className="mb-1.5 shrink-0 text-[9px] tracking-[0.14em] text-[#c7d5ff] uppercase">
                               Arcane
                             </p>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex min-h-0 flex-1 flex-col items-center justify-evenly gap-3 py-1">
                               {filledArcanes.length === 0 ? (
                                 <span className="text-[9px] text-[#7e8fb8]">None</span>
                               ) : (
@@ -821,7 +845,7 @@ export function BuildShareModal({
                             </p>
                             <ShareRadarChart
                               size={radarMain}
-                              labels={['Health', 'Shield', 'Armor', 'Energy', 'Speed']}
+                              labels={['Health', 'Shield', 'Armor', 'Energy', 'Sprint Speed']}
                               values={[
                                 warframeCalc.health.modded,
                                 warframeCalc.shield.modded,
@@ -837,7 +861,12 @@ export function BuildShareModal({
                             </p>
                             <ShareRadarChart
                               size={radarSecondary}
-                              labels={['Str', 'Dur', 'Eff', 'Range']}
+                              labels={[
+                                'Ability Strength',
+                                'Ability Duration',
+                                'Ability Efficiency',
+                                'Ability Range',
+                              ]}
                               values={[
                                 warframeCalc.abilityStrength.modded,
                                 warframeCalc.abilityDuration.modded,
@@ -858,7 +887,25 @@ export function BuildShareModal({
                             </p>
                             <ShareRadarChart
                               size={radarMain}
-                              labels={['Crit', 'Mult', 'Status', 'Rate', 'Multi', 'Reload']}
+                              labels={
+                                weaponCalc.isMelee
+                                  ? [
+                                      'Critical Chance',
+                                      'Critical Multiplier',
+                                      'Status Chance',
+                                      'Attack Speed',
+                                      'Multishot',
+                                      'Reload Speed',
+                                    ]
+                                  : [
+                                      'Critical Chance',
+                                      'Critical Multiplier',
+                                      'Status Chance',
+                                      'Fire Rate',
+                                      'Multishot',
+                                      'Reload Speed',
+                                    ]
+                              }
                               values={weaponRadarValues}
                             />
                           </div>
@@ -876,11 +923,13 @@ export function BuildShareModal({
                   </div>
                 ) : (
                   <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2.5">
-                    <div className="glass-panel min-h-0 flex-1 rounded-2xl p-3">
-                      <p className="mb-2 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
+                    <div className="glass-panel flex min-h-0 flex-1 flex-col rounded-2xl p-3">
+                      <p className="mb-2 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
                         Mods ({equippedSlots.length})
                       </p>
-                      <ModShareGrid slots={equippedSlots} modScale={modScale} />
+                      <div className="flex min-h-0 flex-1 flex-col">
+                        <ModShareGrid slots={equippedSlots} modScale={modScale} fillSpace />
+                      </div>
                     </div>
                     {isWarframe && warframeCalc ? (
                       <div className="grid grid-cols-2 gap-2">
@@ -890,7 +939,7 @@ export function BuildShareModal({
                           </p>
                           <ShareRadarChart
                             size={radarMain}
-                            labels={['HP', 'Shd', 'Arm', 'En', 'Spd']}
+                            labels={['Health', 'Shield', 'Armor', 'Energy', 'Sprint Speed']}
                             values={[
                               warframeCalc.health.modded,
                               warframeCalc.shield.modded,
@@ -906,7 +955,12 @@ export function BuildShareModal({
                           </p>
                           <ShareRadarChart
                             size={radarSecondary}
-                            labels={['Str', 'Dur', 'Eff', 'Rg']}
+                            labels={[
+                              'Ability Strength',
+                              'Ability Duration',
+                              'Ability Efficiency',
+                              'Ability Range',
+                            ]}
                             values={[
                               warframeCalc.abilityStrength.modded,
                               warframeCalc.abilityDuration.modded,
@@ -927,7 +981,25 @@ export function BuildShareModal({
                           </p>
                           <ShareRadarChart
                             size={radarMain + 8}
-                            labels={['Crit', 'Mult', 'Stat', 'Rate', 'Multi', 'Rld']}
+                            labels={
+                              weaponCalc.isMelee
+                                ? [
+                                    'Critical Chance',
+                                    'Critical Multiplier',
+                                    'Status Chance',
+                                    'Attack Speed',
+                                    'Multishot',
+                                    'Reload Speed',
+                                  ]
+                                : [
+                                    'Critical Chance',
+                                    'Critical Multiplier',
+                                    'Status Chance',
+                                    'Fire Rate',
+                                    'Multishot',
+                                    'Reload Speed',
+                                  ]
+                            }
                             values={weaponRadarValues}
                           />
                         </div>
@@ -938,14 +1010,14 @@ export function BuildShareModal({
                     ) : null}
                     {isWarframe ? (
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="glass-panel rounded-xl p-2">
-                          <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
+                        <div className="glass-panel flex min-h-0 flex-col rounded-xl p-2">
+                          <p className="mb-1 shrink-0 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                             Arcane
                           </p>
                           {filledArcanes.length === 0 ? (
                             <span className="text-[9px] text-[#7e8fb8]">None</span>
                           ) : (
-                            <div className="flex flex-col gap-1.5">
+                            <div className="flex min-h-[100px] flex-1 flex-col items-center justify-evenly gap-3 py-1">
                               {filledArcanes.map((slot, i) => {
                                 const a = slot.arcane!;
                                 const maxRank = getMaxRank(a);
