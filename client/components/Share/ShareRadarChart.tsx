@@ -21,13 +21,7 @@ export function ShareRadarChart({
 }: ShareRadarChartProps) {
   const n = labels.length;
   if (n < 3 || values.length !== n) {
-    return (
-      <div
-        className={className}
-        style={{ width: size, height: size }}
-        aria-hidden
-      />
-    );
+    return <div className={className} style={{ width: size, height: size }} aria-hidden />;
   }
 
   const cx = size / 2;
@@ -66,15 +60,7 @@ export function ShareRadarChart({
   const spokes = Array.from({ length: n }, (_, i) => {
     const [x, y] = pt(i, maxR);
     return (
-      <line
-        key={`spoke-${i}`}
-        x1={cx}
-        y1={cy}
-        x2={x}
-        y2={y}
-        stroke={gridStroke}
-        strokeWidth={1}
-      />
+      <line key={`spoke-${i}`} x1={cx} y1={cy} x2={x} y2={y} stroke={gridStroke} strokeWidth={1} />
     );
   });
 
@@ -113,16 +99,16 @@ export function ShareRadarChart({
       aria-hidden
     >
       {gridPolygons.map((pts, gi) => (
-        <polygon
-          key={`grid-${gi}`}
-          points={pts}
-          fill="none"
-          stroke={gridStroke}
-          strokeWidth={1}
-        />
+        <polygon key={`grid-${gi}`} points={pts} fill="none" stroke={gridStroke} strokeWidth={1} />
       ))}
       {spokes}
-      <polygon points={polyPoints} fill={fill} stroke={stroke} strokeWidth={1.5} strokeLinejoin="round" />
+      <polygon
+        points={polyPoints}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
       {labelEls}
     </svg>
   );

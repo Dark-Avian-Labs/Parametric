@@ -149,12 +149,7 @@ function ShareFormaHeader({ forma }: { forma?: FormaCount }) {
     <div className="flex items-end gap-3 pr-1">
       {forma.regular > 0 ? (
         <div className="flex flex-col items-center gap-0.5">
-          <img
-            src="/icons/forma.png"
-            alt=""
-            className="h-7 w-7 object-contain"
-            draggable={false}
-          />
+          <img src="/icons/forma.png" alt="" className="h-7 w-7 object-contain" draggable={false} />
           <span className="text-[11px] font-semibold text-[#e8edff]">{forma.regular}</span>
         </div>
       ) : null}
@@ -296,11 +291,7 @@ function ShareSkillsPanel({
       ? selectedReplacement.description
       : ownAbilities.find((a) => a.description)?.description;
 
-  const shortDesc = desc
-    ? desc.length > 220
-      ? `${desc.slice(0, 217)}…`
-      : desc
-    : null;
+  const shortDesc = desc ? (desc.length > 220 ? `${desc.slice(0, 217)}…` : desc) : null;
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
@@ -358,13 +349,7 @@ function ShareSkillsPanel({
   );
 }
 
-function ShareDamageBreakdownBars({
-  weapon,
-  slots,
-}: {
-  weapon: Weapon;
-  slots: ModSlot[];
-}) {
+function ShareDamageBreakdownBars({ weapon, slots }: { weapon: Weapon; slots: ModSlot[] }) {
   const { totalDamage, damageBreakdown } = calculateBuildDamage(weapon, slots);
   if (damageBreakdown.length === 0) return null;
   const maxValue = Math.max(...damageBreakdown.map((e) => e.value));
@@ -409,10 +394,10 @@ function ShareDamageBreakdownBars({
               {entry.type}
             </span>
             <div className="relative z-10 flex-1" />
-            <span className="relative z-10 text-[8px] tabular-nums text-[#9fb0d8]">
+            <span className="relative z-10 text-[8px] text-[#9fb0d8] tabular-nums">
               {pct.toFixed(1)}%
             </span>
-            <span className="relative z-10 min-w-[40px] text-right text-[9px] font-semibold tabular-nums text-[#f0f4ff]">
+            <span className="relative z-10 min-w-[40px] text-right text-[9px] font-semibold text-[#f0f4ff] tabular-nums">
               {formatDamage(entry.value)}
             </span>
           </div>
@@ -654,7 +639,7 @@ export function BuildShareModal({
             <div
               ref={exportRef}
               style={{ width: canvasWidth, height: canvasHeight }}
-              className="relative flex shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/15 bg-[#090d18] text-[#edf2ff]"
+              className="share-export-root relative flex shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/15 bg-[#090d18] text-[#edf2ff]"
             >
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(120,154,255,0.35),transparent_38%),radial-gradient(circle_at_85%_78%,rgba(70,214,190,0.24),transparent_45%),linear-gradient(130deg,#0a1020_0%,#12172d_45%,#090d18_100%)]" />
               {bgDataUrl ? (
@@ -689,7 +674,7 @@ export function BuildShareModal({
                       <p className="text-[9px] tracking-[0.2em] text-[#9fb2e8]/95 uppercase">
                         Parametric
                       </p>
-                      <h4 className="mt-0.5 text-[26px] font-semibold leading-[1.08] tracking-tight text-[#f6f8ff]">
+                      <h4 className="mt-0.5 text-[26px] leading-[1.08] font-semibold tracking-tight text-[#f6f8ff]">
                         {buildName}
                       </h4>
                       <p className="mt-1 text-[13px] font-medium text-[#d0ddf8]">{equipmentName}</p>
@@ -751,7 +736,10 @@ export function BuildShareModal({
                                   return (
                                     <ArcaneCardPreview
                                       key={`${a.unique_name}-${i}`}
-                                      layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale * 0.85 }}
+                                      layout={{
+                                        ...DEFAULT_ARCANE_LAYOUT,
+                                        scale: arcaneScale * 0.85,
+                                      }}
                                       rarity={normalizeArcaneRarity(a.rarity)}
                                       arcaneArt={art}
                                       arcaneName={a.name}
@@ -915,7 +903,7 @@ export function BuildShareModal({
                     {isWarframe && warframeCalc ? (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="glass-panel flex flex-col items-center rounded-xl p-2">
-                          <p className="mb-0.5 w-full text-left text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                          <p className="mb-0.5 w-full text-left text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                             Stats
                           </p>
                           <ShareRadarChart
@@ -931,7 +919,7 @@ export function BuildShareModal({
                           />
                         </div>
                         <div className="glass-panel flex flex-col items-center rounded-xl p-2">
-                          <p className="mb-0.5 w-full text-left text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                          <p className="mb-0.5 w-full text-left text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                             Abilities
                           </p>
                           <ShareRadarChart
@@ -952,7 +940,7 @@ export function BuildShareModal({
                     {!isWarframe && weaponCalc && weaponRadarValues ? (
                       <>
                         <div className="glass-panel flex flex-col items-center rounded-xl p-2">
-                          <p className="mb-0.5 w-full text-left text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                          <p className="mb-0.5 w-full text-left text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                             Stats
                           </p>
                           <ShareRadarChart
@@ -969,7 +957,7 @@ export function BuildShareModal({
                     {isWarframe ? (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="glass-panel rounded-xl p-2">
-                          <p className="mb-1 text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                          <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                             Arcane
                           </p>
                           {filledArcanes.length === 0 ? (
@@ -996,7 +984,7 @@ export function BuildShareModal({
                           )}
                         </div>
                         <div className="glass-panel rounded-xl p-2">
-                          <p className="mb-1 text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                          <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                             Shards
                           </p>
                           <ShareShardColumn slots={shardSlots} shards={shardTypes} />
@@ -1004,7 +992,7 @@ export function BuildShareModal({
                       </div>
                     ) : filledArcanes.length > 0 ? (
                       <div className="glass-panel rounded-xl p-2">
-                        <p className="mb-1 text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                        <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                           Arcane
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -1029,7 +1017,7 @@ export function BuildShareModal({
                     ) : null}
                     {isWarframe ? (
                       <div className="glass-panel rounded-xl p-2">
-                        <p className="mb-1 text-[9px] uppercase tracking-wide text-[#c7d5ff]">
+                        <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
                           Skills
                         </p>
                         <ShareSkillsPanel
@@ -1042,7 +1030,9 @@ export function BuildShareModal({
                       </div>
                     ) : null}
                     <div className="glass-panel rounded-xl p-2">
-                      <p className="mb-1 text-[9px] uppercase tracking-wide text-[#c7d5ff]">Build</p>
+                      <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
+                        Build
+                      </p>
                       <div className="space-y-0.5 text-[9px]">
                         <div className="flex justify-between">
                           <span className="text-[#9fb0d8]">Reactor</span>

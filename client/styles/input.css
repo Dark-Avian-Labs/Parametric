@@ -215,6 +215,46 @@ html.theme-dark {
     border-radius: 1rem;
   }
 
+  /*
+   * PNG export (html-to-image): backdrop-filter is rasterized poorly (banding / JPEG-like noise).
+   * Inside .share-export-root only: drop blur and use opaque “glass” fills so captures stay clean.
+   */
+  .share-export-root * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .share-export-root .glass-panel,
+  .share-export-root .glass-shell,
+  .share-export-root .glass-surface,
+  .share-export-root .glass-light {
+    background:
+      linear-gradient(
+        155deg,
+        rgba(255, 255, 255, 0.11) 0%,
+        rgba(255, 255, 255, 0.03) 42%,
+        rgba(0, 0, 0, 0.14) 100%
+      ),
+      rgba(10, 16, 30, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.11) !important;
+  }
+
+  .share-export-root .glass-panel::before,
+  .share-export-root .glass-shell::before,
+  .share-export-root .glass-surface::before,
+  .share-export-root .glass-light::before {
+    background:
+      linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent) top center/78% 1px
+        no-repeat,
+      linear-gradient(
+          transparent 0%,
+          rgba(255, 255, 255, 0.1) 14%,
+          rgba(255, 255, 255, 0.04) 58%,
+          transparent 100%
+        )
+        left center/1px 84% no-repeat;
+  }
+
   .text-shadow-soft {
     text-shadow:
       0 1px 2px rgba(0, 0, 0, 0.75),
