@@ -239,6 +239,11 @@ html.theme-dark {
     border-color: rgba(255, 255, 255, 0.11) !important;
   }
 
+  .share-export-footer {
+    border: 0;
+    box-shadow: none;
+  }
+
   .share-export-root .glass-panel::before,
   .share-export-root .glass-shell::before,
   .share-export-root .glass-surface::before,

@@ -2,6 +2,7 @@ import { toPng } from 'html-to-image';
 import { useMemo, useRef, useState } from 'react';
 
 import feathers from '../../assets/feathers.png';
+import orokinReactorImg from '../../assets/orokin-reactor.png';
 import type {
   Ability,
   BuildConfig,
@@ -143,10 +144,10 @@ function ModShareGrid({ slots, modScale }: { slots: ModSlot[]; modScale: number 
   );
 }
 
-function ShareFormaHeader({ forma }: { forma?: FormaCount }) {
+function ShareFormaCounts({ forma }: { forma?: FormaCount }) {
   if (!forma || forma.total <= 0) return null;
   return (
-    <div className="flex items-end gap-3 pr-1">
+    <>
       {forma.regular > 0 ? (
         <div className="flex flex-col items-center gap-0.5">
           <img src="/icons/forma.png" alt="" className="h-7 w-7 object-contain" draggable={false} />
@@ -186,6 +187,26 @@ function ShareFormaHeader({ forma }: { forma?: FormaCount }) {
           <span className="text-[11px] font-semibold text-[#e8edff]">{forma.stance}</span>
         </div>
       ) : null}
+    </>
+  );
+}
+
+/** Orokin Reactor / Catalyst — replace `client/assets/orokin-reactor.png` with final art. */
+function ShareReactorStamp({ active }: { active: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <img
+        src={orokinReactorImg}
+        alt=""
+        className="h-7 w-7 object-contain"
+        draggable={false}
+      />
+      <span
+        className={`text-[13px] font-bold leading-none ${active ? 'text-emerald-400' : 'text-red-400/90'}`}
+        aria-hidden
+      >
+        {active ? '\u2713' : '\u2717'}
+      </span>
     </div>
   );
 }
@@ -516,16 +537,11 @@ export function BuildShareModal({
   const isWide = aspect === 'wide';
   const canvasWidth = isWide ? 1280 : 720;
   const canvasHeight = isWide ? 720 : 1280;
-  const modScale = isWide ? 0.27 : 0.21;
-  const arcaneScale = isWide ? 0.36 : 0.32;
+  const modScale = isWide ? 0.36 : 0.29;
+  const arcaneScale = isWide ? 0.52 : 0.45;
   const radarMain = isWide ? 188 : 148;
   const radarSecondary = isWide ? 168 : 132;
   const skillIconPx = isWide ? 40 : 36;
-
-  const shardSummary = {
-    filled: shardSlots.filter((s) => s.shard_type_id != null).length,
-    tau: shardSlots.filter((s) => s.shard_type_id != null && s.tauforged).length,
-  };
 
   return (
     <Modal open onClose={onClose} ariaLabelledBy="share-build-title" className="max-w-[1120px]">
@@ -659,7 +675,7 @@ export function BuildShareModal({
               ) : null}
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,transparent_25%,transparent_70%,rgba(0,0,0,0.44)_100%)]" />
 
-              <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pt-4 pb-2.5">
+              <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5 pt-4 pb-3">
                 <div className="flex shrink-0 items-start justify-between gap-3">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     <img
@@ -683,8 +699,9 @@ export function BuildShareModal({
                       </p>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-start gap-2">
-                    <ShareFormaHeader forma={formaCost} />
+                  <div className="flex shrink-0 items-end gap-3 pr-0.5">
+                    <ShareFormaCounts forma={formaCost} />
+                    <ShareReactorStamp active={orokinReactor} />
                     <div className="glass-panel shrink-0 overflow-hidden rounded-2xl p-1">
                       <div
                         className={`flex items-center justify-center overflow-hidden rounded-xl bg-black/35 ${
@@ -738,7 +755,7 @@ export function BuildShareModal({
                                       key={`${a.unique_name}-${i}`}
                                       layout={{
                                         ...DEFAULT_ARCANE_LAYOUT,
-                                        scale: arcaneScale * 0.85,
+                                        scale: arcaneScale,
                                       }}
                                       rarity={normalizeArcaneRarity(a.rarity)}
                                       arcaneArt={art}
@@ -800,10 +817,10 @@ export function BuildShareModal({
                         </div>
                       )}
                     </div>
-                    <div className="col-span-4 flex min-h-0 flex-col gap-2.5">
+                    <div className="col-span-4 flex min-h-0 flex-1 flex-col gap-2.5">
                       {isWarframe && warframeCalc ? (
                         <>
-                          <div className="glass-panel flex flex-col items-center rounded-2xl p-2.5">
+                          <div className="glass-panel flex min-h-0 flex-1 flex-col items-center rounded-2xl p-2.5">
                             <p className="mb-0.5 w-full text-left text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
                               Stats
                             </p>
@@ -819,7 +836,7 @@ export function BuildShareModal({
                               ]}
                             />
                           </div>
-                          <div className="glass-panel flex flex-col items-center rounded-2xl p-2.5">
+                          <div className="glass-panel flex min-h-0 flex-1 flex-col items-center rounded-2xl p-2.5">
                             <p className="mb-0.5 w-full text-left text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
                               Abilities
                             </p>
@@ -860,36 +877,6 @@ export function BuildShareModal({
                           Stats unavailable.
                         </div>
                       ) : null}
-                      <div className="glass-panel rounded-2xl p-2.5">
-                        <p className="mb-1.5 text-[9px] tracking-[0.16em] text-[#c7d5ff] uppercase">
-                          Build
-                        </p>
-                        <div className="space-y-1 text-[10px]">
-                          <div className="flex justify-between gap-2">
-                            <span className="text-[#9fb0d8]">Reactor</span>
-                            <span className="font-medium">{orokinReactor ? 'Yes' : 'No'}</span>
-                          </div>
-                          <div className="flex justify-between gap-2">
-                            <span className="text-[#9fb0d8]">Arcanes</span>
-                            <span className="font-medium">{filledArcanes.length}</span>
-                          </div>
-                          {isWarframe ? (
-                            <div className="flex justify-between gap-2">
-                              <span className="text-[#9fb0d8]">Shards</span>
-                              <span className="font-medium">
-                                {shardSummary.filled}
-                                {shardSummary.tau > 0 ? ` (${shardSummary.tau} τ)` : ''}
-                              </span>
-                            </div>
-                          ) : null}
-                          {formaCost && formaCost.total > 0 ? (
-                            <div className="flex justify-between gap-2">
-                              <span className="text-[#9fb0d8]">Forma</span>
-                              <span className="font-medium">{formaCost.total}</span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
                     </div>
                   </div>
                 ) : (
@@ -971,7 +958,7 @@ export function BuildShareModal({
                                 return (
                                   <ArcaneCardPreview
                                     key={`${a.unique_name}-${i}`}
-                                    layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale * 0.82 }}
+                                    layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale }}
                                     rarity={normalizeArcaneRarity(a.rarity)}
                                     arcaneArt={art}
                                     arcaneName={a.name}
@@ -1003,7 +990,7 @@ export function BuildShareModal({
                             return (
                               <ArcaneCardPreview
                                 key={`${a.unique_name}-${i}`}
-                                layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale * 0.9 }}
+                                layout={{ ...DEFAULT_ARCANE_LAYOUT, scale: arcaneScale }}
                                 rarity={normalizeArcaneRarity(a.rarity)}
                                 arcaneArt={art}
                                 arcaneName={a.name}
@@ -1029,30 +1016,9 @@ export function BuildShareModal({
                         />
                       </div>
                     ) : null}
-                    <div className="glass-panel rounded-xl p-2">
-                      <p className="mb-1 text-[9px] tracking-wide text-[#c7d5ff] uppercase">
-                        Build
-                      </p>
-                      <div className="space-y-0.5 text-[9px]">
-                        <div className="flex justify-between">
-                          <span className="text-[#9fb0d8]">Reactor</span>
-                          <span>{orokinReactor ? 'Yes' : 'No'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#9fb0d8]">Arcanes</span>
-                          <span>{filledArcanes.length}</span>
-                        </div>
-                        {isWarframe ? (
-                          <div className="flex justify-between">
-                            <span className="text-[#9fb0d8]">Shards</span>
-                            <span>{shardSummary.filled}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
                   </div>
                 )}
-                <div className="mt-auto flex shrink-0 items-center justify-between border-t border-white/10 pt-3 text-[11px] text-[#c4d2f8]">
+                <div className="share-export-footer -mx-5 mt-auto flex shrink-0 items-center justify-between bg-[#090d18] px-5 pb-2 pt-3 text-[11px] text-[#a8b8d8]/88">
                   <span>darkavianlabs.com/parametric</span>
                   <span>Generated in Parametric</span>
                 </div>
