@@ -1,4 +1,5 @@
 import { AP_ANY, AP_UMBRA, type ModSlot, type SlotType } from '../types/warframe';
+import { isRivenMod } from './riven';
 
 function polarityMatchResult(a: string, b: string): 'match' | 'neutral' | 'mismatch' {
   if (a === b) return 'match';
@@ -16,9 +17,14 @@ export function calculateEffectiveDrain(
   slotPolarity: string | undefined,
   modPolarity: string | undefined,
   slotType: SlotType,
+  rivenMaxRankDrain?: boolean,
 ): number {
   const clampedRank = Math.min(modRank, fusionLimit);
-  const absDrain = Math.abs(baseDrain) + clampedRank;
+  const absMagnitude = Math.abs(baseDrain);
+  const absDrain =
+    rivenMaxRankDrain && fusionLimit > 0
+      ? Math.round((absMagnitude * (clampedRank + 1)) / (fusionLimit + 1))
+      : absMagnitude + clampedRank;
 
   if (!slotPolarity || !modPolarity) {
     return isCapacitySlot(slotType) ? -absDrain : absDrain;
@@ -73,6 +79,7 @@ export function calculateTotalCapacity(
       slot.polarity,
       slot.mod.polarity,
       slot.type,
+      isRivenMod(slot.mod),
     );
 
     if (drain < 0) {

@@ -20,6 +20,12 @@ describe('calculateEffectiveDrain', () => {
     it('handles zero rank', () => {
       expect(calculateEffectiveDrain(7, 0, 5, undefined, undefined, 'general')).toBe(7);
     });
+
+    it('treats Riven base_drain as max-rank total (linear scale by rank)', () => {
+      expect(calculateEffectiveDrain(18, 8, 8, undefined, 'AP_ATTACK', 'general', true)).toBe(18);
+      expect(calculateEffectiveDrain(18, 0, 8, undefined, 'AP_ATTACK', 'general', true)).toBe(2);
+      expect(calculateEffectiveDrain(18, 4, 8, 'AP_ATTACK', 'AP_ATTACK', 'general', true)).toBe(5);
+    });
   });
 
   describe('aura slots (capacity slots)', () => {

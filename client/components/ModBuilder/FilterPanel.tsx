@@ -18,45 +18,6 @@ interface FilterPanelProps {
   searchResetKey?: number;
 }
 
-function normalizeMatchText(value: string | undefined): string {
-  if (!value) return '';
-  return value
-    .toLowerCase()
-    .replace(/[_/\\-]+/g, ' ')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function getSearchTokens(value: string | undefined): string[] {
-  const normalized = normalizeMatchText(value);
-  if (!normalized) return [];
-  return normalized.split(' ').filter((token) => token.length >= 3);
-}
-
-function stanceMatchesEquipment(mod: Mod, equipment: FilterPanelProps['equipment']): boolean {
-  const compat = normalizeMatchText(mod.compat_name);
-  if (!compat || compat === 'any' || compat === 'melee') {
-    return true;
-  }
-  if (!equipment) {
-    return true;
-  }
-
-  const searchable = `${normalizeMatchText(equipment.name)} ${normalizeMatchText(equipment.unique_name)}`;
-  if (!searchable) {
-    return true;
-  }
-
-  if (searchable.includes(compat) || compat.includes(normalizeMatchText(equipment.name))) {
-    return true;
-  }
-
-  const compatTokens = getSearchTokens(compat);
-  return compatTokens.some((token) => searchable.includes(token));
-}
-
 function getSyntheticSpecialItemStanceMods(
   equipmentType: EquipmentType,
   equipment: FilterPanelProps['equipment'],
@@ -235,12 +196,6 @@ export function FilterPanel({
     }
     return [...baseMods, ...syntheticStanceMods];
   }, [baseMods, equipmentType, equipment]);
-  const requiredExaltedStanceName = useMemo(() => {
-    if (equipmentType !== 'melee' || !equipment?.name) {
-      return null;
-    }
-    return getRequiredExaltedStanceName(equipment.name);
-  }, [equipmentType, equipment?.name]);
 
   const { compatible, lockedOut } = useMemo(() => {
     const compatMods = filterCompatibleMods(allMods, equipmentType, equipment);
@@ -250,12 +205,7 @@ export function FilterPanel({
       slotFiltered = compatMods.filter((m) => (m.type || '').toUpperCase() === 'AURA');
     } else if (targetSlotType === 'stance') {
       slotFiltered = compatMods.filter(
-        (m) =>
-          (m.type || '').toUpperCase() === 'STANCE' &&
-          !isPostureMod(m) &&
-          stanceMatchesEquipment(m, equipment) &&
-          (!requiredExaltedStanceName ||
-            m.name.trim().toLowerCase() === requiredExaltedStanceName.toLowerCase()),
+        (m) => (m.type || '').toUpperCase() === 'STANCE' && !isPostureMod(m),
       );
     } else if (targetSlotType === 'posture') {
       slotFiltered = compatMods.filter(
@@ -289,16 +239,7 @@ export function FilterPanel({
     }
 
     return { compatible: available, lockedOut: locked };
-  }, [
-    allMods,
-    equipmentType,
-    equipment,
-    equippedMods,
-    targetSlotType,
-    rarity,
-    requiredExaltedStanceName,
-    search,
-  ]);
+  }, [allMods, equipmentType, equipment, equippedMods, targetSlotType, rarity, search]);
 
   const displayMods = showLockedOut ? [...compatible, ...lockedOut] : compatible;
   const handleModPick = useCallback(

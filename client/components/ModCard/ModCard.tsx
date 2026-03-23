@@ -5,6 +5,7 @@ import type { Mod, SlotType } from '../../types/warframe';
 import { sanitizeDisplayTextKeepDamageTokens } from '../../utils/damageTypeTokens';
 import { calculateEffectiveDrain } from '../../utils/drain';
 import { isPostureMod } from '../../utils/modFiltering';
+import { isRivenMod } from '../../utils/riven';
 import { DEFAULT_LAYOUT, dbRarityToCardRarity, dbPolarityToIconName } from './cardLayout';
 import { CardPreview } from './CardPreview';
 
@@ -49,6 +50,7 @@ export function ModCard({
     slotPolarity,
     mod.polarity,
     slotType,
+    isRivenMod(mod),
   );
 
   const rarity =

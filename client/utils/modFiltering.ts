@@ -116,6 +116,32 @@ function getCompatTokens(value: string | undefined): string[] {
   return normalized.split(' ').filter((token) => token.length >= 3);
 }
 
+export function stanceMatchesEquipment(
+  mod: Mod,
+  equipment?: { unique_name: string; name: string; product_category?: string },
+): boolean {
+  const compatNorm = normalizeCompatText(mod.compat_name);
+  if (!compatNorm || compatNorm === 'any' || compatNorm === 'melee') {
+    return true;
+  }
+  if (!equipment) {
+    return true;
+  }
+
+  const searchable =
+    `${normalizeCompatText(equipment.name)} ${normalizeCompatText(equipment.unique_name)}`.trim();
+  if (!searchable) {
+    return true;
+  }
+
+  if (searchable.includes(compatNorm) || compatNorm.includes(normalizeCompatText(equipment.name))) {
+    return true;
+  }
+
+  const compatTokens = getCompatTokens(compatNorm);
+  return compatTokens.some((token) => searchable.includes(token));
+}
+
 function doesCompatMatchEquipment(
   compat: string,
   equipment?: { unique_name: string; name: string; product_category?: string },
@@ -289,11 +315,11 @@ function isMeleeModCompatible(
     }
 
     const requiredStanceName = getRequiredExaltedStanceName(equipment?.name);
-    if (!requiredStanceName) {
-      return true;
+    if (requiredStanceName) {
+      return mod.name.trim().toLowerCase() === requiredStanceName.toLowerCase();
     }
 
-    return mod.name.trim().toLowerCase() === requiredStanceName.toLowerCase();
+    return stanceMatchesEquipment(mod, equipment);
   }
 
   if (modType !== 'MELEE') return false;
