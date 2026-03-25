@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { GAME_ID } from '../config.js';
+import { GAME_ID } from '../gameId.js';
 
 function parseBaseUrl(rawValue: string | undefined, envName: string): string | null {
   const trimmed = rawValue?.trim();

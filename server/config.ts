@@ -105,7 +105,7 @@ export const SECURE_COOKIES =
 export const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN;
 export const SESSION_COOKIE_NAME =
   process.env.SESSION_COOKIE_NAME?.trim() || 'darkavianlabs.parametric.sid';
-export const GAME_ID = 'parametric';
+export { GAME_ID } from './gameId.js';
 
 export function ensureDataDirs(): void {
   for (const dir of [DATA_DIR, EXPORTS_DIR, IMAGES_DIR]) {

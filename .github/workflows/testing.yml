@@ -28,15 +28,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate dotenv private key
+      # Dependabot PRs only receive Dependabot secrets, not repository Actions secrets.
+      - name: Prepare CI environment
         run: |
-          if [ -z "$DOTENV_PRIVATE_KEY_DEVELOPMENT" ]; then
-            echo "ERROR: DOTENV_PRIVATE_KEY_DEVELOPMENT secret is missing or empty."
-            exit 1
+          if [ -n "${DOTENV_PRIVATE_KEY_DEVELOPMENT:-}" ]; then
+            echo "USE_DOTENVX=true" >> "$GITHUB_ENV"
+          else
+            echo "USE_DOTENVX=false" >> "$GITHUB_ENV"
+            echo "::notice title=CI env::No DOTENV_PRIVATE_KEY_DEVELOPMENT (Dependabot/forks). Running build and tests without dotenvx. Optional: add this secret under Settings → Secrets and variables → Actions → Dependabot to match encrypted .env.development."
           fi
 
       - name: Build project
-        run: pnpm exec dotenvx run --strict -f .env.development -- pnpm run build
+        run: |
+          if [ "$USE_DOTENVX" = "true" ]; then
+            pnpm exec dotenvx run --strict -f .env.development -- pnpm run build
+          else
+            pnpm run build
+          fi
 
       - name: Run tests
-        run: pnpm exec dotenvx run --strict -f .env.development -- pnpm run test
+        run: |
+          if [ "$USE_DOTENVX" = "true" ]; then
+            pnpm exec dotenvx run --strict -f .env.development -- pnpm run test
+          else
+            pnpm run test
+          fi
