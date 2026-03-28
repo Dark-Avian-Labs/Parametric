@@ -1,11 +1,51 @@
+import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
 import { Modal } from '../../components/ui/Modal';
+import { useTheme, type ThemeMode, type UiStyle } from '../../context/ThemeContext';
 import { apiFetch } from '../../utils/api';
 import { useAuth } from '../auth/AuthContext';
 
+function ModePillToggle({ mode, setMode }: { mode: ThemeMode; setMode: (m: ThemeMode) => void }) {
+  return (
+    <div
+      className="border-glass-border bg-glass/40 inline-flex rounded-full border p-0.5"
+      role="group"
+      aria-label="Color mode"
+    >
+      <button
+        type="button"
+        className={clsx(
+          'rounded-full px-4 py-1.5 text-xs font-medium transition-all outline-none',
+          mode === 'light'
+            ? 'bg-glass-active text-foreground shadow-sm'
+            : 'text-muted hover:text-foreground',
+        )}
+        aria-pressed={mode === 'light'}
+        onClick={() => setMode('light')}
+      >
+        Light
+      </button>
+      <button
+        type="button"
+        className={clsx(
+          'rounded-full px-4 py-1.5 text-xs font-medium transition-all outline-none',
+          mode === 'dark'
+            ? 'bg-glass-active text-foreground shadow-sm'
+            : 'text-muted hover:text-foreground',
+        )}
+        aria-pressed={mode === 'dark'}
+        onClick={() => setMode('dark')}
+      >
+        Dark
+      </button>
+    </div>
+  );
+}
+
 export function ProfilePage() {
   const { account, updateProfile } = useAuth();
+  const { mode, setMode, uiStyle, setUiStyle } = useTheme();
   const profile = account?.profile;
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -132,72 +172,111 @@ export function ProfilePage() {
     setConfirmPassword('');
   };
 
+  const sectionHeaderClass = 'border-glass-divider bg-glass-hover/50 border-b px-4 py-2.5';
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="glass-shell p-6">
         <h1 className="text-foreground text-2xl font-semibold">Profile</h1>
       </div>
-      <div className="glass-shell p-6">
-        <h2 className="sr-only">Profile details</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label htmlFor="profile-username" className="text-muted mb-1.5 block text-sm">
-              Username
-            </label>
-            <input
-              id="profile-username"
-              className="form-input"
-              type="text"
-              readOnly
-              value={profile.username}
-            />
-          </div>
-          <div>
-            <label htmlFor="profile-role" className="text-muted mb-1.5 block text-sm">
-              Role
-            </label>
-            <input
-              id="profile-role"
-              className="form-input"
-              type="text"
-              readOnly
-              value={profile.isAdmin ? 'Admin' : 'User'}
-            />
-          </div>
-          <div>
-            <label htmlFor="profile-display-name" className="text-muted mb-1.5 block text-sm">
-              Name
-            </label>
-            <input
-              id="profile-display-name"
-              className="form-input"
-              type="text"
-              value={displayName}
-              onChange={(event) => {
-                setDisplayName(event.target.value);
-                setSaveStatus(null);
-              }}
-              placeholder="Display name"
-            />
-          </div>
-          <div>
-            <label htmlFor="profile-email" className="text-muted mb-1.5 block text-sm">
-              Email
-            </label>
-            <input
-              id="profile-email"
-              className="form-input"
-              type="email"
-              value={email}
-              onChange={(event) => {
-                setEmail(event.target.value);
-                setSaveStatus(null);
-              }}
-              placeholder="you@example.com"
-            />
+
+      <div className="glass-shell overflow-hidden p-0">
+        <div className={sectionHeaderClass}>
+          <h2 className="text-muted text-sm font-semibold tracking-wider uppercase">Details</h2>
+        </div>
+        <div className="p-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="profile-username" className="text-muted mb-1.5 block text-sm">
+                Username
+              </label>
+              <input
+                id="profile-username"
+                className="form-input"
+                type="text"
+                readOnly
+                value={profile.username}
+              />
+            </div>
+            <div>
+              <label htmlFor="profile-role" className="text-muted mb-1.5 block text-sm">
+                Role
+              </label>
+              <input
+                id="profile-role"
+                className="form-input"
+                type="text"
+                readOnly
+                value={profile.isAdmin ? 'Admin' : 'User'}
+              />
+            </div>
+            <div>
+              <label htmlFor="profile-display-name" className="text-muted mb-1.5 block text-sm">
+                Name
+              </label>
+              <input
+                id="profile-display-name"
+                className="form-input"
+                type="text"
+                value={displayName}
+                onChange={(event) => {
+                  setDisplayName(event.target.value);
+                  setSaveStatus(null);
+                }}
+                placeholder="Display name"
+              />
+            </div>
+            <div>
+              <label htmlFor="profile-email" className="text-muted mb-1.5 block text-sm">
+                Email
+              </label>
+              <input
+                id="profile-email"
+                className="form-input"
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setSaveStatus(null);
+                }}
+                placeholder="you@example.com"
+              />
+            </div>
           </div>
         </div>
-        <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
+      </div>
+
+      <div className="glass-shell overflow-hidden p-0">
+        <div className={sectionHeaderClass}>
+          <h2 className="text-muted text-sm font-semibold tracking-wider uppercase">Theme</h2>
+        </div>
+        <div className="flex flex-col gap-4 p-6 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="min-w-[12rem] flex-1">
+            <label htmlFor="profile-ui-style" className="text-muted mb-1.5 block text-sm">
+              Interface style
+            </label>
+            <select
+              id="profile-ui-style"
+              className="form-input w-full"
+              value={uiStyle}
+              onChange={(e) => setUiStyle(e.target.value as UiStyle)}
+            >
+              <option value="prism">Prism</option>
+              <option value="shadow">Shadow</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-muted text-sm">Appearance</span>
+            <ModePillToggle mode={mode} setMode={setMode} />
+          </div>
+        </div>
+      </div>
+
+      <div className="glass-shell overflow-hidden p-0">
+        <div className={sectionHeaderClass}>
+          <h2 className="text-muted text-sm font-semibold tracking-wider uppercase">Security</h2>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 p-6">
           <button
             type="button"
             className="btn btn-secondary"
@@ -208,29 +287,32 @@ export function ProfilePage() {
           >
             Change Password
           </button>
-          <button
-            type="button"
-            className="btn btn-accent"
-            onClick={() => {
-              void handleSave();
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              type="button"
+              className="btn btn-accent"
+              onClick={() => {
+                void handleSave();
+              }}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+            {saveStatus ? (
+              <p
+                className={`text-sm ${
+                  saveStatus.type === 'success' ? 'text-success' : 'text-danger'
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                {saveStatus.message}
+              </p>
+            ) : null}
+          </div>
         </div>
-        {saveStatus && (
-          <p
-            className={`mt-3 text-sm ${
-              saveStatus.type === 'success' ? 'text-success' : 'text-danger'
-            }`}
-            role="status"
-            aria-live="polite"
-          >
-            {saveStatus.message}
-          </p>
-        )}
       </div>
+
       <Modal
         open={showChangePassword}
         className="max-w-md"

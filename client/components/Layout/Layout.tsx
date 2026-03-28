@@ -19,8 +19,6 @@ import { CompareBar } from '../Compare/CompareBar';
 import { Menu } from '../ui/Menu';
 import { EquipmentGridModal } from './EquipmentGridModal';
 import { SearchBar } from './SearchBar';
-import { ThemeRadioGroup } from './ThemeRadioGroup';
-
 export function Layout() {
   const [showAddBuild, setShowAddBuild] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -30,7 +28,7 @@ export function Layout() {
   const userMenuId = 'parametric-user-menu';
   const navigate = useNavigate();
   const { snapshots } = useCompare();
-  const { mode, toggleMode, uiStyle, setUiStyle } = useTheme();
+  const { mode, toggleMode } = useTheme();
   const { account, logout } = useAuth();
   const compareBarVisible = snapshots.length > 0;
   const currentYear = new Date().getFullYear();
@@ -230,7 +228,6 @@ export function Layout() {
                     >
                       Profile
                     </Link>
-                    <ThemeRadioGroup uiStyle={uiStyle} setUiStyle={setUiStyle} />
                     <button
                       type="button"
                       className="user-menu-item text-left"
