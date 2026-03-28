@@ -19,6 +19,7 @@ import { CompareBar } from '../Compare/CompareBar';
 import { Menu } from '../ui/Menu';
 import { EquipmentGridModal } from './EquipmentGridModal';
 import { SearchBar } from './SearchBar';
+import { ThemeRadioGroup } from './ThemeRadioGroup';
 
 export function Layout() {
   const [showAddBuild, setShowAddBuild] = useState(false);
@@ -229,30 +230,7 @@ export function Layout() {
                     >
                       Profile
                     </Link>
-                    <div
-                      className="text-muted border-glass-border mt-1 border-t px-3 pt-2 pb-1 text-xs font-semibold tracking-wide uppercase"
-                      role="presentation"
-                    >
-                      Theme
-                    </div>
-                    <button
-                      type="button"
-                      className="user-menu-item text-left"
-                      role="menuitemradio"
-                      aria-checked={uiStyle === 'prism'}
-                      onClick={() => setUiStyle('prism')}
-                    >
-                      Prism
-                    </button>
-                    <button
-                      type="button"
-                      className="user-menu-item text-left"
-                      role="menuitemradio"
-                      aria-checked={uiStyle === 'shadow'}
-                      onClick={() => setUiStyle('shadow')}
-                    >
-                      Shadow
-                    </button>
+                    <ThemeRadioGroup uiStyle={uiStyle} setUiStyle={setUiStyle} />
                     <button
                       type="button"
                       className="user-menu-item text-left"
