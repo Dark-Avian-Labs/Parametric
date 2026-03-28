@@ -4,7 +4,6 @@ export const APP_PATHS = {
   buildNew: '/builder/new/:equipmentType/:equipmentId',
   buildEdit: '/builder/:buildId',
   admin: '/admin',
-  profile: '/profile',
   login: '/login',
   legal: '/legal',
 } as const;

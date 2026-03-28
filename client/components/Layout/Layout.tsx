@@ -7,7 +7,12 @@ import {
 } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 
-import { APP_DISPLAY_NAME, LEGAL_ENTITY_NAME, LEGAL_PAGE_URL } from '../../app/config';
+import {
+  APP_DISPLAY_NAME,
+  AUTH_PROFILE_URL,
+  LEGAL_ENTITY_NAME,
+  LEGAL_PAGE_URL,
+} from '../../app/config';
 import { APP_PATHS, buildNewPath } from '../../app/paths';
 import bgArt from '../../assets/background.txt?raw';
 import feathers from '../../assets/feathers.png';
@@ -68,9 +73,7 @@ export function Layout() {
   useEffect(() => {
     const container = menuRef.current;
     if (!container) return;
-    const items = container.querySelectorAll<HTMLElement>(
-      '[role="menuitem"], [role="menuitemradio"]',
-    );
+    const items = container.querySelectorAll<HTMLElement>('[role="menuitem"]');
     if (userMenuOpen && items.length > 0) {
       items[0].focus();
     }
@@ -83,9 +86,7 @@ export function Layout() {
   const handleUserMenuKeyDown = useCallback(
     (event: ReactKeyboardEvent) => {
       if (!userMenuOpen || !menuRef.current) return;
-      const items = Array.from(
-        menuRef.current.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]'),
-      );
+      const items = Array.from(menuRef.current.querySelectorAll<HTMLElement>('[role="menuitem"]'));
       if (items.length === 0) return;
       const activeIndex = items.findIndex((item) => item === document.activeElement);
       const first = items[0];
@@ -220,14 +221,14 @@ export function Layout() {
                         Admin
                       </Link>
                     ) : null}
-                    <Link
-                      to={APP_PATHS.profile}
+                    <a
+                      href={`${AUTH_PROFILE_URL}?next=${encodeURIComponent(APP_PATHS.buildOverview)}`}
                       className="user-menu-item"
                       role="menuitem"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       Profile
-                    </Link>
+                    </a>
                     <button
                       type="button"
                       className="user-menu-item text-left"

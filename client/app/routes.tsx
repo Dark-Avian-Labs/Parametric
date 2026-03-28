@@ -21,11 +21,6 @@ const AdminPage = lazy(() =>
     default: mod.AdminPage,
   })),
 );
-const ProfilePage = lazy(() =>
-  import('../features/profile/ProfilePage').then((mod) => ({
-    default: mod.ProfilePage,
-  })),
-);
 const LoginPage = lazy(() =>
   import('../components/Auth/LoginPage').then((mod) => ({
     default: mod.LoginPage,
@@ -119,7 +114,6 @@ export function AppRoutes() {
             <Route path={APP_PATHS.buildNew} element={<ModBuilder />} />
             <Route path={APP_PATHS.buildEdit} element={<ModBuilder />} />
             <Route path={APP_PATHS.admin} element={<AdminPage />} />
-            <Route path={APP_PATHS.profile} element={<ProfilePage />} />
             <Route path={APP_PATHS.legal} element={<LegalPage />} />
           </Route>
           <Route path={APP_PATHS.login} element={<LoginPage />} />
