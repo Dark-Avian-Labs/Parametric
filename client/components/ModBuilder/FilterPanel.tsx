@@ -265,7 +265,7 @@ export function FilterPanel({
   const rivenPlaceholderMod = useMemo(() => createRivenPlaceholderMod(rivenArt), [rivenArt]);
 
   return (
-    <div className="glass-panel p-4">
+    <div className="mod-builder-side-panel flex min-h-0 flex-col">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-foreground text-lg font-semibold">Mods</h2>
         <div className="flex items-center gap-3">

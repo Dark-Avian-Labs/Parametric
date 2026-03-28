@@ -1121,7 +1121,12 @@ export function ModBuilder() {
 
   const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('.glass-panel, button, input, [role="button"], [draggable="true"]')) return;
+    if (
+      target.closest(
+        '.glass-panel, .mod-builder-side-panel, button, input, [role="button"], [draggable="true"]',
+      )
+    )
+      return;
     setActiveSlotIndex(undefined);
     setActiveSlotType(undefined);
     setActiveArcaneSlot(null);

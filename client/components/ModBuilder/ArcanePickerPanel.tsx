@@ -56,7 +56,7 @@ export function ArcanePickerPanel({
   }, [measure]);
 
   return (
-    <div className="glass-panel p-4">
+    <div className="mod-builder-side-panel flex min-h-0 flex-col">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-foreground text-lg font-semibold">Arcanes</h2>
