@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react
 import { useApi } from '../../hooks/useApi';
 import type { EquipmentType } from '../../types/warframe';
 import { getMaxRank, getArcaneDescription } from '../../utils/arcaneUtils';
+import { DamageTypeInlineText } from '../DamageTypeInlineText';
 import { GlassTooltip } from '../GlassTooltip';
 import { ArcaneCardPreview } from '../ModCard/ArcaneCardPreview';
 import { DEFAULT_ARCANE_LAYOUT, normalizeArcaneRarity } from '../ModCard/cardLayout';
@@ -177,7 +178,9 @@ function ArcanePickerCard({
   const tooltipContent = desc ? (
     <>
       <div className="text-foreground mb-1 text-xs font-semibold">{arcane.name}</div>
-      <div className="text-muted text-[10px] leading-tight">{desc}</div>
+      <div className="text-muted text-[10px] leading-tight">
+        <DamageTypeInlineText text={desc} iconSize={12} />
+      </div>
       {arcane.rarity && <div className="text-muted/50 mt-1 text-[9px]">{arcane.rarity}</div>}
     </>
   ) : null;
