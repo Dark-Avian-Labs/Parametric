@@ -3,7 +3,8 @@ export interface DisplayTextSegment {
   value: string;
 }
 
-const DAMAGE_TOKEN_REGEX = /<DT_[A-Z0-9_]+_COLOR>/g;
+/** Matches Warframe damage-type placeholders, e.g. `<DT_TOXIN_COLOR>` or `<DT_TOXIN>`. */
+const DAMAGE_TOKEN_REGEX = /<DT_[A-Z0-9_]+>/g;
 
 const DAMAGE_TYPE_ICON_MAP: Record<string, string> = {
   '<DT_IMPACT_COLOR>': '/icons/elements/01_impact.png',
@@ -24,7 +25,16 @@ const DAMAGE_TYPE_ICON_MAP: Record<string, string> = {
 };
 
 export function getDamageTypeIconPath(token: string): string | undefined {
-  return DAMAGE_TYPE_ICON_MAP[token];
+  const direct = DAMAGE_TYPE_ICON_MAP[token];
+  if (direct) return direct;
+  // Short tokens like `<DT_FIRE>` → same art as `<DT_FIRE_COLOR>`
+  if (token.endsWith('_COLOR>')) {
+    return undefined;
+  }
+  const m = token.match(/^<DT_([A-Z0-9_]+)>$/);
+  if (!m) return undefined;
+  const withColor = `<DT_${m[1]}_COLOR>`;
+  return DAMAGE_TYPE_ICON_MAP[withColor];
 }
 
 export function sanitizeDisplayTextKeepDamageTokens(value: unknown): string {

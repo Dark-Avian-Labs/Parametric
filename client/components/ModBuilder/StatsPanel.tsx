@@ -317,6 +317,43 @@ interface FireBehavior {
   [key: string]: unknown;
 }
 
+function readProjectileSpeed(fb: Record<string, unknown>): number | undefined {
+  const candidates = [fb.projectileSpeed, fb.ProjectileSpeed, fb.projectile_speed];
+  for (const c of candidates) {
+    if (typeof c === 'number' && Number.isFinite(c)) {
+      return c;
+    }
+  }
+  return undefined;
+}
+
+function readFireBehaviorName(fb: Record<string, unknown>, index: number): string {
+  const n = fb.name ?? fb.Name ?? fb.modeName ?? fb.ModeName;
+  if (typeof n === 'string' && n.trim()) {
+    return n.trim();
+  }
+  return `Mode ${index + 1}`;
+}
+
+function normalizeFireBehaviorsJson(raw: string | undefined): FireBehavior[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((entry, index) => {
+      const o =
+        entry && typeof entry === 'object' && !Array.isArray(entry)
+          ? (entry as Record<string, unknown>)
+          : {};
+      const projectileSpeed = readProjectileSpeed(o);
+      const name = readFireBehaviorName(o, index);
+      return { ...o, name, projectileSpeed };
+    });
+  } catch {
+    return [];
+  }
+}
+
 type StatColor = 'text-foreground' | 'text-green-400' | 'text-red-400';
 
 function statColor(base: number, modded: number, lowerIsBetter = false): StatColor {
@@ -340,13 +377,10 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
     return calculateWeaponDps(weapon, slots);
   }, [weapon, slots]);
 
-  const fireBehaviors: FireBehavior[] = (() => {
-    try {
-      return weapon.fire_behaviors ? JSON.parse(weapon.fire_behaviors) : [];
-    } catch {
-      return [];
-    }
-  })();
+  const fireBehaviors = useMemo(
+    () => normalizeFireBehaviorsJson(weapon.fire_behaviors),
+    [weapon.fire_behaviors],
+  );
 
   const isMelee = weapon.range != null;
   const rivenDisposition = weapon.riven_disposition ?? weapon.omega_attenuation;
@@ -569,7 +603,7 @@ function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
             {fireBehaviors.map((fb, i) =>
               fb.projectileSpeed != null ? (
                 <div key={i} className="flex justify-between text-xs">
-                  <span className="text-muted">{fb.name || `Mode ${i + 1}`}</span>
+                  <span className="text-muted">{fb.name}</span>
                   <span className="text-foreground font-medium">{fb.projectileSpeed} m/s</span>
                 </div>
               ) : null,

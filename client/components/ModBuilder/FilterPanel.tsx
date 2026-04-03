@@ -98,6 +98,29 @@ function isImportedRivenPlaceholder(mod: Mod): boolean {
   return /\bRiven Mod$/i.test(mod.name) && (mod.type || '').toUpperCase() !== 'RIVEN';
 }
 
+/** Name plus rank descriptions (and raw fallback) for search. */
+function getModSearchHaystack(mod: Mod): string {
+  const parts: string[] = [mod.name];
+  const raw = mod.description?.trim();
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const entry of parsed) {
+          if (typeof entry === 'string') {
+            parts.push(entry);
+          }
+        }
+      } else {
+        parts.push(raw);
+      }
+    } catch {
+      parts.push(raw);
+    }
+  }
+  return parts.join('\n');
+}
+
 function getRivenArtNameForType(equipmentType: EquipmentType): string | null {
   switch (equipmentType) {
     case 'primary':
@@ -222,9 +245,10 @@ export function FilterPanel({
       });
     }
 
+    const query = search.trim().toLowerCase();
     const textFiltered = slotFiltered.filter((mod) => {
       if (rarity !== 'ALL' && mod.rarity !== rarity) return false;
-      if (search && !mod.name.toLowerCase().includes(search.toLowerCase())) return false;
+      if (query && !getModSearchHaystack(mod).toLowerCase().includes(query)) return false;
       return true;
     });
 
