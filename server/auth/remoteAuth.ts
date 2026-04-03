@@ -1,9 +1,15 @@
+/** Load `.env.*` before reading `process.env` (see `server/config.ts`). Must run before this file’s top-level env parsing. */
+import '../config.js';
+
 import type { Request, Response } from 'express';
 
 import { GAME_ID } from '../gameId.js';
 
 function parseBaseUrl(rawValue: string | undefined, envName: string): string | null {
-  const trimmed = rawValue?.trim();
+  const trimmed = rawValue
+    ?.trim()
+    .replace(/^\uFEFF/, '')
+    .trim();
   if (!trimmed) return null;
   try {
     const parsed = new URL(trimmed);
