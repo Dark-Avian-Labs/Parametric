@@ -10,12 +10,6 @@ import session from 'express-session';
 import helmet from 'helmet';
 
 import {
-  authLoginRedirect,
-  requireAuthApiJson,
-  requireGameAccess,
-  requirePageGameAccess,
-} from './auth/middleware.js';
-import {
   PORT,
   HOST,
   SESSION_SECRET,
@@ -31,6 +25,12 @@ import {
   IMAGES_DIR,
   ensureDataDirs,
 } from './config.js';
+import {
+  authLoginRedirect,
+  requireAuthApiJson,
+  requireGameAccess,
+  requirePageGameAccess,
+} from './auth/middleware.js';
 import { createCentralSchema } from './db/centralSchema.js';
 import { closeAll, getCentralDb } from './db/connection.js';
 import { createAppSchema } from './db/schema.js';
