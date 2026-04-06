@@ -144,7 +144,7 @@ function cleanStatValue(raw: string): string | null {
 }
 
 function wikiSlug(name: string): string {
-  return encodeURIComponent(name.replace(/ /g, '_')).replace(/'/g, '%27');
+  return encodeURIComponent(name.replace(/ /g, '_'));
 }
 
 function normalizeText(s: string): string {
