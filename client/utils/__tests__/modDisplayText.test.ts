@@ -4,7 +4,7 @@ import type { Mod } from '../../types/warframe';
 import { getModCardDisplayTexts } from '../modDisplayText';
 
 describe('getModCardDisplayTexts', () => {
-  it('puts Umbral tier text in main body and leaves set-bonus strip empty', () => {
+  it('applies Umbral multiplier to main body and shows set bonus description', () => {
     const mod: Mod = {
       unique_name: '/u/umbra',
       name: 'Umbral Vitality',
@@ -17,8 +17,8 @@ describe('getModCardDisplayTexts', () => {
     const { mainDescription, setBonusDescription, effectiveSetRank } = getModCardDisplayTexts(mod, 1, {
       umbraSetEquippedCount: 3,
     });
-    expect(mainDescription).toContain('180');
-    expect(setBonusDescription).toBe('');
+    expect(mainDescription).toContain('792'); // 440 * 1.80
+    expect(setBonusDescription).not.toBe('');
     expect(effectiveSetRank).toBe(3);
   });
 
@@ -38,7 +38,7 @@ describe('getModCardDisplayTexts', () => {
     expect(setBonusDescription).toBe('Set B');
   });
 
-  it('uses rank JSON when Umbral tier does not apply (below max rank)', () => {
+  it('applies Umbral multiplier at any rank when equipped count >= 2', () => {
     const mod: Mod = {
       unique_name: '/u/umbra',
       name: 'Umbral Vitality',
@@ -49,6 +49,6 @@ describe('getModCardDisplayTexts', () => {
       fusion_limit: 1,
     };
     const { mainDescription } = getModCardDisplayTexts(mod, 0, { umbraSetEquippedCount: 3 });
-    expect(mainDescription).toContain('10');
+    expect(mainDescription).toContain('18'); // 10 * 1.80
   });
 });
