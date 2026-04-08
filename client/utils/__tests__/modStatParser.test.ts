@@ -139,6 +139,28 @@ describe('parseModEffects', () => {
     expect(parseModEffects(mod, 1, { umbraSetEquippedCount: 3 }).healthFlat).toBeCloseTo(180);
   });
 
+  it('uses Umbral set_stats when tiers are a JSON object', () => {
+    const mod = makeMod(['ignored'], {
+      mod_set: 'UmbraModSet',
+      set_stats: JSON.stringify({
+        '1': '+100 Health',
+        '2': '+130 Health',
+        '3': '+180 Health',
+      }),
+      fusion_limit: 1,
+    });
+    expect(parseModEffects(mod, 1, { umbraSetEquippedCount: 3 }).healthFlat).toBeCloseTo(180);
+  });
+
+  it('treats Umbral name prefix as self-scaling when mod_set is missing', () => {
+    const mod = makeMod(['+10 Health'], {
+      name: 'Umbral Vitality',
+      set_stats: JSON.stringify(['+100 Health']),
+      fusion_limit: 1,
+    });
+    expect(parseModEffects(mod, 1, { umbraSetEquippedCount: 1 }).healthFlat).toBeCloseTo(100);
+  });
+
   it('does not use Umbral set_stats below max fusion rank', () => {
     const mod = makeMod(['+10 Health', '+20 Health'], {
       mod_set: 'UmbraModSet',

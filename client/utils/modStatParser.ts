@@ -1,6 +1,10 @@
 import type { Mod, ModSlot } from '../types/warframe';
 import { isRivenMod } from './riven';
-import { countEquippedUmbraSetMods, isUmbraSelfScalingSetMod } from './umbraSet';
+import {
+  countEquippedUmbraSetMods,
+  isUmbraSelfScalingSetMod,
+  parseSetStatsTiers,
+} from './umbraSet';
 
 export interface AggregateOptions {
   rivenDispositionMultiplier?: number;
@@ -156,15 +160,11 @@ function getUmbraSetTierStatText(
   ) {
     return null;
   }
-  try {
-    const setStats: string[] = JSON.parse(mod.set_stats);
-    if (setStats.length === 0) return null;
-    const tier = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length);
-    const t = setStats[tier - 1]?.trim();
-    return t || null;
-  } catch {
-    return null;
-  }
+  const setStats = parseSetStatsTiers(mod.set_stats);
+  if (!setStats?.length) return null;
+  const tier = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length);
+  const t = setStats[tier - 1]?.trim();
+  return t || null;
 }
 
 export function parseModEffects(

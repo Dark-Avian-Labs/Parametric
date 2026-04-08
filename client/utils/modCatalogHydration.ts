@@ -1,6 +1,20 @@
 import type { Mod, ModSlot } from '../types/warframe';
 import { isRivenMod } from './riven';
 
+/** Prefer stored when non-empty; otherwise catalog (handles `''` blocking catalog fill). */
+function preferCatalogOptional<T extends string | undefined>(
+  stored: T | null | undefined,
+  catalog: T | null | undefined,
+): T | undefined {
+  if (stored != null && String(stored).trim() !== '') return stored;
+  return catalog ?? stored ?? undefined;
+}
+
+export function catalogKeyForMod(mod: Pick<Mod, 'name' | 'type'>): string {
+  const t = (mod.type ?? '').trim().toUpperCase();
+  return `${mod.name ?? ''}|||${t}`;
+}
+
 /**
  * Merges a stored mod (from build JSON) with the full catalog row from `/api/mods`.
  * Saved builds often omit `set_stats`, `mod_set`, and other joined fields — required for Umbral scaling.
@@ -10,19 +24,19 @@ export function mergeModWithCatalog(stored: Mod, catalog?: Mod): Mod {
   return {
     ...catalog,
     ...stored,
-    mod_set: stored.mod_set ?? catalog.mod_set,
+    mod_set: preferCatalogOptional(stored.mod_set, catalog.mod_set),
     set_num_in_set: stored.set_num_in_set ?? catalog.set_num_in_set,
-    set_stats: stored.set_stats ?? catalog.set_stats,
-    description: stored.description ?? catalog.description,
+    set_stats: preferCatalogOptional(stored.set_stats, catalog.set_stats),
+    description: preferCatalogOptional(stored.description, catalog.description),
     fusion_limit: stored.fusion_limit ?? catalog.fusion_limit,
     base_drain: stored.base_drain ?? catalog.base_drain,
-    polarity: stored.polarity ?? catalog.polarity,
-    rarity: stored.rarity ?? catalog.rarity,
-    image_path: stored.image_path ?? catalog.image_path,
-    compat_name: stored.compat_name ?? catalog.compat_name,
-    type: stored.type ?? catalog.type,
+    polarity: preferCatalogOptional(stored.polarity, catalog.polarity),
+    rarity: preferCatalogOptional(stored.rarity, catalog.rarity),
+    image_path: preferCatalogOptional(stored.image_path, catalog.image_path),
+    compat_name: preferCatalogOptional(stored.compat_name, catalog.compat_name),
+    type: preferCatalogOptional(stored.type, catalog.type),
     is_utility: stored.is_utility ?? catalog.is_utility,
-    subtype: stored.subtype ?? catalog.subtype,
+    subtype: preferCatalogOptional(stored.subtype, catalog.subtype),
     is_augment: stored.is_augment ?? catalog.is_augment,
     name: stored.name || catalog.name,
   };
@@ -31,10 +45,18 @@ export function mergeModWithCatalog(stored: Mod, catalog?: Mod): Mod {
 export function hydrateSlotsWithModCatalog(
   slots: ModSlot[],
   catalogByUnique: Map<string, Mod>,
+  catalogByNameAndType?: Map<string, Mod>,
 ): ModSlot[] {
   return slots.map((slot) => {
     if (!slot.mod) return slot;
-    const merged = mergeModWithCatalog(slot.mod, catalogByUnique.get(slot.mod.unique_name));
+    let catalog = catalogByUnique.get(slot.mod.unique_name);
+    if (!catalog && catalogByNameAndType) {
+      catalog = catalogByNameAndType.get(catalogKeyForMod(slot.mod));
+      if (!catalog && slot.mod.name) {
+        catalog = catalogByNameAndType.get(`${slot.mod.name}|||`);
+      }
+    }
+    const merged = mergeModWithCatalog(slot.mod, catalog);
     return merged === slot.mod ? slot : { ...slot, mod: merged };
   });
 }

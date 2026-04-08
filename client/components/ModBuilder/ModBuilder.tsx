@@ -29,7 +29,7 @@ import { calculateWeaponDps } from '../../utils/damageCalc';
 import { calculateTotalCapacity } from '../../utils/drain';
 import { getModTypesForEquipment, NO_MOD_TYPES_FOR_EQUIPMENT } from '../../utils/equipmentModTypes';
 import { calculateFormaCount, type FormaCount, type SlotPolarity } from '../../utils/formaCounter';
-import { hydrateSlotsWithModCatalog } from '../../utils/modCatalogHydration';
+import { catalogKeyForMod, hydrateSlotsWithModCatalog } from '../../utils/modCatalogHydration';
 import { isModLockedOut, isPostureMod } from '../../utils/modFiltering';
 import {
   createRivenMod,
@@ -308,9 +308,22 @@ export function ModBuilder() {
     return m;
   }, [modCatalogData?.items]);
 
+  const modCatalogByNameAndType = useMemo(() => {
+    const items = modCatalogData?.items;
+    if (!items?.length) return new Map<string, Mod>();
+    const m = new Map<string, Mod>();
+    for (const mod of items) {
+      m.set(catalogKeyForMod(mod), mod);
+      if (mod.name) {
+        m.set(`${mod.name}|||`, mod);
+      }
+    }
+    return m;
+  }, [modCatalogData?.items]);
+
   const hydratedSlots = useMemo(
-    () => hydrateSlotsWithModCatalog(slots, modCatalogByUnique),
-    [slots, modCatalogByUnique],
+    () => hydrateSlotsWithModCatalog(slots, modCatalogByUnique, modCatalogByNameAndType),
+    [slots, modCatalogByUnique, modCatalogByNameAndType],
   );
 
   const { addSnapshot, snapshots: compareSnapshots } = useCompare();
