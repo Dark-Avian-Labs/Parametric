@@ -314,8 +314,9 @@ export function ModBuilder() {
     const m = new Map<string, Mod>();
     for (const mod of items) {
       m.set(catalogKeyForMod(mod), mod);
-      if (mod.name) {
-        m.set(`${mod.name}|||`, mod);
+      const loose = mod.name ? `${mod.name}|||` : null;
+      if (loose && !m.has(loose)) {
+        m.set(loose, mod);
       }
     }
     return m;

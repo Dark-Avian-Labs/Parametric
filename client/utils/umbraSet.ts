@@ -30,6 +30,28 @@ export function isUmbraSelfScalingSetMod(mod: Mod | undefined): boolean {
   return false;
 }
 
+export function getUmbraTierStatBlockAtMaxRank(
+  mod: Mod,
+  rank: number,
+  umbraSetEquippedCount: number | undefined,
+): string | null {
+  const fusionLimit = mod.fusion_limit ?? 0;
+  const atMaxRank = fusionLimit > 0 && rank >= fusionLimit;
+  if (
+    !isUmbraSelfScalingSetMod(mod) ||
+    !atMaxRank ||
+    umbraSetEquippedCount == null ||
+    !mod.set_stats
+  ) {
+    return null;
+  }
+  const setStats = parseSetStatsTiers(mod.set_stats);
+  if (!setStats?.length) return null;
+  const tier = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length);
+  const block = setStats[tier - 1]?.trim();
+  return block || null;
+}
+
 export function countEquippedUmbraSetMods(slots: ModSlot[]): number {
   let n = 0;
   for (const slot of slots) {

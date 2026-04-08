@@ -1,10 +1,6 @@
 import type { Mod, ModSlot } from '../types/warframe';
 import { isRivenMod } from './riven';
-import {
-  countEquippedUmbraSetMods,
-  isUmbraSelfScalingSetMod,
-  parseSetStatsTiers,
-} from './umbraSet';
+import { countEquippedUmbraSetMods, getUmbraTierStatBlockAtMaxRank } from './umbraSet';
 
 export interface AggregateOptions {
   rivenDispositionMultiplier?: number;
@@ -143,35 +139,13 @@ function applyStatLineToEffects(line: string, effects: StatEffects): void {
   }
 }
 
-function getUmbraSetTierStatText(
-  mod: Mod,
-  rank: number,
-  umbraSetEquippedCount: number | undefined,
-): string | null {
-  const fusionLimit = mod.fusion_limit ?? 0;
-  const atMaxRank = fusionLimit > 0 && rank >= fusionLimit;
-  if (
-    !isUmbraSelfScalingSetMod(mod) ||
-    !atMaxRank ||
-    umbraSetEquippedCount == null ||
-    !mod.set_stats
-  ) {
-    return null;
-  }
-  const setStats = parseSetStatsTiers(mod.set_stats);
-  if (!setStats?.length) return null;
-  const tier = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length);
-  const t = setStats[tier - 1]?.trim();
-  return t || null;
-}
-
 export function parseModEffects(
   mod: Mod,
   rank: number,
   options?: ParseModEffectsOptions,
 ): StatEffects {
   const effects = emptyEffects();
-  const umbraTierText = getUmbraSetTierStatText(mod, rank, options?.umbraSetEquippedCount);
+  const umbraTierText = getUmbraTierStatBlockAtMaxRank(mod, rank, options?.umbraSetEquippedCount);
 
   if (umbraTierText != null) {
     for (const line of umbraTierText.split('\n')) {

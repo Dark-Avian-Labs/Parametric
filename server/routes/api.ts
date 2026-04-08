@@ -238,7 +238,7 @@ const MOD_JUNK_SUFFIXES = ['SubMod'];
 const MOD_API_SELECT_LIST = `m.*,
   ms_member.set_unique_name AS _set_unique_from_member,
   COALESCE(ms_direct.num_in_set, ms_member.num_in_set) AS set_num_in_set,
-  COALESCE(ms_direct.stats, ms_member.stats) AS set_stats`;
+  COALESCE(NULLIF(TRIM(COALESCE(ms_direct.stats, '')), ''), ms_member.stats) AS set_stats`;
 
 const MOD_API_FROM = `
 FROM mods m
