@@ -19,6 +19,7 @@ export function mergeModWithCatalog(stored: Mod, catalog?: Mod): Mod {
   return {
     ...catalog,
     ...stored,
+    unique_name: stored.unique_name,
     mod_set: preferCatalogOptional(stored.mod_set, catalog.mod_set),
     set_num_in_set: stored.set_num_in_set ?? catalog.set_num_in_set,
     set_stats: preferCatalogOptional(stored.set_stats, catalog.set_stats),

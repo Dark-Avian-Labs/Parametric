@@ -2,11 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { Mod, SlotType } from '../../types/warframe';
-import { sanitizeDisplayTextKeepDamageTokens } from '../../utils/damageTypeTokens';
 import { calculateEffectiveDrain, polarityMatchForUi } from '../../utils/drain';
+import { getModCardDisplayTexts } from '../../utils/modDisplayText';
 import { isPostureMod } from '../../utils/modFiltering';
 import { isRivenMod } from '../../utils/riven';
-import { isUmbraSelfScalingSetMod, parseSetStatsTiers } from '../../utils/umbraSet';
 import { DEFAULT_LAYOUT, dbRarityToCardRarity, dbPolarityToIconName } from './cardLayout';
 import { CardPreview } from './CardPreview';
 
@@ -66,43 +65,11 @@ export function ModCard({
   const modArt = mod.image_path ? `/images${mod.image_path}` : '';
 
   const maxSetRank = mod.set_num_in_set ?? 0;
-  const isUmbra = isUmbraSelfScalingSetMod(mod);
-
-  const effectiveSetRank =
-    isUmbra && umbraSetEquippedCount != null && maxSetRank > 0
-      ? Math.min(Math.max(umbraSetEquippedCount, 1), maxSetRank)
-      : (setRank ?? (maxSetRank > 0 ? 1 : 0));
-
-  let description = '';
-  try {
-    if (mod.description) {
-      const descriptions: string[] = JSON.parse(mod.description);
-      const raw = descriptions[Math.min(rank, descriptions.length - 1)] ?? '';
-      description = sanitizeDisplayTextKeepDamageTokens(raw);
-    }
-  } catch {
-    description = sanitizeDisplayTextKeepDamageTokens(mod.description ?? '');
-  }
-
-  if (isUmbra && maxRank > 0 && rank >= maxRank && umbraSetEquippedCount != null && mod.set_stats) {
-    const setStats = parseSetStatsTiers(mod.set_stats);
-    if (setStats?.length) {
-      const idx = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length) - 1;
-      const tierLine = setStats[idx];
-      if (tierLine?.trim()) {
-        description = sanitizeDisplayTextKeepDamageTokens(tierLine);
-      }
-    }
-  }
-
-  let setDescription = '';
-  if (!isUmbra && mod.set_stats && maxSetRank > 0) {
-    const setStats = parseSetStatsTiers(mod.set_stats);
-    if (setStats?.length) {
-      const idx = Math.min(Math.max(effectiveSetRank - 1, 0), setStats.length - 1);
-      setDescription = sanitizeDisplayTextKeepDamageTokens(setStats[idx] ?? '');
-    }
-  }
+  const {
+    mainDescription: description,
+    setBonusDescription: setDescription,
+    effectiveSetRank,
+  } = getModCardDisplayTexts(mod, rank, { umbraSetEquippedCount, setRank });
 
   const modType = mod.compat_name?.toUpperCase() ?? '';
 
