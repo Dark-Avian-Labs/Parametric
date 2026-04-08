@@ -235,6 +235,37 @@ apiRouter.get('/search', (req: Request, res: Response) => {
 const MOD_JUNK_SEGMENTS = ['/Beginner/', '/Intermediate/', '/Nemesis/'];
 const MOD_JUNK_SUFFIXES = ['SubMod'];
 
+const MOD_API_SELECT_LIST = `m.*,
+  ms_member.set_unique_name AS _set_unique_from_member,
+  COALESCE(ms_direct.num_in_set, ms_member.num_in_set) AS set_num_in_set,
+  COALESCE(ms_direct.stats, ms_member.stats) AS set_stats`;
+
+const MOD_API_FROM = `
+FROM mods m
+LEFT JOIN mod_sets ms_direct ON ms_direct.unique_name = m.mod_set
+LEFT JOIN (
+  SELECT mod_unique_name, set_unique_name, num_in_set, stats
+  FROM (
+    SELECT
+      msm.mod_unique_name AS mod_unique_name,
+      msm.set_unique_name AS set_unique_name,
+      ms2.num_in_set AS num_in_set,
+      ms2.stats AS stats,
+      ROW_NUMBER() OVER (PARTITION BY msm.mod_unique_name ORDER BY msm.set_unique_name) AS rn
+    FROM mod_set_members msm
+    INNER JOIN mod_sets ms2 ON ms2.unique_name = msm.set_unique_name
+  ) AS ranked_member_set
+  WHERE ranked_member_set.rn = 1
+) AS ms_member ON ms_member.mod_unique_name = m.unique_name`;
+
+function normalizeModApiRow(row: Record<string, unknown>): Record<string, unknown> {
+  const { _set_unique_from_member, ...rest } = row;
+  const modSet = rest.mod_set;
+  const filled =
+    modSet != null && String(modSet).trim() !== '' ? modSet : (_set_unique_from_member ?? modSet);
+  return { ...rest, mod_set: filled };
+}
+
 const shardBuffCreateSchema = z.object({
   shard_type_id: z.coerce.number().int().positive(),
   description: z.string().trim().min(1).max(200),
@@ -448,9 +479,8 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
     const rarity = typeof req.query.rarity === 'string' ? req.query.rarity : undefined;
     const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
-    let sql = `SELECT m.*, ms.num_in_set AS set_num_in_set, ms.stats AS set_stats
-      FROM mods m
-      LEFT JOIN mod_sets ms ON m.mod_set = ms.unique_name
+    let sql = `SELECT ${MOD_API_SELECT_LIST}
+      ${MOD_API_FROM}
       WHERE 1=1`;
     const params: unknown[] = [];
 
@@ -483,13 +513,14 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
 
     sql += ' ORDER BY m.name';
 
-    const rows = db.prepare(sql).all(...params) as Array<{
+    const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
+    const normalizedRows = rows.map(normalizeModApiRow) as Array<{
       unique_name: string;
       name: string;
       type: string;
     }>;
 
-    const cleaned = rows.filter((r) => {
+    const cleaned = normalizedRows.filter((r) => {
       if (MOD_JUNK_SEGMENTS.some((seg) => r.unique_name.includes(seg))) return false;
       if (MOD_JUNK_SUFFIXES.some((suf) => r.unique_name.endsWith(suf))) return false;
       return true;
@@ -520,7 +551,10 @@ apiRouter.get('/mods/:uniqueName', (req: Request, res: Response) => {
   try {
     const db = getDb();
     const uniqueName = String(req.params.uniqueName);
-    const mod = db.prepare('SELECT * FROM mods WHERE unique_name = ?').get(uniqueName);
+    const raw = db
+      .prepare(`SELECT ${MOD_API_SELECT_LIST} ${MOD_API_FROM} WHERE m.unique_name = ?`)
+      .get(uniqueName) as Record<string, unknown> | undefined;
+    const mod = raw ? normalizeModApiRow(raw) : undefined;
     if (!mod) {
       res.status(404).json({ error: 'Mod not found' });
       return;

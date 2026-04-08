@@ -972,7 +972,6 @@ export function mergeWikiData(
   const updatePassive = db.prepare(
     'UPDATE warframes SET passive_description_wiki = ? WHERE unique_name = ?',
   );
-  /** Same passive text often applies to variant rows whose `unique_name` shares a path prefix (e.g. `/Lotus/.../Foo` vs `/Lotus/.../Foo/Prime`). The exact-name update above only hits one row; this second pass fills siblings that still have NULL wiki passives. */
   const updatePassiveLike = db.prepare(
     `UPDATE warframes SET passive_description_wiki = ?
      WHERE unique_name LIKE ? AND passive_description_wiki IS NULL`,

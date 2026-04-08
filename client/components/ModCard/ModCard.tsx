@@ -6,7 +6,7 @@ import { sanitizeDisplayTextKeepDamageTokens } from '../../utils/damageTypeToken
 import { calculateEffectiveDrain, polarityMatchForUi } from '../../utils/drain';
 import { isPostureMod } from '../../utils/modFiltering';
 import { isRivenMod } from '../../utils/riven';
-import { isUmbraSelfScalingSetMod } from '../../utils/umbraSet';
+import { isUmbraSelfScalingSetMod, parseSetStatsTiers } from '../../utils/umbraSet';
 import { DEFAULT_LAYOUT, dbRarityToCardRarity, dbPolarityToIconName } from './cardLayout';
 import { CardPreview } from './CardPreview';
 
@@ -25,7 +25,6 @@ interface ModCardProps {
   lockedOut?: boolean;
   collapsed?: boolean;
   scale?: number;
-  /** When set, Umbral set mods use this count for tier stats/dots (1 = solo). */
   umbraSetEquippedCount?: number;
 }
 
@@ -86,28 +85,22 @@ export function ModCard({
   }
 
   if (isUmbra && maxRank > 0 && rank >= maxRank && umbraSetEquippedCount != null && mod.set_stats) {
-    try {
-      const setStats: string[] = JSON.parse(mod.set_stats);
-      if (setStats.length > 0) {
-        const idx = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length) - 1;
-        const tierLine = setStats[idx];
-        if (tierLine?.trim()) {
-          description = sanitizeDisplayTextKeepDamageTokens(tierLine);
-        }
+    const setStats = parseSetStatsTiers(mod.set_stats);
+    if (setStats?.length) {
+      const idx = Math.min(Math.max(umbraSetEquippedCount, 1), setStats.length) - 1;
+      const tierLine = setStats[idx];
+      if (tierLine?.trim()) {
+        description = sanitizeDisplayTextKeepDamageTokens(tierLine);
       }
-    } catch {
-      // keep rank-based description
     }
   }
 
   let setDescription = '';
   if (!isUmbra && mod.set_stats && maxSetRank > 0) {
-    try {
-      const setStats: string[] = JSON.parse(mod.set_stats);
+    const setStats = parseSetStatsTiers(mod.set_stats);
+    if (setStats?.length) {
       const idx = Math.min(Math.max(effectiveSetRank - 1, 0), setStats.length - 1);
       setDescription = sanitizeDisplayTextKeepDamageTokens(setStats[idx] ?? '');
-    } catch {
-      // ignore
     }
   }
 

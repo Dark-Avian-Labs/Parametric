@@ -1,11 +1,33 @@
 import type { Mod, ModSlot } from '../types/warframe';
 
-/** Warframe ExportModSet unique name fragment for Umbral mods (full path contains this). */
 const UMBRA_MOD_SET_MARKER = 'UmbraModSet';
 
+export function parseSetStatsTiers(raw: string | undefined | null): string[] | null {
+  if (raw == null || String(raw).trim() === '') return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const lines = parsed.filter((x): x is string => typeof x === 'string');
+      return lines.length > 0 ? lines : null;
+    }
+    if (parsed && typeof parsed === 'object') {
+      const rec = parsed as Record<string, unknown>;
+      const entries = Object.entries(rec).sort(([a], [b]) => Number(a) - Number(b));
+      const lines = entries.map(([, v]) => v).filter((x): x is string => typeof x === 'string');
+      return lines.length > 0 ? lines : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function isUmbraSelfScalingSetMod(mod: Mod | undefined): boolean {
-  if (!mod?.mod_set) return false;
-  return mod.mod_set.includes(UMBRA_MOD_SET_MARKER);
+  if (!mod) return false;
+  if (mod.mod_set?.includes(UMBRA_MOD_SET_MARKER)) return true;
+  if (mod.unique_name?.includes(UMBRA_MOD_SET_MARKER)) return true;
+  if (mod.name?.startsWith('Umbral ')) return true;
+  return false;
 }
 
 export function countEquippedUmbraSetMods(slots: ModSlot[]): number {
