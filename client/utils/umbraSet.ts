@@ -1,12 +1,7 @@
 import type { Mod, ModSlot } from '../types/warframe';
 
-/** Warframe ExportModSet unique name fragment for Umbral mods (full path contains this). */
 const UMBRA_MOD_SET_MARKER = 'UmbraModSet';
 
-/**
- * Parses `mod_sets.stats` / `set_stats` JSON into tier lines (array of stat block strings).
- * Handles string arrays and record-shaped JSON (e.g. keyed by rank).
- */
 export function parseSetStatsTiers(raw: string | undefined | null): string[] | null {
   if (raw == null || String(raw).trim() === '') return null;
   try {

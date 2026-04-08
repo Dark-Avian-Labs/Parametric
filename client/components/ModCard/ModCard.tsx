@@ -25,7 +25,6 @@ interface ModCardProps {
   lockedOut?: boolean;
   collapsed?: boolean;
   scale?: number;
-  /** When set, Umbral set mods use this count for tier stats/dots (1 = solo). */
   umbraSetEquippedCount?: number;
 }
 

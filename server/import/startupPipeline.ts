@@ -104,10 +104,6 @@ function emptySummary(start: number): StartupPipelineSummary {
 export interface StartupPipelineOptions {
   includeHiddenCompanionWeapons?: boolean;
   includeExaltedStanceMods?: boolean;
-  /**
-   * Manual CLI run: section headers, full export progress, and a printed summary at the end.
-   * Server startup omits this for quieter logs.
-   */
   cliReport?: boolean;
   reporter?: (line: string, level: 'info' | 'error') => void;
 }

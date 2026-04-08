@@ -123,7 +123,6 @@ const FLAT_STAT_PATTERNS: Array<{
 ];
 
 export interface ParseModEffectsOptions {
-  /** Number of Umbral-set mods in the same build (including this mod). Used at max rank only. */
   umbraSetEquippedCount?: number;
 }
 
@@ -144,7 +143,6 @@ function applyStatLineToEffects(line: string, effects: StatEffects): void {
   }
 }
 
-/** At max rank, Umbral mods use mod_sets.stats tier lines as the effective stat block. */
 function getUmbraSetTierStatText(
   mod: Mod,
   rank: number,

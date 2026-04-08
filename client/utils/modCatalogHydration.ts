@@ -1,7 +1,6 @@
 import type { Mod, ModSlot } from '../types/warframe';
 import { isRivenMod } from './riven';
 
-/** Prefer stored when non-empty; otherwise catalog (handles `''` blocking catalog fill). */
 function preferCatalogOptional<T extends string | undefined>(
   stored: T | null | undefined,
   catalog: T | null | undefined,
@@ -15,10 +14,6 @@ export function catalogKeyForMod(mod: Pick<Mod, 'name' | 'type'>): string {
   return `${mod.name ?? ''}|||${t}`;
 }
 
-/**
- * Merges a stored mod (from build JSON) with the full catalog row from `/api/mods`.
- * Saved builds often omit `set_stats`, `mod_set`, and other joined fields — required for Umbral scaling.
- */
 export function mergeModWithCatalog(stored: Mod, catalog?: Mod): Mod {
   if (!catalog || isRivenMod(stored)) return stored;
   return {

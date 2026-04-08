@@ -235,20 +235,28 @@ apiRouter.get('/search', (req: Request, res: Response) => {
 const MOD_JUNK_SEGMENTS = ['/Beginner/', '/Intermediate/', '/Nemesis/'];
 const MOD_JUNK_SUFFIXES = ['SubMod'];
 
-/**
- * Joined fields for `/api/mods`: `set_stats` / `set_num_in_set` from `mod_sets` via `mods.mod_set`
- * and/or `mod_set_members` when `mods.mod_set` is null in the DB.
- */
-const MOD_API_SELECT = `m.*,
-  (SELECT msm.set_unique_name FROM mod_set_members msm WHERE msm.mod_unique_name = m.unique_name LIMIT 1) AS _set_unique_from_member,
-  COALESCE(
-    (SELECT ms.num_in_set FROM mod_sets ms WHERE ms.unique_name = m.mod_set),
-    (SELECT ms2.num_in_set FROM mod_set_members msm JOIN mod_sets ms2 ON ms2.unique_name = msm.set_unique_name WHERE msm.mod_unique_name = m.unique_name LIMIT 1)
-  ) AS set_num_in_set,
-  COALESCE(
-    (SELECT ms.stats FROM mod_sets ms WHERE ms.unique_name = m.mod_set),
-    (SELECT ms2.stats FROM mod_set_members msm JOIN mod_sets ms2 ON ms2.unique_name = msm.set_unique_name WHERE msm.mod_unique_name = m.unique_name LIMIT 1)
-  ) AS set_stats`;
+const MOD_API_SELECT_LIST = `m.*,
+  ms_member.set_unique_name AS _set_unique_from_member,
+  COALESCE(ms_direct.num_in_set, ms_member.num_in_set) AS set_num_in_set,
+  COALESCE(ms_direct.stats, ms_member.stats) AS set_stats`;
+
+const MOD_API_FROM = `
+FROM mods m
+LEFT JOIN mod_sets ms_direct ON ms_direct.unique_name = m.mod_set
+LEFT JOIN (
+  SELECT mod_unique_name, set_unique_name, num_in_set, stats
+  FROM (
+    SELECT
+      msm.mod_unique_name AS mod_unique_name,
+      msm.set_unique_name AS set_unique_name,
+      ms2.num_in_set AS num_in_set,
+      ms2.stats AS stats,
+      ROW_NUMBER() OVER (PARTITION BY msm.mod_unique_name ORDER BY msm.set_unique_name) AS rn
+    FROM mod_set_members msm
+    INNER JOIN mod_sets ms2 ON ms2.unique_name = msm.set_unique_name
+  ) AS ranked_member_set
+  WHERE ranked_member_set.rn = 1
+) AS ms_member ON ms_member.mod_unique_name = m.unique_name`;
 
 function normalizeModApiRow(row: Record<string, unknown>): Record<string, unknown> {
   const { _set_unique_from_member, ...rest } = row;
@@ -471,8 +479,8 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
     const rarity = typeof req.query.rarity === 'string' ? req.query.rarity : undefined;
     const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
-    let sql = `SELECT ${MOD_API_SELECT}
-      FROM mods m
+    let sql = `SELECT ${MOD_API_SELECT_LIST}
+      ${MOD_API_FROM}
       WHERE 1=1`;
     const params: unknown[] = [];
 
@@ -544,7 +552,7 @@ apiRouter.get('/mods/:uniqueName', (req: Request, res: Response) => {
     const db = getDb();
     const uniqueName = String(req.params.uniqueName);
     const raw = db
-      .prepare(`SELECT ${MOD_API_SELECT} FROM mods m WHERE m.unique_name = ?`)
+      .prepare(`SELECT ${MOD_API_SELECT_LIST} ${MOD_API_FROM} WHERE m.unique_name = ?`)
       .get(uniqueName) as Record<string, unknown> | undefined;
     const mod = raw ? normalizeModApiRow(raw) : undefined;
     if (!mod) {

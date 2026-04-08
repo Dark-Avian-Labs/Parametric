@@ -10,7 +10,6 @@ function polarityMatchResult(a: string, b: string): 'match' | 'neutral' | 'misma
   return 'mismatch';
 }
 
-/** Drain number and mod card styling: universal (AP_ANY) counts as match except vs Umbra (neutral). */
 export function polarityMatchForUi(
   slotPolarity: string | undefined,
   modPolarity: string | undefined,

@@ -104,10 +104,6 @@ html.dark {
   --theme-mode: dark;
 }
 
-/*
- * Shadow UI — void.cloud hero-file-tree black glass
- * (#000000bf fill, blur(10px), #ffffff1a borders)
- */
 html.dark.ui-shadow {
   --color-glass: oklch(0% 0 0 / 0.75);
   --color-glass-border: oklch(100% 0 0 / 0.1);
