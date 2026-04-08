@@ -93,6 +93,11 @@ describe('polarityMatchForUi', () => {
     expect(polarityMatchForUi('AP_ANY', undefined)).toBeUndefined();
   });
 
+  it('returns match when slot and mod share the same regular (non-universal, non-Umbra) polarity', () => {
+    expect(polarityMatchForUi('AP_ATTACK', 'AP_ATTACK')).toBe('match');
+    expect(polarityMatchForUi('AP_DEFENSE', 'AP_DEFENSE')).toBe('match');
+  });
+
   it('returns match for universal slot with non-Umbra mod (same as drain)', () => {
     expect(polarityMatchForUi('AP_ANY', 'AP_ATTACK')).toBe('match');
   });
