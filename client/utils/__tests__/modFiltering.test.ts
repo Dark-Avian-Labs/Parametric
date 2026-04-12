@@ -32,6 +32,21 @@ describe('Launcher mod compatibility', () => {
     expect(filterCompatibleMods([sniperMod], 'primary', launcher)).toHaveLength(1);
   });
 
+  it('accepts Sniper-category mods when unique_name uses /Launcher/ (singular) path', () => {
+    const sniperMod: Mod = {
+      unique_name: '/lotus/upgrades/mods/sniper/test',
+      name: 'Sniper Ammo Mutation',
+      type: 'PRIMARY',
+      compat_name: 'Sniper',
+    };
+    const ogrisLauncherPath = {
+      unique_name: '/Lotus/Weapons/Tenno/Launcher/Ogris',
+      name: 'Ogris',
+      product_category: 'LongGuns',
+    };
+    expect(filterCompatibleMods([sniperMod], 'primary', ogrisLauncherPath)).toHaveLength(1);
+  });
+
   it('accepts Sniper-category mods when weapon is LongGuns but launcher-profile (e.g. Kuva Ogris)', () => {
     const sniperMod: Mod = {
       unique_name: '/lotus/upgrades/mods/sniper/test',

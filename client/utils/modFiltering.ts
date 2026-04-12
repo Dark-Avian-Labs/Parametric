@@ -335,7 +335,8 @@ function primaryWeaponAcceptsSniperCategoryMods(equipment?: {
   if (equipment.product_category === 'Launcher') return true;
 
   const path = equipment.unique_name.replace(/\\/g, '/').toLowerCase();
-  if (path.includes('/launchers/')) return true;
+  // Export paths use `/Launcher/` or `/Launchers/` (path is normalized to lowercase).
+  if (/\/launchers?\//.test(path)) return true;
 
   const identity = normalizeWeaponIdentityName(equipment.name).toLowerCase();
   const launcherNameTokens = [
@@ -373,7 +374,10 @@ function isPrimaryModCompatible(
   const validCompats = WEAPON_CATEGORY_TO_MOD_COMPAT[category] || [];
   if (validCompats.some((c) => c.toUpperCase() === compatUpper)) return true;
 
-  if (compatUpper === 'SNIPER' && primaryWeaponAcceptsSniperCategoryMods(equipment)) {
+  if (
+    primaryWeaponAcceptsSniperCategoryMods(equipment) &&
+    (compatUpper === 'SNIPER' || compatUpper.startsWith('SNIPER '))
+  ) {
     return true;
   }
 
