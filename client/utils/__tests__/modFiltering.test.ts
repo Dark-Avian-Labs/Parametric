@@ -32,6 +32,36 @@ describe('Launcher mod compatibility', () => {
     expect(filterCompatibleMods([sniperMod], 'primary', launcher)).toHaveLength(1);
   });
 
+  it('accepts Sniper-category mods when weapon is LongGuns but launcher-profile (e.g. Kuva Ogris)', () => {
+    const sniperMod: Mod = {
+      unique_name: '/lotus/upgrades/mods/sniper/test',
+      name: 'Sniper Ammo Mutation',
+      type: 'PRIMARY',
+      compat_name: 'Sniper',
+    };
+    const kuvaOgrisAsLongGuns = {
+      unique_name: '/Lotus/Weapons/Grineer/Kuva/KuvaOgris',
+      name: 'Kuva Ogris',
+      product_category: 'LongGuns',
+    };
+    expect(filterCompatibleMods([sniperMod], 'primary', kuvaOgrisAsLongGuns)).toHaveLength(1);
+  });
+
+  it('does not apply Sniper launcher rule to ordinary LongGuns rifles', () => {
+    const sniperMod: Mod = {
+      unique_name: '/lotus/upgrades/mods/sniper/test',
+      name: 'Sniper Ammo Mutation',
+      type: 'PRIMARY',
+      compat_name: 'Sniper',
+    };
+    const boltor = {
+      unique_name: '/Lotus/Weapons/Tenno/Rifle/Boltor',
+      name: 'Boltor',
+      product_category: 'LongGuns',
+    };
+    expect(filterCompatibleMods([sniperMod], 'primary', boltor)).toHaveLength(0);
+  });
+
   it('matches weapon-specific mods to Kuva variants', () => {
     const augment: Mod = {
       unique_name: '/test/ogris/augment',
