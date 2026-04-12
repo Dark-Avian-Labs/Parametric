@@ -1,8 +1,5 @@
 import type { Mod } from '../types/warframe';
 
-/**
- * Normalizes ExportUpgrades / DB quirks for "fits in weapon Exilus" (utility) mods.
- */
 export function isWeaponExilusMod(mod: Pick<Mod, 'is_utility' | 'unique_name' | 'name'>): boolean {
   const u: unknown = mod.is_utility;
   if (u === 1 || u === true) return true;

@@ -21,7 +21,6 @@ export function parseDamageArray(weapon: Weapon): number[] {
   }
 }
 
-/** Adds Valence / progenitor damage as base weapon damage (before elemental mod stacking). */
 export function applyValenceBonusToBaseDamage(
   baseFromWeapon: number[],
   valence?: ValenceBonus | null,

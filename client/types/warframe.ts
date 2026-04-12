@@ -153,7 +153,6 @@ export interface ModSlot {
   riven_art_path?: string;
 }
 
-/** Progenitor / Valence bonus on Kuva, Tenet, Coda weapons: extra % of total base damage as one type. */
 export const VALENCE_DAMAGE_TYPES = [
   'Impact',
   'Heat',
@@ -168,7 +167,6 @@ export type ValenceDamageType = (typeof VALENCE_DAMAGE_TYPES)[number];
 
 export interface ValenceBonus {
   element: ValenceDamageType;
-  /** Percent of total base damage added (game range 25–60%). */
   percent: number;
 }
 

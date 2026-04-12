@@ -108,7 +108,6 @@ export const WEAPON_CATEGORY_TO_MOD_COMPAT: Record<string, string[]> = {
   Shotgun: ['Shotgun', 'PRIMARY'],
   Bow: ['Bow', 'PRIMARY'],
   Sniper: ['Sniper', 'PRIMARY'],
-  /** Same primary mod tags as LongGuns (Rifle, etc.); export lists many launcher mods under `Rifle` compat. */
   Launcher: ['Launcher', 'PRIMARY', 'Rifle', 'Assault Rifle'],
 
   Pistols: ['Pistol'],
@@ -243,9 +242,6 @@ function isModCompatible(
   const modType = (mod.type || '').toUpperCase();
   const compat = (mod.compat_name || '').trim();
 
-  // "ANY" compat means the mod fits any equipment of its type. However, mods
-  // with the generic `---` export type use `compatName` for routing, so "ANY"
-  // on a `---` mod does NOT mean "fits every equipment category".
   if (compat.toUpperCase() === 'ANY' && modType !== '---') return true;
 
   switch (equipmentType) {
@@ -314,7 +310,6 @@ function isWarframeModCompatible(
   return false;
 }
 
-/** Strips Kuva / Tenet / Coda prefixes so weapon-specific mods (e.g. Ogris) match variants (e.g. Kuva Ogris). */
 export function normalizeWeaponIdentityName(name: string): string {
   let n = name.replace(/\s+/g, ' ').trim();
   let prev = '';
@@ -325,10 +320,6 @@ export function normalizeWeaponIdentityName(name: string): string {
   return n.toUpperCase();
 }
 
-/**
- * Explosive / launcher primaries accept Sniper-category utility mods in-game (e.g. Sniper Ammo Mutation).
- * Corpus often uses `LongGuns` for these weapons instead of `Launcher`, so we also match by path and name.
- */
 function primaryWeaponAcceptsSniperCategoryMods(equipment?: {
   unique_name: string;
   name: string;
@@ -338,7 +329,6 @@ function primaryWeaponAcceptsSniperCategoryMods(equipment?: {
   if (equipment.product_category === 'Launcher') return true;
 
   const path = equipment.unique_name.replace(/\\/g, '/').toLowerCase();
-  // Export paths use `/Launcher/` or `/Launchers/` (path is normalized to lowercase).
   if (/\/launchers?\//.test(path)) return true;
 
   const identity = normalizeWeaponIdentityName(equipment.name).toLowerCase();
@@ -355,7 +345,6 @@ function primaryWeaponAcceptsSniperCategoryMods(equipment?: {
   return launcherNameTokens.some((t) => identity.includes(t));
 }
 
-/** Export `type` for primary weapon mods is usually a class name (Rifle, Sniper, …), not `PRIMARY`. */
 function isPrimaryWeaponModExportType(modType: string): boolean {
   const t = modType
     .toUpperCase()
@@ -366,11 +355,6 @@ function isPrimaryWeaponModExportType(modType: string): boolean {
   return ['RIFLE', 'SNIPER', 'SHOTGUN', 'BOW', 'LAUNCHER', 'ASSAULT RIFLE'].includes(t);
 }
 
-/**
- * Primary weapon category names that a `type: "---"` mod's `compatName` can
- * resolve to.  When the import hasn't re-resolved the type yet, these let the
- * client accept the mod into the primary compatibility pipeline.
- */
 const GENERIC_TYPE_PRIMARY_COMPAT_NAMES = new Set([
   'SNIPER',
   'RIFLE',

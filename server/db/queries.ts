@@ -500,12 +500,6 @@ const COMPAT_NAME_TO_WEAPON_TYPE: Record<string, string> = {
   PISTOL: 'SECONDARY',
 };
 
-/**
- * DE uses `type: "---"` for mods whose compatibility is driven by
- * `compatibilityTags` rather than the `type` field. When the `compatName`
- * maps to a recognizable weapon category we resolve the type so the mod
- * appears in the correct server-side type filter queries.
- */
 function resolveGenericModType(
   rawType: string | null,
   compatName: string | undefined,

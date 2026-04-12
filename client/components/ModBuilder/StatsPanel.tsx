@@ -15,7 +15,6 @@ interface StatsPanelProps {
   slots?: ModSlot[];
   shardSlots?: ShardSlotConfig[];
   shardTypes?: ShardType[];
-  /** Progenitor / Valence bonus for Kuva, Tenet, Coda weapons. */
   valenceBonus?: ValenceBonus | null;
 }
 

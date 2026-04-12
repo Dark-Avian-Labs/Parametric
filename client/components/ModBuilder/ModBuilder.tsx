@@ -344,14 +344,21 @@ export function ModBuilder() {
   );
 
   useEffect(() => {
-    if (!supportsValence) {
+    if (equipmentType === 'warframe') {
+      if (valenceBonus !== null) setValenceBonus(null);
+      return;
+    }
+    if (!selectedEquipment) {
+      return;
+    }
+    if (!weaponSupportsValenceBonus(selectedEquipment as Weapon)) {
       if (valenceBonus !== null) setValenceBonus(null);
       return;
     }
     if (valenceBonus === null) {
       setValenceBonus(DEFAULT_VALENCE_BONUS);
     }
-  }, [supportsValence, valenceBonus]);
+  }, [equipmentType, selectedEquipment, valenceBonus]);
 
   const effectiveValenceBonus = useMemo(
     () => (supportsValence ? (valenceBonus ?? DEFAULT_VALENCE_BONUS) : null),
