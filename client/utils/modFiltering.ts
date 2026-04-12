@@ -354,7 +354,11 @@ function primaryWeaponAcceptsSniperCategoryMods(equipment?: {
 
 /** Export `type` for primary weapon mods is usually a class name (Rifle, Sniper, …), not `PRIMARY`. */
 function isPrimaryWeaponModExportType(modType: string): boolean {
-  const t = modType.toUpperCase().trim();
+  const t = modType
+    .toUpperCase()
+    .trim()
+    .replace(/\s+MOD$/i, '')
+    .trim();
   if (t === 'PRIMARY') return true;
   return ['RIFLE', 'SNIPER', 'SHOTGUN', 'BOW', 'LAUNCHER', 'ASSAULT RIFLE'].includes(t);
 }

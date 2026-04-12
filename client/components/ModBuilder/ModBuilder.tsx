@@ -32,6 +32,7 @@ import { getModTypesForEquipment, NO_MOD_TYPES_FOR_EQUIPMENT } from '../../utils
 import { calculateFormaCount, type FormaCount, type SlotPolarity } from '../../utils/formaCounter';
 import { catalogKeyForMod, hydrateSlotsWithModCatalog } from '../../utils/modCatalogHydration';
 import { isModLockedOut, isPostureMod } from '../../utils/modFiltering';
+import { isWeaponExilusMod } from '../../utils/modMetadata';
 import {
   createRivenMod,
   getRivenStatsForType,
@@ -766,9 +767,10 @@ export function ModBuilder() {
     if (slotType === 'posture' && (modType !== 'STANCE' || !isPostureMod(mod))) {
       return false;
     }
-    if (slotType === 'exilus' && mod.is_utility !== 1) return false;
+    if (slotType === 'exilus' && !isWeaponExilusMod(mod)) return false;
     if (slotType === 'general') {
       if (modType === 'AURA' || modType === 'STANCE') return false;
+      if (isWeaponExilusMod(mod)) return false;
     }
     return true;
   };
@@ -1496,21 +1498,23 @@ export function ModBuilder() {
                       onModSelect={(mod) => {
                         const modType = (mod.type || '').toUpperCase();
                         const isRivenPlaceholder = mod.unique_name === RIVEN_PLACEHOLDER_UNIQUE;
+                        const exilusMod = isWeaponExilusMod(mod);
                         let emptySlot;
 
                         if (activeSlotType) {
                           const targetType = isRivenPlaceholder ? 'general' : activeSlotType;
-                          emptySlot = slots.find((s) => !s.mod && s.type === targetType);
+                          if (exilusMod && targetType === 'general') {
+                            emptySlot = slots.find((s) => !s.mod && s.type === 'exilus');
+                          } else {
+                            emptySlot = slots.find((s) => !s.mod && s.type === targetType);
+                          }
                         } else if (modType === 'AURA') {
                           emptySlot = slots.find((s) => !s.mod && s.type === 'aura');
                         } else if (modType === 'STANCE') {
                           const stanceSlotType = isPostureMod(mod) ? 'posture' : 'stance';
                           emptySlot = slots.find((s) => !s.mod && s.type === stanceSlotType);
-                        } else if (mod.is_utility === 1) {
+                        } else if (exilusMod) {
                           emptySlot = slots.find((s) => !s.mod && s.type === 'exilus');
-                          if (!emptySlot) {
-                            emptySlot = slots.find((s) => !s.mod && s.type === 'general');
-                          }
                         } else {
                           emptySlot = slots.find((s) => !s.mod && s.type === 'general');
                         }

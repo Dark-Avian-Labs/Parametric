@@ -4,6 +4,7 @@ import { useApi } from '../../hooks/useApi';
 import type { Mod, ModRarity, EquipmentType } from '../../types/warframe';
 import { getModTypesForEquipment, NO_MOD_TYPES_FOR_EQUIPMENT } from '../../utils/equipmentModTypes';
 import { filterCompatibleMods, isModLockedOut, isPostureMod } from '../../utils/modFiltering';
+import { isWeaponExilusMod } from '../../utils/modMetadata';
 import { createRivenPlaceholderMod, getRivenWeaponType } from '../../utils/riven';
 import { getRequiredExaltedStanceName } from '../../utils/specialItems';
 import { countEquippedUmbraSetModsFromModList } from '../../utils/umbraSet';
@@ -210,7 +211,7 @@ export function FilterPanel({
       );
     } else if (targetSlotType === 'exilus') {
       slotFiltered = compatMods.filter(
-        (m) => m.is_utility === 1 || (m.type || '').toUpperCase() === 'AURA',
+        (m) => isWeaponExilusMod(m) || (m.type || '').toUpperCase() === 'AURA',
       );
     } else if (targetSlotType) {
       slotFiltered = compatMods.filter((m) => {

@@ -13,6 +13,21 @@ describe('normalizeWeaponIdentityName', () => {
 });
 
 describe('Launcher mod compatibility', () => {
+  it('accepts primary mods whose export type is "Rifle Mod"', () => {
+    const mod: Mod = {
+      unique_name: '/test/rifle/mod',
+      name: 'Test',
+      type: 'Rifle Mod',
+      compat_name: 'Rifle',
+    };
+    const weapon = {
+      unique_name: '/Lotus/Weapons/Tenno/Launcher/Ogris',
+      name: 'Ogris',
+      product_category: 'Launcher',
+    };
+    expect(filterCompatibleMods([mod], 'primary', weapon)).toHaveLength(1);
+  });
+
   it('accepts Rifle compat + Rifle type (DE export for Sniper Ammo Mutation) on Launcher category', () => {
     const sniperAmmoMutation: Mod = {
       unique_name: '/Lotus/Upgrades/Mods/Rifle/WeaponSnipersConvertAmmoMod',

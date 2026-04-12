@@ -495,16 +495,17 @@ apiRouter.get('/mods', (req: Request, res: Response) => {
       const typeList = typesRaw
         .split(',')
         .map((t) => t.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .map((t) => t.toLowerCase());
       if (typeList.length === 1) {
-        sql += ' AND m.type = ?';
+        sql += ' AND LOWER(m.type) = ?';
         params.push(typeList[0]);
       } else if (typeList.length > 1) {
-        sql += ` AND m.type IN (${typeList.map(() => '?').join(',')})`;
+        sql += ` AND LOWER(m.type) IN (${typeList.map(() => '?').join(',')})`;
         params.push(...typeList);
       }
     } else if (typeRaw) {
-      sql += ' AND m.type = ?';
+      sql += ' AND LOWER(m.type) = LOWER(?)';
       params.push(typeRaw);
     }
 

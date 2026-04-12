@@ -10,7 +10,22 @@ export function getModTypesForEquipment(eqType: EquipmentType): ModTypesForEquip
       return 'WARFRAME,AURA';
     case 'primary':
       // ExportUpgrades uses per-weapon-class labels (Rifle, Sniper, …), not a single PRIMARY type.
-      return 'PRIMARY,Rifle,Sniper,Shotgun,Bow,Launcher,Assault Rifle';
+      // Some entries use the "Rifle Mod" style (WFCD / wiki); server matches types case-insensitively.
+      return [
+        'PRIMARY',
+        'Rifle',
+        'Sniper',
+        'Shotgun',
+        'Bow',
+        'Launcher',
+        'Assault Rifle',
+        'Rifle Mod',
+        'Sniper Mod',
+        'Shotgun Mod',
+        'Bow Mod',
+        'Launcher Mod',
+        'Assault Rifle Mod',
+      ].join(',');
     case 'secondary':
       return 'SECONDARY';
     case 'melee':
