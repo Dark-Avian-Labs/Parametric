@@ -108,4 +108,13 @@ describe('calculateWeaponDps', () => {
     const expectedSustained = result.burstDps * (fireTime / (fireTime + 2.0));
     expect(result.sustainedDps).toBeCloseTo(expectedSustained);
   });
+
+  it('applies Valence / progenitor bonus as base damage', () => {
+    const weapon = makeWeapon({
+      damage_per_shot: JSON.stringify([100, 0, 0]),
+      total_damage: 100,
+    });
+    const result = calculateWeaponDps(weapon, [], { element: 'Heat', percent: 60 });
+    expect(result.modded.totalDamage).toBeCloseTo(160);
+  });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { Warframe, Weapon, EquipmentType, ModSlot } from '../../types/warframe';
+import type { Warframe, Weapon, EquipmentType, ModSlot, ValenceBonus } from '../../types/warframe';
 import { extractArchonShardBonuses } from '../../utils/archonShardBonuses';
 import { formatPercent } from '../../utils/damage';
 import { calculateWeaponDps, type WeaponCalcResult } from '../../utils/damageCalc';
@@ -15,6 +15,8 @@ interface StatsPanelProps {
   slots?: ModSlot[];
   shardSlots?: ShardSlotConfig[];
   shardTypes?: ShardType[];
+  /** Progenitor / Valence bonus for Kuva, Tenet, Coda weapons. */
+  valenceBonus?: ValenceBonus | null;
 }
 
 export function StatsPanel({
@@ -24,6 +26,7 @@ export function StatsPanel({
   slots,
   shardSlots,
   shardTypes,
+  valenceBonus,
 }: StatsPanelProps) {
   return (
     <div className="glass-panel overflow-visible p-4">
@@ -38,7 +41,7 @@ export function StatsPanel({
           shardTypes={shardTypes}
         />
       ) : (
-        <WeaponStats weapon={equipment as Weapon} slots={slots} />
+        <WeaponStats weapon={equipment as Weapon} slots={slots} valenceBonus={valenceBonus} />
       )}
     </div>
   );
@@ -371,11 +374,19 @@ function formatBigNumber(n: number): string {
   return n.toFixed(2);
 }
 
-function WeaponStats({ weapon, slots }: { weapon: Weapon; slots?: ModSlot[] }) {
+function WeaponStats({
+  weapon,
+  slots,
+  valenceBonus,
+}: {
+  weapon: Weapon;
+  slots?: ModSlot[];
+  valenceBonus?: ValenceBonus | null;
+}) {
   const calc: WeaponCalcResult | null = useMemo(() => {
     if (!slots) return null;
-    return calculateWeaponDps(weapon, slots);
-  }, [weapon, slots]);
+    return calculateWeaponDps(weapon, slots, valenceBonus);
+  }, [weapon, slots, valenceBonus]);
 
   const fireBehaviors = useMemo(
     () => normalizeFireBehaviorsJson(weapon.fire_behaviors),

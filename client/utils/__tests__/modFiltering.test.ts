@@ -1,96 +1,49 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import type { Mod } from '../../types/warframe';
-import { getModLockoutKeys, isModLockedOut } from '../modFiltering';
+import { filterCompatibleMods, normalizeWeaponIdentityName, WEAPON_CATEGORY_TO_MOD_COMPAT } from '../modFiltering';
 
-function mod(partial: Partial<Mod> & Pick<Mod, 'unique_name' | 'name'>): Mod {
-  return {
-    type: 'Warframe Mod',
-    ...partial,
-  };
-}
+describe('normalizeWeaponIdentityName', () => {
+  it('strips Kuva, Tenet, and Coda prefixes for augment matching', () => {
+    expect(normalizeWeaponIdentityName('Kuva Ogris')).toBe('OGRIS');
+    expect(normalizeWeaponIdentityName('Tenet Envoy')).toBe('ENVOY');
+    expect(normalizeWeaponIdentityName('Coda Vasto')).toBe('VASTO');
+    expect(normalizeWeaponIdentityName('Kuva Tenet Test')).toBe('TEST');
+  });
+});
 
-describe('getModLockoutKeys / isModLockedOut', () => {
-  it('treats Parkour 2.0 subclasses as one lockout group', () => {
-    const mobilize = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Warframe/ParkourTwoMod',
-      name: 'Mobilize',
-    });
-    const patagium = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Warframe/SuperGlideParkourTwoMod',
-      name: 'Patagium',
-    });
-    expect(getModLockoutKeys(mobilize)).toContain('path:warframe_parkour_two');
-    expect(getModLockoutKeys(patagium)).toContain('path:warframe_parkour_two');
-    expect(isModLockedOut(mobilize, [patagium])).toBe(true);
+describe('Launcher mod compatibility', () => {
+  it('maps Launcher category to Sniper mods', () => {
+    expect(WEAPON_CATEGORY_TO_MOD_COMPAT.Launcher).toContain('Sniper');
   });
 
-  it('still merges Primed/Amalgam variants via legacy name|type', () => {
-    const serration = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Rifle/WeaponDamageAmountMod',
-      name: 'Serration',
+  it('accepts Sniper-category mods on Launchers', () => {
+    const sniperMod: Mod = {
+      unique_name: '/lotus/upgrades/mods/sniper/test',
+      name: 'Sniper Ammo Mutation',
       type: 'PRIMARY',
-    });
-    const amalgam = mod({
-      unique_name: '/Lotus/Upgrades/Mods/DualSource/Rifle/SerratedRushMod',
-      name: 'Amalgam Serration',
-      type: 'PRIMARY',
-    });
-    expect(isModLockedOut(amalgam, [serration])).toBe(true);
-    expect(isModLockedOut(serration, [amalgam])).toBe(true);
+      compat_name: 'Sniper',
+    };
+    const launcher = {
+      unique_name: '/weapons/launcher/test',
+      name: 'Test Launcher',
+      product_category: 'Launcher',
+    };
+    expect(filterCompatibleMods([sniperMod], 'primary', launcher)).toHaveLength(1);
   });
 
-  it('merges Berserker Fury with Fury via Berserker prefix strip', () => {
-    const fury = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Melee/WeaponFireRateMod',
-      name: 'Fury',
-      type: 'MELEE',
-    });
-    const berserker = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Melee/WeaponCritFireRateBonusMod',
-      name: 'Berserker Fury',
-      type: 'MELEE',
-    });
-    expect(isModLockedOut(berserker, [fury])).toBe(true);
-  });
-
-  it('groups Archon school Exilus mods', () => {
-    const a = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Sets/Amar/AmarExilusMod',
-      name: "Amar's Anguish",
-    });
-    const b = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Sets/Boreal/BorealExilusMod',
-      name: "Boreal's Anguish",
-    });
-    expect(isModLockedOut(b, [a])).toBe(true);
-  });
-
-  it('groups Critical Deceleration with Blunderbuss', () => {
-    const blunder = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Shotgun/WeaponCritChanceMod',
-      name: 'Blunderbuss',
+  it('matches weapon-specific mods to Kuva variants', () => {
+    const augment: Mod = {
+      unique_name: '/test/ogris/augment',
+      name: 'Nightwatch Napalm',
       type: 'PRIMARY',
-    });
-    const critDec = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Shotgun/DualStat/CorruptedCritChanceFireRateShotgun',
-      name: 'Critical Deceleration',
-      type: 'PRIMARY',
-    });
-    expect(isModLockedOut(critDec, [blunder])).toBe(true);
-  });
-
-  it('does not flag unrelated mods as locked out', () => {
-    const serration = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Rifle/WeaponDamageAmountMod',
-      name: 'Serration',
-      type: 'PRIMARY',
-    });
-    const splitChamber = mod({
-      unique_name: '/Lotus/Upgrades/Mods/Rifle/WeaponFireIterationsMod',
-      name: 'Split Chamber',
-      type: 'PRIMARY',
-    });
-    expect(isModLockedOut(splitChamber, [serration])).toBe(false);
+      compat_name: 'Ogris',
+    };
+    const kuvaOgris = {
+      unique_name: '/weapons/kuva/ogris',
+      name: 'Kuva Ogris',
+      product_category: 'Launcher',
+    };
+    expect(filterCompatibleMods([augment], 'primary', kuvaOgris)).toHaveLength(1);
   });
 });

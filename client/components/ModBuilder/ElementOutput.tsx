@@ -1,4 +1,4 @@
-import type { Weapon, ModSlot } from '../../types/warframe';
+import type { Weapon, ModSlot, ValenceBonus } from '../../types/warframe';
 import { calculateBuildDamage, formatDamage } from '../../utils/damage';
 import { getElementColor } from '../../utils/elements';
 
@@ -24,10 +24,16 @@ const ELEMENT_ICON_MAP: Record<string, string> = {
 interface ElementOutputProps {
   weapon: Weapon;
   slots: ModSlot[];
+  valenceBonus?: ValenceBonus | null;
 }
 
-export function ElementOutput({ weapon, slots }: ElementOutputProps) {
-  const { totalDamage, damageBreakdown } = calculateBuildDamage(weapon, slots);
+export function ElementOutput({ weapon, slots, valenceBonus }: ElementOutputProps) {
+  const { totalDamage, damageBreakdown } = calculateBuildDamage(
+    weapon,
+    slots,
+    undefined,
+    valenceBonus,
+  );
 
   if (damageBreakdown.length === 0) {
     return null;

@@ -8,6 +8,7 @@ import type {
   BuildConfig,
   EquipmentType,
   ModSlot,
+  ValenceBonus,
   Warframe,
   Weapon,
 } from '../../types/warframe';
@@ -49,6 +50,7 @@ interface BuildShareModalProps {
   orokinReactor: boolean;
   formaCost?: FormaCount;
   helminthConfig?: BuildConfig['helminth'];
+  valenceBonus?: ValenceBonus | null;
 }
 
 function formatEquipmentType(type: EquipmentType): string {
@@ -390,8 +392,21 @@ function ShareSkillsPanel({
   );
 }
 
-function ShareDamageBreakdownBars({ weapon, slots }: { weapon: Weapon; slots: ModSlot[] }) {
-  const { totalDamage, damageBreakdown } = calculateBuildDamage(weapon, slots);
+function ShareDamageBreakdownBars({
+  weapon,
+  slots,
+  valenceBonus,
+}: {
+  weapon: Weapon;
+  slots: ModSlot[];
+  valenceBonus?: ValenceBonus | null;
+}) {
+  const { totalDamage, damageBreakdown } = calculateBuildDamage(
+    weapon,
+    slots,
+    undefined,
+    valenceBonus,
+  );
   if (damageBreakdown.length === 0) return null;
   const maxValue = Math.max(...damageBreakdown.map((e) => e.value));
 
@@ -463,6 +478,7 @@ export function BuildShareModal({
   orokinReactor,
   formaCost,
   helminthConfig,
+  valenceBonus,
 }: BuildShareModalProps) {
   const exportRef = useRef<HTMLDivElement | null>(null);
   const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
@@ -492,11 +508,11 @@ export function BuildShareModal({
   const weaponCalc = useMemo(() => {
     if (isWarframe) return null;
     try {
-      return calculateWeaponDps(equipment as Weapon, slots);
+      return calculateWeaponDps(equipment as Weapon, slots, valenceBonus);
     } catch {
       return null;
     }
-  }, [equipment, isWarframe, slots]);
+  }, [equipment, isWarframe, slots, valenceBonus]);
 
   const equippedSlots = useMemo(() => slots.filter((s) => s.mod), [slots]);
   const filledArcanes = useMemo(() => arcaneSlots.filter((s) => s.arcane), [arcaneSlots]);
@@ -915,7 +931,11 @@ export function BuildShareModal({
                             />
                           </div>
                           <div className="glass-panel min-h-0 flex-1 rounded-2xl p-2.5">
-                            <ShareDamageBreakdownBars weapon={equipment as Weapon} slots={slots} />
+                            <ShareDamageBreakdownBars
+                              weapon={equipment as Weapon}
+                              slots={slots}
+                              valenceBonus={valenceBonus}
+                            />
                           </div>
                         </>
                       ) : null}
@@ -1009,7 +1029,11 @@ export function BuildShareModal({
                           />
                         </div>
                         <div className="glass-panel rounded-xl p-2.5">
-                          <ShareDamageBreakdownBars weapon={equipment as Weapon} slots={slots} />
+                          <ShareDamageBreakdownBars
+                            weapon={equipment as Weapon}
+                            slots={slots}
+                            valenceBonus={valenceBonus}
+                          />
                         </div>
                       </>
                     ) : null}

@@ -394,6 +394,13 @@ const ModConfigSchema = z.object({
     )
     .optional(),
   orokinReactor: z.boolean().optional(),
+  valenceBonus: z
+    .object({
+      element: z.enum(['Impact', 'Heat', 'Cold', 'Electricity', 'Toxin', 'Magnetic', 'Radiation']),
+      percent: z.number().min(0).max(100),
+    })
+    .nullable()
+    .optional(),
   equipment_name: z.string().trim().min(1).optional(),
   equipment_image: z.string().trim().min(1).optional(),
 });

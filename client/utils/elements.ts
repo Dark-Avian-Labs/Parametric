@@ -47,9 +47,13 @@ export function calculateFinalDamage(
 
   const combinedElements = combineElements(elementSequence);
 
-  for (const combined of combinedElements) {
-    const existing = output.get(combined.type) || 0;
-    output.set(combined.type, existing + combined.value);
+  // With no elemental mods, base innate primaries are already in `output` from the first loop;
+  // `combineElements` would repeat the same innate values (duplicate Heat/Toxin/etc.).
+  if (sortedMods.length > 0) {
+    for (const combined of combinedElements) {
+      const existing = output.get(combined.type) || 0;
+      output.set(combined.type, existing + combined.value);
+    }
   }
 
   const result: DamageEntry[] = [];

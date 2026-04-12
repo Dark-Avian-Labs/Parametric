@@ -1,4 +1,4 @@
-import type { Weapon, ModSlot } from '../types/warframe';
+import type { ValenceBonus, Weapon, ModSlot } from '../types/warframe';
 import { calculateBuildDamage } from './damage';
 import { aggregateAllMods, type StatEffects } from './modStatParser';
 
@@ -47,9 +47,13 @@ function parseAmmoCost(weapon: Weapon): number {
   return 1;
 }
 
-export function calculateWeaponDps(weapon: Weapon, slots: ModSlot[]): WeaponCalcResult {
+export function calculateWeaponDps(
+  weapon: Weapon,
+  slots: ModSlot[],
+  valence?: ValenceBonus | null,
+): WeaponCalcResult {
   const effects = aggregateAllMods(slots);
-  const { totalDamage: buildTotalDamage } = calculateBuildDamage(weapon, slots, effects);
+  const { totalDamage: buildTotalDamage } = calculateBuildDamage(weapon, slots, effects, valence);
   const isMelee = weapon.range != null;
 
   const base = {

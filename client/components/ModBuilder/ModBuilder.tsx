@@ -16,6 +16,7 @@ import {
   type EquipmentType,
   type SlotType,
   type BuildConfig,
+  type ValenceBonus,
   type Ability,
   type PolarityKey,
   type RivenConfig,
@@ -39,6 +40,7 @@ import {
   RIVEN_PLACEHOLDER_UNIQUE,
 } from '../../utils/riven';
 import { getRequiredExaltedStanceName, matchesSpecialItemType } from '../../utils/specialItems';
+import { weaponSupportsValenceBonus } from '../../utils/weaponValence';
 import { LazySuspenseFallback } from '../ui/LazySuspenseFallback';
 import { Modal } from '../ui/Modal';
 import { AbilityBar } from './AbilityBar';
@@ -48,6 +50,7 @@ import { CapacityBar } from './CapacityBar';
 import { ElementOutput } from './ElementOutput';
 import { ModSlotGrid } from './ModSlotGrid';
 import { StatsPanel } from './StatsPanel';
+import { ValenceBonusPanel } from './ValenceBonusPanel';
 
 const FILTER_PANEL_IDLE_TIMEOUT_MS = 2000;
 
@@ -198,6 +201,7 @@ export function ModBuilder() {
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [slots, setSlots] = useState<ModSlot[]>([]);
   const [orokinReactor, setOrokinReactor] = useState(false);
+  const [valenceBonus, setValenceBonus] = useState<ValenceBonus | null>(null);
   const [buildName, setBuildName] = useState('New Build');
   const [currentBuildId, setCurrentBuildId] = useState<string | undefined>(buildId);
   const [targetEquipmentUniqueName, setTargetEquipmentUniqueName] = useState<string | null>(null);
@@ -252,6 +256,7 @@ export function ModBuilder() {
     setDraftRivenSlot(null);
     setEquipmentLoadError(null);
     prevRightPanelModeRef.current = null;
+    setValenceBonus(null);
     if (routeEqType) setEquipmentType(routeEqType as EquipmentType);
   }, [routeKey, buildId, routeEqType]);
 
@@ -326,6 +331,22 @@ export function ModBuilder() {
     () => hydrateSlotsWithModCatalog(slots, modCatalogByUnique, modCatalogByNameAndType),
     [slots, modCatalogByUnique, modCatalogByNameAndType],
   );
+
+  const supportsValence = useMemo(
+    () =>
+      Boolean(
+        selectedEquipment &&
+        equipmentType !== 'warframe' &&
+        weaponSupportsValenceBonus(selectedEquipment as Weapon),
+      ),
+    [selectedEquipment, equipmentType],
+  );
+
+  useEffect(() => {
+    if (!supportsValence && valenceBonus !== null) {
+      setValenceBonus(null);
+    }
+  }, [supportsValence, valenceBonus]);
 
   const { addSnapshot, snapshots: compareSnapshots } = useCompare();
 
@@ -413,6 +434,11 @@ export function ModBuilder() {
       if (typeof config.orokinReactor === 'boolean') {
         setOrokinReactor(config.orokinReactor);
       }
+      if (config.valenceBonus && typeof config.valenceBonus === 'object') {
+        setValenceBonus(config.valenceBonus as ValenceBonus);
+      } else {
+        setValenceBonus(null);
+      }
       if (Array.isArray(config.slots)) {
         setSlots(config.slots as ModSlot[]);
       }
@@ -432,6 +458,11 @@ export function ModBuilder() {
         if (stored.arcaneSlots) setArcaneSlots(stored.arcaneSlots as ArcaneSlot[]);
         if (stored.shardSlots) setShardSlots(stored.shardSlots as ShardSlotConfig[]);
         if (stored.orokinReactor !== undefined) setOrokinReactor(stored.orokinReactor);
+        if (stored.valenceBonus && typeof stored.valenceBonus === 'object') {
+          setValenceBonus(stored.valenceBonus as ValenceBonus);
+        } else {
+          setValenceBonus(null);
+        }
         if (!stored.slots?.length) {
           void loadBuildFromApi(buildId);
         }
@@ -1098,8 +1129,14 @@ export function ModBuilder() {
   const addToCompare = () => {
     if (!selectedEquipment || equipmentType === 'warframe') return;
     const weapon = selectedEquipment as Weapon;
-    const calc = calculateWeaponDps(weapon, hydratedSlots);
-    const { totalDamage, damageBreakdown } = calculateBuildDamage(weapon, hydratedSlots);
+    const vb = supportsValence ? valenceBonus : null;
+    const calc = calculateWeaponDps(weapon, hydratedSlots, vb);
+    const { totalDamage, damageBreakdown } = calculateBuildDamage(
+      weapon,
+      hydratedSlots,
+      undefined,
+      vb,
+    );
     addSnapshot({
       id: crypto.randomUUID(),
       label: buildName,
@@ -1138,6 +1175,7 @@ export function ModBuilder() {
         arcaneSlots,
         shardSlots,
         orokinReactor,
+        valenceBonus: valenceBonus ?? undefined,
       };
 
       const imagePath = selectedEquipment.image_path
@@ -1239,6 +1277,7 @@ export function ModBuilder() {
               slots={hydratedSlots}
               shardSlots={equipmentType === 'warframe' ? shardSlots : undefined}
               shardTypes={equipmentType === 'warframe' ? shardTypes : undefined}
+              valenceBonus={supportsValence ? valenceBonus : null}
               abilities={
                 equipmentType === 'warframe' ? (
                   <AbilityBar
@@ -1264,8 +1303,13 @@ export function ModBuilder() {
               }
             />
           )}
+          {supportsValence && <ValenceBonusPanel value={valenceBonus} onChange={setValenceBonus} />}
           {selectedEquipment && equipmentType !== 'warframe' && (
-            <ElementOutput weapon={selectedEquipment as Weapon} slots={hydratedSlots} />
+            <ElementOutput
+              weapon={selectedEquipment as Weapon}
+              slots={hydratedSlots}
+              valenceBonus={supportsValence ? valenceBonus : null}
+            />
           )}
         </div>
 
@@ -1604,6 +1648,7 @@ export function ModBuilder() {
             orokinReactor={orokinReactor}
             formaCost={formaCost}
             helminthConfig={equipmentType === 'warframe' ? helminthConfig : undefined}
+            valenceBonus={supportsValence ? valenceBonus : null}
           />
         </Suspense>
       ) : null}

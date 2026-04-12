@@ -108,6 +108,8 @@ export const WEAPON_CATEGORY_TO_MOD_COMPAT: Record<string, string[]> = {
   Shotgun: ['Shotgun', 'PRIMARY'],
   Bow: ['Bow', 'PRIMARY'],
   Sniper: ['Sniper', 'PRIMARY'],
+  /** Launchers use rifle-style primaries and accept Sniper-category utility mods (e.g. Sniper Ammo Mutation). */
+  Launcher: ['Launcher', 'Sniper', 'PRIMARY'],
 
   Pistols: ['Pistol'],
   Thrown: ['Thrown'],
@@ -309,6 +311,17 @@ function isWarframeModCompatible(
   return false;
 }
 
+/** Strips Kuva / Tenet / Coda prefixes so weapon-specific mods (e.g. Ogris) match variants (e.g. Kuva Ogris). */
+export function normalizeWeaponIdentityName(name: string): string {
+  let n = name.replace(/\s+/g, ' ').trim();
+  let prev = '';
+  while (n !== prev) {
+    prev = n;
+    n = n.replace(/^(Kuva|Tenet|Coda)\s+/i, '').trim();
+  }
+  return n.toUpperCase();
+}
+
 function isPrimaryModCompatible(
   _mod: Mod,
   modType: string,
@@ -334,6 +347,8 @@ function isPrimaryModCompatible(
   if (equipment) {
     const weaponName = equipment.name.replace(/\s+/g, ' ').toUpperCase();
     if (compatUpper === weaponName) return true;
+    const identityName = normalizeWeaponIdentityName(equipment.name);
+    if (identityName && compatUpper === identityName) return true;
   }
 
   if (compatUpper.startsWith('RIFLE') && category === 'LongGuns') return true;

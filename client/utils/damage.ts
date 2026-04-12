@@ -3,6 +3,7 @@ import {
   PRIMARY_ELEMENTS,
   type DamageType,
   type ModSlot,
+  type ValenceBonus,
   type Weapon,
 } from '../types/warframe';
 import { calculateFinalDamage, type DamageEntry } from './elements';
@@ -18,6 +19,39 @@ export function parseDamageArray(weapon: Weapon): number[] {
   } catch {
     return emptyDamageArray;
   }
+}
+
+/** Adds Valence / progenitor damage as base weapon damage (before elemental mod stacking). */
+export function applyValenceBonusToBaseDamage(
+  baseFromWeapon: number[],
+  valence?: ValenceBonus | null,
+): number[] {
+  const pad = () =>
+    baseFromWeapon.length >= DAMAGE_TYPES.length
+      ? [...baseFromWeapon]
+      : [
+          ...baseFromWeapon,
+          ...Array.from({ length: DAMAGE_TYPES.length - baseFromWeapon.length }, () => 0),
+        ];
+
+  if (!valence || valence.percent <= 0) {
+    return pad();
+  }
+
+  const total = baseFromWeapon.reduce((a, b) => a + (b || 0), 0);
+  if (total <= 0) {
+    return pad();
+  }
+
+  const bonus = total * (valence.percent / 100);
+  const idx = DAMAGE_TYPES.indexOf(valence.element as DamageType);
+  if (idx < 0) {
+    return pad();
+  }
+
+  const copy = pad();
+  copy[idx] = (copy[idx] || 0) + bonus;
+  return copy;
 }
 
 export function getInnateSecondaryElements(baseDamage: number[]): DamageEntry[] {
@@ -105,14 +139,16 @@ export function calculateBuildDamage(
   weapon: Weapon,
   slots: ModSlot[],
   precomputedEffects?: StatEffects,
+  valence?: ValenceBonus | null,
 ): {
   totalDamage: number;
   damageBreakdown: DamageEntry[];
   innateSecondary: DamageEntry[];
 } {
-  const baseDamage = parseDamageArray(weapon);
+  const baseFromWeapon = parseDamageArray(weapon);
+  const innateSecondary = getInnateSecondaryElements(baseFromWeapon);
+  const baseDamage = applyValenceBonusToBaseDamage(baseFromWeapon, valence);
   const elementMods = extractElementMods(slots);
-  const innateSecondary = getInnateSecondaryElements(baseDamage);
 
   const effects = precomputedEffects ?? aggregateAllMods(slots);
 
