@@ -343,15 +343,25 @@ export function ModBuilder() {
     [selectedEquipment, equipmentType],
   );
 
+  // Only clear or default valence once `selectedEquipment` is known. While it is still
+  // null, `supportsValence` is false — we must not wipe valence restored from a saved
+  // build's mod_config (otherwise it resets to DEFAULT after the weapon loads).
   useEffect(() => {
-    if (!supportsValence) {
+    if (equipmentType === 'warframe') {
+      if (valenceBonus !== null) setValenceBonus(null);
+      return;
+    }
+    if (!selectedEquipment) {
+      return;
+    }
+    if (!weaponSupportsValenceBonus(selectedEquipment as Weapon)) {
       if (valenceBonus !== null) setValenceBonus(null);
       return;
     }
     if (valenceBonus === null) {
       setValenceBonus(DEFAULT_VALENCE_BONUS);
     }
-  }, [supportsValence, valenceBonus]);
+  }, [equipmentType, selectedEquipment, valenceBonus]);
 
   const effectiveValenceBonus = useMemo(
     () => (supportsValence ? (valenceBonus ?? DEFAULT_VALENCE_BONUS) : null),
