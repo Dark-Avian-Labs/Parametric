@@ -332,6 +332,22 @@ export function ModBuilder() {
     [slots, modCatalogByUnique, modCatalogByNameAndType],
   );
 
+  const supportsValence = useMemo(
+    () =>
+      Boolean(
+        selectedEquipment &&
+        equipmentType !== 'warframe' &&
+        weaponSupportsValenceBonus(selectedEquipment as Weapon),
+      ),
+    [selectedEquipment, equipmentType],
+  );
+
+  useEffect(() => {
+    if (!supportsValence && valenceBonus !== null) {
+      setValenceBonus(null);
+    }
+  }, [supportsValence, valenceBonus]);
+
   const { addSnapshot, snapshots: compareSnapshots } = useCompare();
 
   const resolveSpecialItem = useCallback(
@@ -1113,7 +1129,7 @@ export function ModBuilder() {
   const addToCompare = () => {
     if (!selectedEquipment || equipmentType === 'warframe') return;
     const weapon = selectedEquipment as Weapon;
-    const vb = weaponSupportsValenceBonus(weapon) ? valenceBonus : null;
+    const vb = supportsValence ? valenceBonus : null;
     const calc = calculateWeaponDps(weapon, hydratedSlots, vb);
     const { totalDamage, damageBreakdown } = calculateBuildDamage(
       weapon,
@@ -1214,13 +1230,6 @@ export function ModBuilder() {
     : undefined;
 
   useEffect(() => {
-    if (!selectedEquipment || equipmentType === 'warframe') return;
-    if (!weaponSupportsValenceBonus(selectedEquipment as Weapon)) {
-      setValenceBonus(null);
-    }
-  }, [selectedEquipment?.unique_name, equipmentType]);
-
-  useEffect(() => {
     if (!selectedIsCompanionWeapon) return;
     setSlots((prev) => {
       if (!prev.some((slot) => slot.type === 'exilus')) {
@@ -1268,12 +1277,7 @@ export function ModBuilder() {
               slots={hydratedSlots}
               shardSlots={equipmentType === 'warframe' ? shardSlots : undefined}
               shardTypes={equipmentType === 'warframe' ? shardTypes : undefined}
-              valenceBonus={
-                equipmentType !== 'warframe' &&
-                weaponSupportsValenceBonus(selectedEquipment as Weapon)
-                  ? valenceBonus
-                  : null
-              }
+              valenceBonus={supportsValence ? valenceBonus : null}
               abilities={
                 equipmentType === 'warframe' ? (
                   <AbilityBar
@@ -1299,18 +1303,12 @@ export function ModBuilder() {
               }
             />
           )}
-          {selectedEquipment &&
-            equipmentType !== 'warframe' &&
-            weaponSupportsValenceBonus(selectedEquipment as Weapon) && (
-              <ValenceBonusPanel value={valenceBonus} onChange={setValenceBonus} />
-            )}
+          {supportsValence && <ValenceBonusPanel value={valenceBonus} onChange={setValenceBonus} />}
           {selectedEquipment && equipmentType !== 'warframe' && (
             <ElementOutput
               weapon={selectedEquipment as Weapon}
               slots={hydratedSlots}
-              valenceBonus={
-                weaponSupportsValenceBonus(selectedEquipment as Weapon) ? valenceBonus : null
-              }
+              valenceBonus={supportsValence ? valenceBonus : null}
             />
           )}
         </div>
@@ -1650,13 +1648,7 @@ export function ModBuilder() {
             orokinReactor={orokinReactor}
             formaCost={formaCost}
             helminthConfig={equipmentType === 'warframe' ? helminthConfig : undefined}
-            valenceBonus={
-              equipmentType !== 'warframe' &&
-              selectedEquipment &&
-              weaponSupportsValenceBonus(selectedEquipment as Weapon)
-                ? valenceBonus
-                : null
-            }
+            valenceBonus={supportsValence ? valenceBonus : null}
           />
         </Suspense>
       ) : null}
