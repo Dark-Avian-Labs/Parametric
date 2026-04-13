@@ -18,46 +18,46 @@ type RivenRollRule = {
 
 const PRIMARY_BASELINES = {
   Damage: 165,
-  Multishot: 99,
-  'Critical Chance': 149.9,
-  'Critical Damage': 99.9,
-  'Status Chance': 89.9,
-  'Status Duration': 99.9,
-  'Fire Rate': 59.9,
-  'Magazine Capacity': 59.9,
-  'Reload Speed': 59.9,
-  'Ammo Maximum': 99.9,
-  'Flight Speed': 89.9,
+  Multishot: 90,
+  'Critical Chance': 149.99,
+  'Critical Damage': 120,
+  'Status Chance': 90,
+  'Status Duration': 99.99,
+  'Fire Rate': 60.03,
+  'Magazine Capacity': 50,
+  'Reload Speed': 50,
+  'Ammo Maximum': 49.95,
+  'Flight Speed': 90,
   'Punch Through': 2.7,
-  Recoil: 89.9,
-  Zoom: 44.9,
-  Impact: 119.9,
-  Puncture: 119.9,
-  Slash: 119.9,
-  Heat: 89.9,
-  Cold: 89.9,
-  Electricity: 89.9,
-  Toxin: 89.9,
+  Recoil: 90,
+  Zoom: 59.99,
+  Impact: 119.97,
+  Puncture: 119.97,
+  Slash: 119.97,
+  Heat: 90,
+  Cold: 90,
+  Electricity: 90,
+  Toxin: 90,
 } as const satisfies BaselineMap;
 
 const SECONDARY_BASELINES = {
-  Damage: 220,
-  Multishot: 120,
-  'Critical Chance': 180,
-  'Critical Damage': 120,
-  'Status Chance': 120,
-  'Status Duration': 120,
-  'Fire Rate': 80,
-  'Magazine Capacity': 60,
-  'Reload Speed': 60,
-  'Ammo Maximum': 120,
-  'Flight Speed': 100,
+  Damage: 219.6,
+  Multishot: 119.7,
+  'Critical Chance': 149.99,
+  'Critical Damage': 90,
+  'Status Chance': 90,
+  'Status Duration': 99.99,
+  'Fire Rate': 74.7,
+  'Magazine Capacity': 50,
+  'Reload Speed': 50,
+  'Ammo Maximum': 90,
+  'Flight Speed': 90,
   'Punch Through': 2.7,
   Recoil: 90,
-  Zoom: 44.9,
-  Impact: 120,
-  Puncture: 120,
-  Slash: 120,
+  Zoom: 80.1,
+  Impact: 119.97,
+  Puncture: 119.97,
+  Slash: 119.97,
   Heat: 90,
   Cold: 90,
   Electricity: 90,
@@ -75,11 +75,11 @@ const MELEE_BASELINES = {
   'Combo Duration': 8.1,
   'Initial Combo': 24.5,
   'Slide Critical Chance': 120,
-  'Finisher Damage': 120,
+  'Finisher Damage': 119.7,
   'Heavy Attack Efficiency': 73.44,
-  Impact: 120,
-  Puncture: 120,
-  Slash: 120,
+  Impact: 119.7,
+  Puncture: 119.7,
+  Slash: 119.7,
   Heat: 90,
   Cold: 90,
   Electricity: 90,
@@ -87,12 +87,26 @@ const MELEE_BASELINES = {
 } as const satisfies BaselineMap;
 
 const ARCHGUN_BASELINES = {
-  ...PRIMARY_BASELINES,
-  Damage: 140,
-  Multishot: 80,
-  'Critical Chance': 130,
-  'Critical Damage': 90,
-  'Fire Rate': 50,
+  Damage: 99.9,
+  Multishot: 60.3,
+  'Critical Chance': 99.9,
+  'Critical Damage': 80.1,
+  'Status Chance': 60.3,
+  'Status Duration': 99.99,
+  'Fire Rate': 60.03,
+  'Magazine Capacity': 60.3,
+  'Reload Speed': 99.9,
+  'Ammo Maximum': 99.9,
+  'Punch Through': 2.7,
+  Recoil: 90,
+  Zoom: 59.99,
+  Impact: 90,
+  Puncture: 90,
+  Slash: 90,
+  Heat: 119.7,
+  Cold: 119.7,
+  Electricity: 119.7,
+  Toxin: 119.7,
 } as const satisfies BaselineMap;
 
 const BASELINES = {
@@ -132,7 +146,6 @@ export function getRivenBaselineValue(stat: string, weaponType: RivenWeaponType)
   return baselineMap[stat] ?? null;
 }
 
-/** Prefer game export (`omega_attenuation`); wiki-only `riven_disposition` when omega is absent. */
 export function getEffectiveRivenDisposition(
   weapon: Pick<Weapon, 'omega_attenuation' | 'riven_disposition'>,
 ): number | null {
@@ -140,13 +153,6 @@ export function getEffectiveRivenDisposition(
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
 }
 
-/**
- * Disposition rank 1–5 as filled pips (multiplier bands).
- * 1: 0.50–0.69, 2: 0.70–0.89, 3: 0.90–1.10, 4: 1.11–1.30, 5: ≥1.31
- *
- * Values are rounded to 3 decimals before bucketing so binary float noise (e.g. 0.6999999
- * for “0.7”) does not sit one tier below what the UI shows with `.toFixed(3)`.
- */
 export function getDispositionPips(value: number): number {
   const v = Math.round(value * 1000) / 1000;
   if (v >= 1.31) return 5;
@@ -157,7 +163,6 @@ export function getDispositionPips(value: number): number {
   return 1;
 }
 
-/** One decimal place; uses string rounding to avoid float noise (e.g. 61.9 → 61.8). */
 function toOneDecimal(value: number): number {
   const sign = value < 0 ? -1 : 1;
   return sign * parseFloat(Math.abs(value).toFixed(1));

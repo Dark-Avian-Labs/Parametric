@@ -500,11 +500,6 @@ html.ui-shadow:not(.dark) {
     color: var(--color-muted);
   }
 
-  .riven-select option {
-    color: oklch(16% 0.01 264);
-    background: oklch(100% 0 0);
-  }
-
   .search-box {
     padding: 8px 32px 8px 14px;
     font-size: 14px;

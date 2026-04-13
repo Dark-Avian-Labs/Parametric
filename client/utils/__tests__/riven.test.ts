@@ -51,7 +51,7 @@ describe('verifyAndAdjustRivenConfig', () => {
 
     expect(result.adjusted).toBe(true);
     expect(result.config.positive[0].value).toBeCloseTo(136.1, 1);
-    expect(result.config.positive[1].value).toBeCloseTo(66.8, 1);
+    expect(result.config.positive[1].value).toBeCloseTo(60.8, 1);
     expect(result.config.positive[2].value).toBeCloseTo(123.7, 1);
   });
 
@@ -69,12 +69,12 @@ describe('verifyAndAdjustRivenConfig', () => {
     );
 
     expect(result.adjusted).toBe(true);
-    expect(result.config.negative?.value).toBeCloseTo(-26.7, 1);
+    expect(result.config.negative?.value).toBeCloseTo(-22.3, 1);
   });
 });
 
 describe('resolveRivenConfig', () => {
-  it('clamps negative Zoom when curse magnitude exceeds disposition cap (e.g. −32.1 → −25.9 at ~0.7 disp)', () => {
+  it('keeps Zoom curse in range for rifle at ~0.7 disp (browse.wf / wiki baseline 59.99%)', () => {
     const { config, warnings, adjusted } = resolveRivenConfig(
       {
         polarity: 'AP_ATTACK',
@@ -93,8 +93,32 @@ describe('resolveRivenConfig', () => {
       },
     );
 
+    expect(adjusted).toBe(false);
+    expect(config.negative?.value).toBeCloseTo(-32.1, 1);
+    expect(warnings.some((w) => w.includes('Zoom'))).toBe(false);
+  });
+
+  it('clamps negative Zoom when curse exceeds wiki max at this disposition', () => {
+    const { config, adjusted, warnings } = resolveRivenConfig(
+      {
+        polarity: 'AP_ATTACK',
+        positive: [
+          { stat: 'Heat', value: 61.9, isNegative: false },
+          { stat: 'Status Chance', value: 63.1, isNegative: false },
+          { stat: 'Electricity', value: 63.6, isNegative: false },
+        ],
+        negative: { stat: 'Zoom', value: 40, isNegative: true },
+      },
+      {
+        weaponType: 'primary',
+        disposition: 0.7,
+        assumeValuesAreMaxRank: true,
+        manualRank: 8,
+      },
+    );
+
     expect(adjusted).toBe(true);
-    expect(config.negative?.value).toBeCloseTo(-25.9, 1);
+    expect(config.negative?.value).toBeCloseTo(-34.6, 1);
     expect(warnings.some((w) => w.includes('Zoom'))).toBe(true);
   });
 

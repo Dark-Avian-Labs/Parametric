@@ -15,6 +15,7 @@ import {
   resolveRivenConfig,
   validateRivenConfig,
 } from '../../utils/riven';
+import { SelectDropdown } from '../ui/SelectDropdown';
 
 interface RivenBuilderProps {
   availableStats: string[];
@@ -50,6 +51,7 @@ export function RivenBuilder({
   const [manualModRank, setManualModRank] = useState(config?.rivenRank ?? 8);
   const [error, setError] = useState<string>('');
   const [info, setInfo] = useState<string>('');
+  const [openStatRow, setOpenStatRow] = useState<number | null>(null);
   const isMounted = useRef(false);
 
   useEffect(() => {
@@ -245,18 +247,25 @@ export function RivenBuilder({
                 >
                   {stat.isNegative ? 'Negative' : `Positive ${i + 1}`}
                 </span>
-                <select
+                <SelectDropdown
+                  id={`riven-stat-${i}`}
+                  className="flex-1"
                   value={stat.stat}
-                  onChange={(e) => updateRow(i, 'stat', e.target.value)}
-                  className="form-input riven-select flex-1 text-xs"
-                >
-                  <option value="">None</option>
-                  {getFilteredStats(stat.stat).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'None' },
+                    ...getFilteredStats(stat.stat).map((s) => ({ value: s, label: s })),
+                  ]}
+                  onChange={(v) => updateRow(i, 'stat', v)}
+                  placeholder="None"
+                  buttonAriaLabel={
+                    stat.isNegative ? 'Negative riven stat' : `Positive ${i + 1} riven stat`
+                  }
+                  open={openStatRow === i}
+                  onOpenChange={(next) => {
+                    if (next) setOpenStatRow(i);
+                    else setOpenStatRow(null);
+                  }}
+                />
                 <input
                   type="number"
                   value={stat.value}
