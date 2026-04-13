@@ -1,4 +1,4 @@
-name: Parametric Run Tests
+name: Parametric PR Checks
 
 permissions:
   contents: read
@@ -11,7 +11,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  validate:
     runs-on: blacksmith-2vcpu-ubuntu-2404
 
     steps:
@@ -29,6 +29,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm run check-format
+
+      - name: Check linting
+        run: pnpm run lint
+
+      - name: Check types
+        run: pnpm run typecheck
 
       - name: Build project
         run: pnpm run build
