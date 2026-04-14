@@ -6,7 +6,6 @@ interface ShareRadarChartProps {
   stroke?: string;
   gridStroke?: string;
   className?: string;
-  /** Tighter plot + labels; less empty padding inside the SVG (share export). */
   dense?: boolean;
 }
 

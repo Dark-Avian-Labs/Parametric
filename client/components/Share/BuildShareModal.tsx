@@ -41,10 +41,8 @@ import {
 
 const SHARE_CANVAS_WIDTH = 720;
 const SHARE_CANVAS_HEIGHT = 1280;
-/** html-to-image rasterizes the DOM to a canvas; 1× looks soft and gradients can band. 2× supersamples for sharper PNGs. */
 const SHARE_EXPORT_PIXEL_RATIO = 2;
 
-/** Same stack as `body` in `input.css` so the share card matches the main app backdrop. */
 const MAIN_PAGE_BACKGROUND_STYLE: CSSProperties = {
   backgroundImage:
     'radial-gradient(circle at 10% 10%, var(--color-bg-glow), transparent 40%), radial-gradient(circle at 85% 15%, var(--color-bg-glow), transparent 45%), linear-gradient(to bottom, var(--color-bg-start) 0%, var(--color-bg-end) 100%)',
@@ -71,7 +69,6 @@ function clampBackgroundPan(
   };
 }
 
-/** Uploaded partial background: full image at uniform scale, positioned with translate (no object-cover crop). */
 function ShareUploadBackgroundView({
   dataUrl,
   naturalW,
@@ -176,7 +173,6 @@ const SHARE_ELEMENT_ICONS: Record<string, string> = {
 
 const MOD_SHARE_GAP_PX = 3;
 const MOD_COLLAPSED_H = DEFAULT_LAYOUT.collapsedHeight;
-/** Warframe builds can have up to 12 mod slots; scale is computed from actual count but must not cap too low or a large empty band appears below the list. */
 const MOD_SCALE_MIN = 0.28;
 const MOD_SCALE_MAX = 1.02;
 
@@ -208,7 +204,6 @@ function ModShareColumnList({ slots, modScale }: { slots: ModSlot[]; modScale: n
   );
 }
 
-/** Scales mod cards so the column fills available height (collapsed height × scale × n + gaps). */
 function ModsShareSection({ slots }: { slots: ModSlot[] }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [modScale, setModScale] = useState(0.42);
@@ -359,7 +354,6 @@ function ShareShardColumn({
   slots: ShardSlotConfig[];
   shards: ShardType[];
   compact?: boolean;
-  /** Share card: right-align rows; text on the left of the row, shard icon on the right. */
   textLeftIconRight?: boolean;
 }) {
   const lines: { key: string; name: string; tau: boolean; buff: string }[] = [];
@@ -670,10 +664,6 @@ function ShareDamageBreakdownBars({
   );
 }
 
-/**
- * Fades hero art to transparency at left, right, and bottom; top stays fully opaque.
- * Multi-stop horizontal feather avoids a visible "step" at the first opaque pixel (html-to-image).
- */
 const HERO_MASK_HORIZONTAL = `linear-gradient(to right,
   rgba(0,0,0,0) 0%,
   rgba(0,0,0,0.06) 4%,
@@ -712,7 +702,6 @@ function ShareHeroImage({
     maskImage: HERO_MASK_IMAGE,
     maskRepeat: 'no-repeat',
     maskSize: '100% 100%',
-    // Intersect: keep pixels only where both feather bands are opaque (sides + bottom fade).
     maskComposite: 'intersect',
   };
 
@@ -771,7 +760,6 @@ export function BuildShareModal({
   const [bgDataUrl, setBgDataUrl] = useState<string | null>(null);
   const [uploadName, setUploadName] = useState<string>('');
   const [bgOpacity, setBgOpacity] = useState(36);
-  /** Uniform scale applied to the uploaded image's intrinsic pixel size (not crop). */
   const [bgImageScale, setBgImageScale] = useState(1);
   const [bgNaturalW, setBgNaturalW] = useState(0);
   const [bgNaturalH, setBgNaturalH] = useState(0);
@@ -939,8 +927,11 @@ export function BuildShareModal({
     setIsRendering(true);
     setError(null);
     let objectUrl: string | null = null;
+    const exportEl = exportRef.current;
+    const captureClass = 'share-export--capture-png';
+    exportEl.classList.add(captureClass);
     try {
-      const blob = await toBlob(exportRef.current, {
+      const blob = await toBlob(exportEl, {
         cacheBust: true,
         pixelRatio: SHARE_EXPORT_PIXEL_RATIO,
         canvasWidth: SHARE_CANVAS_WIDTH,
@@ -958,6 +949,7 @@ export function BuildShareModal({
       console.error('[BuildShareModal] Failed to render share image', renderError);
       setError('Failed to export image. If this persists, try removing the background image.');
     } finally {
+      exportEl.classList.remove(captureClass);
       setIsRendering(false);
       if (objectUrl) {
         const u = objectUrl;

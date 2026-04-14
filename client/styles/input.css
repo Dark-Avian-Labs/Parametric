@@ -279,7 +279,6 @@ html.ui-shadow:not(.dark) {
     backdrop-filter: none !important;
   }
 
-  /* Glass treatment only on the outer export frame (PNG-safe: no live backdrop blur). */
   .share-export-glass-frame {
     position: relative;
     overflow: hidden;
@@ -295,6 +294,12 @@ html.ui-shadow:not(.dark) {
     border: 1px solid oklch(100% 0 0 / 0.14);
     box-shadow:
       0 12px 40px oklch(0% 0 0 / 0.35),
+      inset 0 1px 0 oklch(100% 0 0 / 0.12),
+      inset 0 -1px 0 oklch(0% 0 0 / 0.15);
+  }
+
+  .share-export-glass-frame.share-export--capture-png {
+    box-shadow:
       inset 0 1px 0 oklch(100% 0 0 / 0.12),
       inset 0 -1px 0 oklch(0% 0 0 / 0.15);
   }

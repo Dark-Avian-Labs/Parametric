@@ -945,9 +945,7 @@ export interface WikiMergeResult {
   augmentsUpdated: number;
   shardTypes: number;
   shardBuffs: number;
-  /** Rows where `riven_disposition` was set from game export `omega_attenuation`. */
   rivenDispositionsSyncedFromOmega: number;
-  /** Wiki table values applied only when `omega_attenuation` is null on the weapon. */
   rivenDispositionsWikiFallback: number;
   weaponsProjectileSpeedsUpdated: number;
 }
