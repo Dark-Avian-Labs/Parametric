@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
 const MIN_PX = 10;
-const MAX_PX = 96;
+const MAX_PX = 112;
 
 /** Single-line title scaled to use full width of the container (for share card hero overlay). */
 export function ShareHeroTitle({ text }: { text: string }) {

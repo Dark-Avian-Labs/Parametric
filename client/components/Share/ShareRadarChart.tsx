@@ -45,8 +45,8 @@ export function ShareRadarChart({
 
   const cx = size / 2;
   const cy = size / 2;
-  const maxR = size * (dense ? 0.37 : 0.26);
-  const labelR = size * (dense ? 0.445 : 0.46);
+  const maxR = size * (dense ? 0.4 : 0.26);
+  const labelR = size * (dense ? 0.438 : 0.46);
   const vmax = Math.max(...values.map((v) => (Number.isFinite(v) ? Math.abs(v) : 0)), 1e-9);
   const norm = values.map((v) => {
     const t = Number.isFinite(v) ? Math.abs(v) / vmax : 0;
