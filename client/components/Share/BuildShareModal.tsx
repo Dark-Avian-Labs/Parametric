@@ -23,7 +23,11 @@ import { calculateWarframeStats } from '../../utils/warframeCalc';
 import type { ArcaneSlot } from '../ModBuilder/ArcaneSlots';
 import type { ShardSlotConfig, ShardType } from '../ModBuilder/ArchonShardSlots';
 import { ArcaneCardPreview } from '../ModCard/ArcaneCardPreview';
-import { DEFAULT_ARCANE_LAYOUT, normalizeArcaneRarity } from '../ModCard/cardLayout';
+import {
+  DEFAULT_ARCANE_LAYOUT,
+  DEFAULT_LAYOUT,
+  normalizeArcaneRarity,
+} from '../ModCard/cardLayout';
 import { ModCard } from '../ModCard/ModCard';
 import { Modal } from '../ui/Modal';
 import { ShareHeroTitle } from './ShareHeroTitle';
@@ -107,6 +111,11 @@ const SHARE_ELEMENT_ICONS: Record<string, string> = {
   True: '20_true',
 };
 
+const MOD_SHARE_GAP_PX = 4;
+const MOD_COLLAPSED_H = DEFAULT_LAYOUT.collapsedHeight;
+const MOD_SCALE_MIN = 0.26;
+const MOD_SCALE_MAX = 0.62;
+
 function ModShareColumnList({ slots, modScale }: { slots: ModSlot[]; modScale: number }) {
   if (slots.length === 0) {
     return (
@@ -131,6 +140,50 @@ function ModShareColumnList({ slots, modScale }: { slots: ModSlot[]; modScale: n
           />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Scales mod cards so the column fills available height (collapsed height × scale × n + gaps). */
+function ModsShareSection({ slots }: { slots: ModSlot[] }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [modScale, setModScale] = useState(0.42);
+  const n = slots.length;
+
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!el || n === 0) return;
+    const run = () => {
+      const h = el.clientHeight;
+      if (h <= 0) return;
+      const raw = (h - Math.max(0, n - 1) * MOD_SHARE_GAP_PX) / (n * MOD_COLLAPSED_H);
+      setModScale(Math.min(MOD_SCALE_MAX, Math.max(MOD_SCALE_MIN, raw)));
+    };
+    run();
+    const ro = new ResizeObserver(run);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [n]);
+
+  if (n === 0) {
+    return (
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <p className="mb-1.5 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
+          Mods (0)
+        </p>
+        <p className="text-muted py-2 text-center text-[10px] text-[#7e8fb8]">No mods equipped.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <p className="mb-1.5 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
+        Mods ({slots.length})
+      </p>
+      <div ref={listRef} className="min-h-0 min-w-0 flex-1">
+        <ModShareColumnList slots={slots} modScale={modScale} />
+      </div>
     </div>
   );
 }
@@ -499,8 +552,9 @@ function ShareHeroImage({
   equipmentImagePath?: string;
   equipmentName: string;
 }) {
+  const edge = '#090d18';
   return (
-    <div className="relative h-[340px] w-full shrink-0 overflow-hidden rounded-lg bg-[#0c1222]">
+    <div className="relative h-[340px] w-full shrink-0 overflow-hidden rounded-lg bg-[#090d18]">
       {equipmentImagePath ? (
         <img
           src={equipmentImagePath}
@@ -513,12 +567,13 @@ function ShareHeroImage({
           No Art
         </div>
       )}
+      {/* Visible L/R/bottom fade into the card background (html-to-image needs explicit opaque blends). */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: `
-            linear-gradient(to right, rgba(9,13,24,0.97) 0%, transparent 12%, transparent 88%, rgba(9,13,24,0.97) 100%),
-            linear-gradient(to bottom, transparent 0%, transparent 58%, rgba(9,13,24,0.98) 100%)
+            linear-gradient(90deg, ${edge} 0%, ${edge} 8%, rgba(9,13,24,0.55) 22%, transparent 42%, transparent 58%, rgba(9,13,24,0.55) 78%, ${edge} 92%, ${edge} 100%),
+            linear-gradient(180deg, transparent 0%, transparent 38%, rgba(9,13,24,0.35) 62%, ${edge} 100%)
           `,
         }}
       />
@@ -611,7 +666,6 @@ export function BuildShareModal({
     return () => ro.disconnect();
   }, [open]);
 
-  const modScale = 0.34;
   const arcaneScale = 0.5;
   const skillIconPx = 34;
 
@@ -707,12 +761,7 @@ export function BuildShareModal({
         <ShareFormaCounts forma={formaCost} />
         <ShareReactorStamp active={orokinReactor} />
       </div>
-      <div className="share-export-panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-2">
-        <p className="mb-1.5 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
-          Mods ({equippedSlots.length})
-        </p>
-        <ModShareColumnList slots={equippedSlots} modScale={modScale} />
-      </div>
+      <ModsShareSection slots={equippedSlots} />
       <div className="flex shrink-0 flex-wrap items-center justify-center gap-3 py-1">
         {filledArcanes.length === 0 ? (
           <span className="text-[9px] text-[#7e8fb8]">No arcanes</span>
@@ -740,9 +789,9 @@ export function BuildShareModal({
 
   const warframeRightColumn =
     isWarframe && warframeCalc ? (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden pl-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 pl-1">
         <ShareHeroImage equipmentImagePath={equipmentImagePath} equipmentName={equipmentName} />
-        <div className="share-export-panel shrink-0 px-2 py-1.5">
+        <div className="shrink-0 px-0.5 py-1">
           <ShareSkillsPanel
             ownAbilities={shareAbilities.ownAbilities}
             dbAbilities={shareAbilities.dbAbilities}
@@ -752,12 +801,12 @@ export function BuildShareModal({
             iconsOnly
           />
         </div>
-        <div className="share-export-panel max-h-[132px] min-h-0 shrink-0 overflow-hidden p-2">
+        <div className="min-h-0 shrink-0 px-0.5">
           <p className="mb-1 text-[9px] tracking-[0.14em] text-[#c7d5ff] uppercase">Shards</p>
           <ShareShardColumn compact slots={shardSlots} shards={shardTypes} />
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <div className="share-export-panel flex min-h-0 min-w-0 flex-1 flex-col p-2">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <p className="mb-0.5 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
               Stats
             </p>
@@ -772,7 +821,7 @@ export function BuildShareModal({
               ]}
             />
           </div>
-          <div className="share-export-panel flex min-h-0 min-w-0 flex-1 flex-col p-2">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <p className="mb-0.5 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
               Abilities
             </p>
@@ -796,25 +845,23 @@ export function BuildShareModal({
         </div>
       </div>
     ) : isWarframe ? (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden pl-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 pl-1">
         <ShareHeroImage equipmentImagePath={equipmentImagePath} equipmentName={equipmentName} />
-        <div className="share-export-panel text-[11px] text-[#b6c5ed]">
-          Stats unavailable for this build.
-        </div>
+        <p className="text-[11px] text-[#b6c5ed]">Stats unavailable for this build.</p>
       </div>
     ) : null;
 
   const weaponRightColumn =
     !isWarframe && weaponCalc && weaponRadarValues ? (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden pl-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 pl-1">
         <ShareHeroImage equipmentImagePath={equipmentImagePath} equipmentName={equipmentName} />
-        <div className="share-export-panel flex min-h-0 min-w-0 flex-1 flex-col p-2">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <p className="mb-0.5 shrink-0 text-[10px] tracking-[0.18em] text-[#c7d5ff] uppercase">
             Stats
           </p>
           <ShareRadarAuto labels={weaponStatLabels} values={weaponRadarValues} />
         </div>
-        <div className="share-export-panel min-h-0 flex-1 overflow-hidden p-2.5">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <ShareDamageBreakdownBars
             weapon={equipment as Weapon}
             slots={slots}
@@ -823,9 +870,9 @@ export function BuildShareModal({
         </div>
       </div>
     ) : !isWarframe ? (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden pl-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 pl-1">
         <ShareHeroImage equipmentImagePath={equipmentImagePath} equipmentName={equipmentName} />
-        <div className="share-export-panel text-[11px] text-[#b6c5ed]">Stats unavailable.</div>
+        <p className="text-[11px] text-[#b6c5ed]">Stats unavailable.</p>
       </div>
     ) : null;
 
@@ -961,14 +1008,10 @@ export function BuildShareModal({
                   ) : null}
                   <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,transparent_25%,transparent_70%,rgba(0,0,0,0.44)_100%)]" />
 
-                  <div className="relative z-10 flex min-h-0 flex-1 flex-col px-4 pt-4 pb-2">
-                    <div className="flex min-h-0 flex-1 flex-row gap-0">
+                  <div className="relative z-10 flex min-h-0 flex-1 flex-col px-4 pt-4 pb-3">
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-row gap-0">
                       {leftColumn}
                       {isWarframe ? warframeRightColumn : weaponRightColumn}
-                    </div>
-                    <div className="share-export-footer -mx-4 mt-auto flex shrink-0 items-center justify-between bg-[#090d18] px-4 pt-3 pb-2 text-[11px] text-[#a8b8d8]/88">
-                      <span>darkavianlabs.com/parametric</span>
-                      <span>Generated in Parametric</span>
                     </div>
                   </div>
                 </div>
