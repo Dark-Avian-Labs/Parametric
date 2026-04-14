@@ -7,89 +7,176 @@ importers:
     configDependencies: {}
     packageManagerDependencies:
       '@pnpm/exe':
-        specifier: 10.33.0
-        version: 10.33.0
+        specifier: 11.0.0-rc.0
+        version: 11.0.0-rc.0
       pnpm:
-        specifier: 10.33.0
-        version: 10.33.0
+        specifier: 11.0.0-rc.0
+        version: 11.0.0-rc.0
 
 packages:
 
-  '@pnpm/exe@10.33.0':
-    resolution: {integrity: sha512-sGsjztJBelzVMd0RhceDJ3p8Hk7eBcpu4G/TF6REzIvNdkKyxDT0czc1BWyo8Kbg+U0OBtK/TAGXN7Art4rTdg==}
+  '@pnpm/exe@11.0.0-rc.0':
+    resolution: {integrity: sha512-lpa3BGQaCvH5BGS256VTyJ4+Ib2PiA5gipTfTs7MTL02utSYXcWarP0OeDhw++Cg/tgrCVRDYWcUjHOy/KNTtA==}
     hasBin: true
 
-  '@pnpm/linux-arm64@10.33.0':
-    resolution: {integrity: sha512-oYb5NxEyImqaTkLVX/7jL59m9Vfmd07iLWzr4Pg2LIk4XEtAllNcnksNHcp5Uf+lFk/BggtpOdvC84TG3VnbFw==}
+  '@pnpm/linux-arm64@11.0.0-rc.0':
+    resolution: {integrity: sha512-6JIbPFu8y7RevLIpOH/rhML9JtnLgAa9VVVGl8A02+sRdF415Q3cldz+N9Oh3ZNLi2JZWtvHRa5UE2FRFELOJQ==}
     cpu: [arm64]
     os: [linux]
-    hasBin: true
 
-  '@pnpm/linux-x64@10.33.0':
-    resolution: {integrity: sha512-JYD2GXDF2roKpvTg5s032lYcUcT9lMedYlzxoqitWTjKlkMhl2gXRYpiDHdi2mWC5nFOJYlgYbUuy6jh3rXhng==}
+  '@pnpm/linux-x64@11.0.0-rc.0':
+    resolution: {integrity: sha512-5nSOBz07hmznMKJ88LaO/mk6BXCOMs3cA7VkwAz7ehWvtxeT1Dqez2Rnf5nK//BgEF1jQ8cgjff6MWaSmiYY8A==}
     cpu: [x64]
     os: [linux]
-    hasBin: true
 
-  '@pnpm/macos-arm64@10.33.0':
-    resolution: {integrity: sha512-3w9Pqpw0swnAbnEdAKumMuKj+TPaGratnqC49bC41vjR1pNs0UMwVdOxiIROUMQy5OHKPx0IH/wOOP0hkhJd+g==}
+  '@pnpm/macos-arm64@11.0.0-rc.0':
+    resolution: {integrity: sha512-X1KgttzXrspprRU4JV3y1rxraX/H8AzXhuO3tDJj01nbUhps0kkjdfJziLJFFYN74bwSO8DgFWmJ5w5V+Hp0Cg==}
     cpu: [arm64]
     os: [darwin]
-    hasBin: true
 
-  '@pnpm/macos-x64@10.33.0':
-    resolution: {integrity: sha512-SBeiLjU/9ORMIXAMsD6+Ltaaesniwh49FeFcG6kA64Zxr30U9SyzeZDnNOyWCGFjHeCmGfzCnSpNEN4VNo827g==}
+  '@pnpm/macos-x64@11.0.0-rc.0':
+    resolution: {integrity: sha512-Ra/CuHN7hrqScrl9w3zPDcMbY5AjAZMqTDKXL/1qP/GlY4lOJp24sQrH19y3pQGoUKoxlvVo0S4I29ZX2Wsf7A==}
     cpu: [x64]
     os: [darwin]
-    hasBin: true
 
-  '@pnpm/win-arm64@10.33.0':
-    resolution: {integrity: sha512-8X3NQqmfNVZ+dCu+EfD7ZkAgDgIKKdAgBBKcvhvMoMJq/nWHOfqDLxewE9TQ7qzVLuUKG/9b/xBVRVjdtDOm0w==}
+  '@pnpm/win-arm64@11.0.0-rc.0':
+    resolution: {integrity: sha512-vum6DgUMO6hxYdhJBUkdNpnXW0TU/iKRUuZca6qgn/uckhaobENsuaN0pG1ga49G26I+jL5C8GfVBmdnRenm6w==}
     cpu: [arm64]
     os: [win32]
-    hasBin: true
 
-  '@pnpm/win-x64@10.33.0':
-    resolution: {integrity: sha512-wiPVvxmTuB6FFn+rZ4FfSk1WTn+cxiQ7MTJEEz1k9VZLN/yZujGrv/WLYH2JcwzVTgObfmQuBKeNgEUavEL0Qg==}
+  '@pnpm/win-x64@11.0.0-rc.0':
+    resolution: {integrity: sha512-avY9Gz97pvcWO7nRL1AoJToVwljZIybX9A09buGpgrxTSTGjfs6bbFE+d+576ro02MHqhTn6qUnkCbPyKPcWrA==}
     cpu: [x64]
     os: [win32]
-    hasBin: true
 
-  pnpm@10.33.0:
-    resolution: {integrity: sha512-EFaLtKavtYyes2MNqQzJUWQXq+vT+rvmc58K55VyjaFJHp21pUTHatjrdXD1xLs9bGN7LLQb/c20f6gjyGSTGQ==}
-    engines: {node: '>=18.12'}
+  '@reflink/reflink-darwin-arm64@0.1.19':
+    resolution: {integrity: sha512-ruy44Lpepdk1FqDz38vExBY/PVUsjxZA+chd9wozjUH9JjuDT/HEaQYA6wYN9mf041l0yLVar6BCZuWABJvHSA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@reflink/reflink-darwin-x64@0.1.19':
+    resolution: {integrity: sha512-By85MSWrMZa+c26TcnAy8SDk0sTUkYlNnwknSchkhHpGXOtjNDUOxJE9oByBnGbeuIE1PiQsxDG3Ud+IVV9yuA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@reflink/reflink-linux-arm64-gnu@0.1.19':
+    resolution: {integrity: sha512-7P+er8+rP9iNeN+bfmccM4hTAaLP6PQJPKWSA4iSk2bNvo6KU6RyPgYeHxXmzNKzPVRcypZQTpFgstHam6maVg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@reflink/reflink-linux-arm64-musl@0.1.19':
+    resolution: {integrity: sha512-37iO/Dp6m5DDaC2sf3zPtx/hl9FV3Xze4xoYidrxxS9bgP3S8ALroxRK6xBG/1TtfXKTvolvp+IjrUU6ujIGmA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@reflink/reflink-linux-x64-gnu@0.1.19':
+    resolution: {integrity: sha512-jbI8jvuYCaA3MVUdu8vLoLAFqC+iNMpiSuLbxlAgg7x3K5bsS8nOpTRnkLF7vISJ+rVR8W+7ThXlXlUQ93ulkw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@reflink/reflink-linux-x64-musl@0.1.19':
+    resolution: {integrity: sha512-e9FBWDe+lv7QKAwtKOt6A2W/fyy/aEEfr0g6j/hWzvQcrzHCsz07BNQYlNOjTfeytrtLU7k449H1PI95jA4OjQ==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@reflink/reflink-win32-arm64-msvc@0.1.19':
+    resolution: {integrity: sha512-09PxnVIQcd+UOn4WAW73WU6PXL7DwGS6wPlkMhMg2zlHHG65F3vHepOw06HFCq+N42qkaNAc8AKIabWvtk6cIQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@reflink/reflink-win32-x64-msvc@0.1.19':
+    resolution: {integrity: sha512-E//yT4ni2SyhwP8JRjVGWr3cbnhWDiPLgnQ66qqaanjjnMiu3O/2tjCPQXlcGc/DEYofpDc9fvhv6tALQsMV9w==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@reflink/reflink@0.1.19':
+    resolution: {integrity: sha512-DmCG8GzysnCZ15bres3N5AHCmwBwYgp0As6xjhQ47rAUTUXxJiK+lLUxaGsX3hd/30qUpVElh05PbGuxRPgJwA==}
+    engines: {node: '>= 10'}
+
+  pnpm@11.0.0-rc.0:
+    resolution: {integrity: sha512-Hwjq3uoCXpFEjebV3uQqbJR2QlcADAQ6nja4/xKEmnLry5xl/BiFCUdHJJ5S9T2Lc62hGBRGu6gYZoEMik0/bA==}
+    engines: {node: '>=22.13'}
     hasBin: true
 
 snapshots:
 
-  '@pnpm/exe@10.33.0':
+  '@pnpm/exe@11.0.0-rc.0':
+    dependencies:
+      '@reflink/reflink': 0.1.19
     optionalDependencies:
-      '@pnpm/linux-arm64': 10.33.0
-      '@pnpm/linux-x64': 10.33.0
-      '@pnpm/macos-arm64': 10.33.0
-      '@pnpm/macos-x64': 10.33.0
-      '@pnpm/win-arm64': 10.33.0
-      '@pnpm/win-x64': 10.33.0
+      '@pnpm/linux-arm64': 11.0.0-rc.0
+      '@pnpm/linux-x64': 11.0.0-rc.0
+      '@pnpm/macos-arm64': 11.0.0-rc.0
+      '@pnpm/macos-x64': 11.0.0-rc.0
+      '@pnpm/win-arm64': 11.0.0-rc.0
+      '@pnpm/win-x64': 11.0.0-rc.0
 
-  '@pnpm/linux-arm64@10.33.0':
+  '@pnpm/linux-arm64@11.0.0-rc.0':
     optional: true
 
-  '@pnpm/linux-x64@10.33.0':
+  '@pnpm/linux-x64@11.0.0-rc.0':
     optional: true
 
-  '@pnpm/macos-arm64@10.33.0':
+  '@pnpm/macos-arm64@11.0.0-rc.0':
     optional: true
 
-  '@pnpm/macos-x64@10.33.0':
+  '@pnpm/macos-x64@11.0.0-rc.0':
     optional: true
 
-  '@pnpm/win-arm64@10.33.0':
+  '@pnpm/win-arm64@11.0.0-rc.0':
     optional: true
 
-  '@pnpm/win-x64@10.33.0':
+  '@pnpm/win-x64@11.0.0-rc.0':
     optional: true
 
-  pnpm@10.33.0: {}
+  '@reflink/reflink-darwin-arm64@0.1.19':
+    optional: true
+
+  '@reflink/reflink-darwin-x64@0.1.19':
+    optional: true
+
+  '@reflink/reflink-linux-arm64-gnu@0.1.19':
+    optional: true
+
+  '@reflink/reflink-linux-arm64-musl@0.1.19':
+    optional: true
+
+  '@reflink/reflink-linux-x64-gnu@0.1.19':
+    optional: true
+
+  '@reflink/reflink-linux-x64-musl@0.1.19':
+    optional: true
+
+  '@reflink/reflink-win32-arm64-msvc@0.1.19':
+    optional: true
+
+  '@reflink/reflink-win32-x64-msvc@0.1.19':
+    optional: true
+
+  '@reflink/reflink@0.1.19':
+    optionalDependencies:
+      '@reflink/reflink-darwin-arm64': 0.1.19
+      '@reflink/reflink-darwin-x64': 0.1.19
+      '@reflink/reflink-linux-arm64-gnu': 0.1.19
+      '@reflink/reflink-linux-arm64-musl': 0.1.19
+      '@reflink/reflink-linux-x64-gnu': 0.1.19
+      '@reflink/reflink-linux-x64-musl': 0.1.19
+      '@reflink/reflink-win32-arm64-msvc': 0.1.19
+      '@reflink/reflink-win32-x64-msvc': 0.1.19
+
+  pnpm@11.0.0-rc.0: {}
 
 ---
 lockfileVersion: '9.0'
@@ -97,9 +184,6 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
-
-overrides:
-  undici: '>=7.24.4'
 
 importers:
 
@@ -1662,9 +1746,9 @@ packages:
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
 
-  undici@8.1.0:
-    resolution: {integrity: sha512-E9MkTS4xXLnRPYqxH2e6Hr2/49e7WFDKczKcCaFH4VaZs2iNvHMqeIkyUAD9vM8kujy9TjVrRlQ5KkdEJxB2pw==}
-    engines: {node: '>=22.19.0'}
+  undici@7.25.0:
+    resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
+    engines: {node: '>=20.18.1'}
 
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
@@ -2313,7 +2397,7 @@ snapshots:
       parse5: 7.3.0
       parse5-htmlparser2-tree-adapter: 7.1.0
       parse5-parser-stream: 7.1.2
-      undici: 8.1.0
+      undici: 7.25.0
       whatwg-mimetype: 4.0.0
 
   chownr@1.1.4: {}
@@ -3101,7 +3185,7 @@ snapshots:
 
   undici-types@7.19.2: {}
 
-  undici@8.1.0: {}
+  undici@7.25.0: {}
 
   unpipe@1.0.0: {}
 
