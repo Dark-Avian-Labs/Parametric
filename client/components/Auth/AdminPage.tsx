@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { useApi } from '../../hooks/useApi';
 import { apiFetch } from '../../utils/api';
-import type { ShardType } from '../ModBuilder/ArchonShardSlots';
 import { Modal } from '../ui/Modal';
 
 interface ImportLogLine {
@@ -252,12 +250,9 @@ export function AdminPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="glass-shell p-6">
         <h1 className="text-foreground text-2xl font-bold">Admin Panel</h1>
-        <p className="text-muted mt-1 text-sm">
-          Data import controls and read-only Archon Shard data from the wiki pipeline.
-        </p>
+        <p className="text-muted mt-1 text-sm">Data import controls.</p>
       </div>
       <DataImportAdmin />
-      <ArchonShardAdmin />
     </div>
   );
 }
@@ -396,20 +391,117 @@ function DataImportAdmin() {
   };
 
   return (
-    <div className="glass-surface p-6">
-      <h2 className="text-foreground mb-3 text-lg font-semibold">Data Import</h2>
-      <p className="text-muted mb-3 text-xs">
-        Run the full data pipeline manually (official exports, DB processing, Overframe sync, wiki
-        enrichments, Helminth Fandom sync, image updates).
-      </p>
-      <p className="text-muted mb-4 text-sm" role="status">
-        {statusText}
-      </p>
-      {snapshot?.summary ? (
-        <div className="mb-4 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-glass)]/40 p-3">
-          <p className="text-foreground mb-2 text-xs font-semibold">
-            Last run summary ({(snapshot.summary.durationMs / 1000).toFixed(1)}s)
+    <>
+      <div className="glass-surface p-6">
+        <h2 className="text-foreground mb-3 text-lg font-semibold">Data Import</h2>
+        <p className="text-muted mb-3 text-xs">
+          Run the full data pipeline manually (official exports, DB processing, Overframe sync, wiki
+          enrichments, Helminth sync, image updates).
+        </p>
+        <p className="text-muted mb-4 text-sm" role="status">
+          {statusText}
+        </p>
+        {errorMessage ? (
+          <p className="text-danger mb-3 text-sm" role="alert">
+            {errorMessage}
           </p>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="glass-button text-sm"
+            onClick={() => {
+              void runImport();
+            }}
+            disabled={runningImport}
+          >
+            {runningImport ? 'Import running...' : 'Run Full Import'}
+          </button>
+          <button
+            type="button"
+            className="glass-button-secondary text-sm"
+            onClick={() => setShowLogs(true)}
+          >
+            View Live Log
+          </button>
+        </div>
+
+        <Modal
+          open={showLogs}
+          onClose={() => setShowLogs(false)}
+          ariaLabelledBy="parametric-import-log-title"
+          className="import-log-modal"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                id="parametric-import-log-title"
+                className="text-foreground text-lg font-semibold"
+              >
+                Import Console
+              </h3>
+              <div className="flex shrink-0 items-center gap-2">
+                <span
+                  className={`text-xs ${snapshot?.running ? 'text-warning' : 'text-muted'}`}
+                  role="status"
+                >
+                  {snapshot?.running ? 'Running' : 'Idle'}
+                </span>
+                <button
+                  type="button"
+                  className="glass-button-secondary text-sm"
+                  onClick={() => {
+                    void copyLogToClipboard();
+                  }}
+                  aria-label="Copy import log to clipboard"
+                >
+                  {copyFeedback === 'copied'
+                    ? 'Copied'
+                    : copyFeedback === 'error'
+                      ? 'Copy failed'
+                      : 'Copy log'}
+                </button>
+              </div>
+            </div>
+            {snapshot?.summary?.blockingIssues?.length ? (
+              <div className="error-msg text-xs">{snapshot.summary.blockingIssues.join(' ')}</div>
+            ) : null}
+            <div ref={logContainerRef} className="import-log-terminal">
+              {snapshot?.lines.length ? (
+                snapshot.lines.map((line, index) => (
+                  <div
+                    key={`${line.ts}-${index}`}
+                    className={line.level === 'error' ? 'text-danger' : 'text-foreground'}
+                  >
+                    <span className="text-muted">[{new Date(line.ts).toLocaleTimeString()}]</span>{' '}
+                    {line.message}
+                  </div>
+                ))
+              ) : (
+                <div className="text-muted">No output yet.</div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="glass-button-secondary text-sm"
+                onClick={() => setShowLogs(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      </div>
+
+      {snapshot?.summary ? (
+        <div className="glass-surface p-6">
+          <h2 className="text-foreground mb-2 text-lg font-semibold">
+            Last Run Summary
+            <span className="text-muted ml-2 text-xs font-normal">
+              ({(snapshot.summary.durationMs / 1000).toFixed(1)}s)
+            </span>
+          </h2>
           <ul className="list-none space-y-0 text-xs">
             {formatImportSummaryLines(snapshot.summary).map((row) => (
               <li
@@ -432,199 +524,6 @@ function DataImportAdmin() {
           </ul>
         </div>
       ) : null}
-      {errorMessage ? (
-        <p className="text-danger mb-3 text-sm" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="glass-button text-sm"
-          onClick={() => {
-            void runImport();
-          }}
-          disabled={runningImport}
-        >
-          {runningImport ? 'Import running...' : 'Run Full Import'}
-        </button>
-        <button
-          type="button"
-          className="glass-button-secondary text-sm"
-          onClick={() => setShowLogs(true)}
-        >
-          View Live Log
-        </button>
-      </div>
-
-      <Modal
-        open={showLogs}
-        onClose={() => setShowLogs(false)}
-        ariaLabelledBy="parametric-import-log-title"
-        className="import-log-modal"
-      >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h3 id="parametric-import-log-title" className="text-foreground text-lg font-semibold">
-              Import Console
-            </h3>
-            <div className="flex shrink-0 items-center gap-2">
-              <span
-                className={`text-xs ${snapshot?.running ? 'text-warning' : 'text-muted'}`}
-                role="status"
-              >
-                {snapshot?.running ? 'Running' : 'Idle'}
-              </span>
-              <button
-                type="button"
-                className="glass-button-secondary text-sm"
-                onClick={() => {
-                  void copyLogToClipboard();
-                }}
-                aria-label="Copy import log to clipboard"
-              >
-                {copyFeedback === 'copied'
-                  ? 'Copied'
-                  : copyFeedback === 'error'
-                    ? 'Copy failed'
-                    : 'Copy log'}
-              </button>
-            </div>
-          </div>
-          {snapshot?.summary?.blockingIssues?.length ? (
-            <div className="error-msg text-xs">{snapshot.summary.blockingIssues.join(' ')}</div>
-          ) : null}
-          <div ref={logContainerRef} className="import-log-terminal">
-            {snapshot?.lines.length ? (
-              snapshot.lines.map((line, index) => (
-                <div
-                  key={`${line.ts}-${index}`}
-                  className={line.level === 'error' ? 'text-danger' : 'text-foreground'}
-                >
-                  <span className="text-muted">[{new Date(line.ts).toLocaleTimeString()}]</span>{' '}
-                  {line.message}
-                </div>
-              ))
-            ) : (
-              <div className="text-muted">No output yet.</div>
-            )}
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="glass-button-secondary text-sm"
-              onClick={() => setShowLogs(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-const SHARD_TABLE_ICON_FALLBACK = '/icons/shards/emptyBackground.png';
-
-function shardTableIconSrc(iconPath: unknown): string {
-  if (typeof iconPath === 'string' && iconPath.trim() !== '') {
-    return iconPath.trim();
-  }
-  return SHARD_TABLE_ICON_FALLBACK;
-}
-
-function ArchonShardAdmin() {
-  const { data, loading, error } = useApi<{ shards: ShardType[] }>('/api/archon-shards');
-  const shards = data?.shards || [];
-
-  return (
-    <div className="glass-surface p-6">
-      <h2 className="text-foreground mb-3 text-lg font-semibold">Archon Shards</h2>
-      <p className="text-muted mb-4 text-xs">
-        Shard types and buffs from the wiki import pipeline (read-only). Run a full import to
-        refresh.
-      </p>
-      {error ? (
-        <p className="text-danger mb-3 text-sm" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {loading ? (
-        <p className="text-muted text-sm" role="status" aria-live="polite">
-          Loading archon shard data...
-        </p>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-glass)]/40">
-          <table className="w-full min-w-[32rem] border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-[var(--color-glass-border)] bg-[var(--color-glass)]/60">
-                <th className="text-foreground px-3 py-2 font-semibold">Shard</th>
-                <th className="text-foreground px-3 py-2 font-semibold">Buff</th>
-                <th className="text-foreground w-20 px-3 py-2 font-semibold">Base</th>
-                <th className="text-foreground w-20 px-3 py-2 font-semibold">Tauforged</th>
-                <th className="text-foreground w-16 px-3 py-2 font-semibold">Format</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shards.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-muted px-3 py-4 text-center">
-                    No shard data in the database yet.
-                  </td>
-                </tr>
-              ) : (
-                shards.flatMap((shard) =>
-                  shard.buffs.length === 0
-                    ? [
-                        <tr key={shard.id}>
-                          <td className="border-border/40 border-t px-3 py-2 align-top">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={shardTableIconSrc(shard.icon_path)}
-                                alt={`${shard.name} shard icon`}
-                                className="h-5 w-5 object-contain"
-                              />
-                              <span className="text-foreground font-medium">{shard.name}</span>
-                            </div>
-                          </td>
-                          <td
-                            colSpan={4}
-                            className="border-border/40 text-muted border-t px-3 py-2 italic"
-                          >
-                            No buffs recorded
-                          </td>
-                        </tr>,
-                      ]
-                    : shard.buffs.map((buff, buffIdx) => (
-                        <tr key={buff.id} className="border-border/40 border-t">
-                          {buffIdx === 0 ? (
-                            <td className="px-3 py-2 align-top" rowSpan={shard.buffs.length}>
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={shardTableIconSrc(shard.icon_path)}
-                                  alt={`${shard.name} shard icon`}
-                                  className="h-5 w-5 object-contain"
-                                />
-                                <span className="text-foreground font-medium">{shard.name}</span>
-                              </div>
-                            </td>
-                          ) : null}
-                          <td className="text-muted px-3 py-2">{buff.description}</td>
-                          <td className="text-foreground px-3 py-2 tabular-nums">
-                            {buff.base_value}
-                          </td>
-                          <td className="text-warning px-3 py-2 tabular-nums">
-                            {buff.tauforged_value}
-                          </td>
-                          <td className="text-muted px-3 py-2">{buff.value_format}</td>
-                        </tr>
-                      )),
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

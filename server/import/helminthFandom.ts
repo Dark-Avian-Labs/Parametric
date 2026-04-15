@@ -76,20 +76,20 @@ export async function syncHelminthFlagsFromFandom(
   }
 
   const rows = db
-    .prepare(`SELECT id, name FROM abilities WHERE name IS NOT NULL AND TRIM(name) != ''`)
-    .all() as Array<{ id: number; name: string }>;
+    .prepare(`SELECT unique_name, name FROM abilities WHERE name IS NOT NULL AND TRIM(name) != ''`)
+    .all() as Array<{ unique_name: string; name: string }>;
 
-  const toUpdate: number[] = [];
+  const toUpdate: string[] = [];
   for (const row of rows) {
     const key = normalizeAbilityName(row.name);
     if (key && names.has(key)) {
-      toUpdate.push(row.id);
+      toUpdate.push(row.unique_name);
     }
   }
 
   const resetAll = db.prepare('UPDATE abilities SET is_helminth_extractable = 0');
-  const stmt = db.prepare('UPDATE abilities SET is_helminth_extractable = 1 WHERE id = ?');
-  const runMany = db.transaction((ids: number[]) => {
+  const stmt = db.prepare('UPDATE abilities SET is_helminth_extractable = 1 WHERE unique_name = ?');
+  const runMany = db.transaction((ids: string[]) => {
     resetAll.run();
     for (const id of ids) {
       stmt.run(id);
