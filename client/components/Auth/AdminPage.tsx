@@ -524,6 +524,15 @@ function DataImportAdmin() {
   );
 }
 
+const SHARD_TABLE_ICON_FALLBACK = '/icons/shards/emptyBackground.png';
+
+function shardTableIconSrc(iconPath: unknown): string {
+  if (typeof iconPath === 'string' && iconPath.trim() !== '') {
+    return iconPath.trim();
+  }
+  return SHARD_TABLE_ICON_FALLBACK;
+}
+
 function ArchonShardAdmin() {
   const { data, loading, error } = useApi<{ shards: ShardType[] }>('/api/archon-shards');
   const shards = data?.shards || [];
@@ -571,8 +580,8 @@ function ArchonShardAdmin() {
                           <td className="border-border/40 border-t px-3 py-2 align-top">
                             <div className="flex items-center gap-2">
                               <img
-                                src={shard.icon_path}
-                                alt=""
+                                src={shardTableIconSrc(shard.icon_path)}
+                                alt={`${shard.name} shard icon`}
                                 className="h-5 w-5 object-contain"
                               />
                               <span className="text-foreground font-medium">{shard.name}</span>
@@ -592,8 +601,8 @@ function ArchonShardAdmin() {
                             <td className="px-3 py-2 align-top" rowSpan={shard.buffs.length}>
                               <div className="flex items-center gap-2">
                                 <img
-                                  src={shard.icon_path}
-                                  alt=""
+                                  src={shardTableIconSrc(shard.icon_path)}
+                                  alt={`${shard.name} shard icon`}
                                   className="h-5 w-5 object-contain"
                                 />
                                 <span className="text-foreground font-medium">{shard.name}</span>
