@@ -81,11 +81,12 @@ function getImagePaths(entry: ManifestImageEntry): {
 
 async function downloadSingleImage(
   entry: ManifestImageEntry,
+  forceDownload = false,
 ): Promise<{ dbImagePath: string; status: 'downloaded' | 'skipped' } | { error: string }> {
   const { textureLocation } = entry;
   const { localPath, localDir, hash, hashPath, dbImagePath } = getImagePaths(entry);
 
-  if (hash && fs.existsSync(localPath) && fs.existsSync(hashPath)) {
+  if (!forceDownload && hash && fs.existsSync(localPath) && fs.existsSync(hashPath)) {
     const existingHash = fs.readFileSync(hashPath, 'utf-8').trim();
     if (existingHash === hash) {
       return { dbImagePath, status: 'skipped' };
@@ -119,6 +120,7 @@ async function downloadSingleImage(
 
 export async function downloadImages(
   onProgress?: (completed: number, total: number, latest: string) => void,
+  forceDownload = false,
 ): Promise<ImageDownloadResult> {
   const dbNames = collectDbUniqueNames();
 
@@ -144,7 +146,9 @@ export async function downloadImages(
 
   for (let i = 0; i < toDownload.length; i += CONCURRENCY) {
     const batch = toDownload.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(batch.map((entry) => downloadSingleImage(entry)));
+    const results = await Promise.all(
+      batch.map((entry) => downloadSingleImage(entry, forceDownload)),
+    );
 
     for (let j = 0; j < results.length; j++) {
       const res = results[j];

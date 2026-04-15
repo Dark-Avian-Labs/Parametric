@@ -657,7 +657,10 @@ apiRouter.post('/admin/import/run', requireAdmin, (req: Request, res: Response) 
       res.status(401).json({ error: 'Not authenticated' });
       return;
     }
-    const result = startAdminImportJob(userId);
+    const body = req.body as Record<string, unknown> | undefined;
+    const forceImport = body?.forceImport === true;
+    const forceImages = body?.forceImages === true;
+    const result = startAdminImportJob(userId, { forceImport, forceImages });
     if (!result.started) {
       res.status(409).json({
         error: result.reason ?? 'Import job is already running.',

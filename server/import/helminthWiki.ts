@@ -55,16 +55,16 @@ export async function fetchHelminthAbilityNameSet(): Promise<{
   }
 }
 
-export interface HelminthFandomSyncResult {
+export interface HelminthWikiSyncResult {
   wikiNamesFound: number;
   abilitiesFlagged: number;
   fetchOk: boolean;
   error?: string;
 }
 
-export async function syncHelminthFlagsFromFandom(
+export async function syncHelminthFlagsFromWiki(
   db: Database.Database,
-): Promise<HelminthFandomSyncResult> {
+): Promise<HelminthWikiSyncResult> {
   const { names, fetchOk, error } = await fetchHelminthAbilityNameSet();
   if (!fetchOk || names.size === 0) {
     return {

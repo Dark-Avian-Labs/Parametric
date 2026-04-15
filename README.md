@@ -73,7 +73,7 @@ Use one key per environment to reduce blast radius.
 | `CENTRAL_DB_PATH`          | Shared central DB for users/sessions/access (default under `./data/`).         |
 | `COOKIE_DOMAIN`            | Optional cross-subdomain cookie domain.                                        |
 | `SESSION_COOKIE_NAME`      | Session cookie name.                                                           |
-| `HELMINTH_WIKI_USER_AGENT` | Optional `User-Agent` for Helminth wiki fetches (see `helminthFandom.ts`).     |
+| `HELMINTH_WIKI_USER_AGENT` | Optional `User-Agent` for Helminth wiki fetches (see `helminthWiki.ts`).       |
 
 Client `VITE_*` variables are listed in `.env.example`.
 

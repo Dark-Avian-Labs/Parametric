@@ -11,7 +11,7 @@ import { syncHiddenCompanionWeaponsFromOverframe } from '../scraping/hiddenCompa
 import { scrapeIndex } from '../scraping/indexScraper.js';
 import { scrapeItems } from '../scraping/itemScraper.js';
 import { runWikiScrape } from '../scraping/wikiScraper.js';
-import { syncHelminthFlagsFromFandom } from './helminthFandom.js';
+import { syncHelminthFlagsFromWiki } from './helminthWiki.js';
 import { downloadImages } from './images.js';
 import { runImportPipeline, listExportFiles } from './pipeline.js';
 import {
@@ -20,8 +20,7 @@ import {
   type SummaryOutcome,
 } from './pipelineSummary.js';
 
-const TAG = '[Startup]';
-const CLI_TAG = '[DataPipeline]';
+const TAG = '[DataPipeline]';
 const EXPORT_HASH_STATE_FILE = path.join(EXPORTS_DIR, '.processed-export-hashes.json');
 
 function getCurrentExportHashes(): Record<string, string> {
@@ -90,23 +89,23 @@ function hasDbData(): boolean {
 function emptySummary(start: number): StartupPipelineSummary {
   return {
     durationMs: Date.now() - start,
-    schema: { outcome: 'skipped', detail: 'Not run.' },
-    officialExports: { outcome: 'skipped' },
-    sqliteFromExports: { outcome: 'skipped', reason: 'Not run.' },
-    exaltedStanceMods: { outcome: 'skipped', reason: 'Not run.' },
-    images: { outcome: 'skipped' },
-    hiddenCompanionWeapons: { outcome: 'skipped', reason: 'Not run.' },
-    overframe: { outcome: 'skipped', skipReason: 'Not run.' },
-    wiki: { outcome: 'skipped', skipReason: 'Pipeline did not reach this step.' },
-    helminthFandom: { outcome: 'skipped', skipReason: 'Pipeline did not reach this step.' },
+    schema: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    officialExports: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    sqliteFromExports: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    exaltedStanceMods: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    images: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    hiddenCompanionWeapons: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    overframe: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    wiki: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
+    helminthWiki: { outcome: 'skipped', detail: 'Pipeline did not reach this step.' },
     blockingIssues: [],
   };
 }
 
 export interface StartupPipelineOptions {
-  includeHiddenCompanionWeapons?: boolean;
-  includeExaltedStanceMods?: boolean;
   cliReport?: boolean;
+  forceImport?: boolean;
+  forceImages?: boolean;
   reporter?: (line: string, level: 'info' | 'error') => void;
 }
 
@@ -115,8 +114,11 @@ export async function runStartupPipeline(
 ): Promise<StartupPipelineSummary> {
   const startTime = Date.now();
   const cli = options.cliReport === true;
+  const forceImport = options.forceImport === true;
+  const forceImages = options.forceImages === true;
+
   const emit = (level: 'info' | 'error', msg: string): void => {
-    const line = `${cli ? CLI_TAG : TAG} ${msg}`;
+    const line = `${TAG} ${msg}`;
     options.reporter?.(line, level);
     if (level === 'error') console.error(line);
     else console.log(line);
@@ -129,52 +131,61 @@ export async function runStartupPipeline(
 
   const summary = emptySummary(startTime);
 
-  const phase = (title: string) => {
-    if (cli) emit('info', `\n── ${title} ──`);
-  };
+  if (forceImport || forceImages) {
+    const flags = [forceImport && 'forceImport', forceImages && 'forceImages']
+      .filter(Boolean)
+      .join(', ');
+    log(`Starting pipeline with force flags: ${flags}`);
+  }
 
-  phase('Schema');
-  log(cli ? 'Ensuring SQLite schema...' : 'Starting data pipeline...');
+  // ── Schema ──
+
+  log('[Schema] Ensuring SQLite schema...');
   try {
     createAppSchema();
     summary.schema = { outcome: 'ok', detail: 'App tables and indexes are ready.' };
   } catch (e) {
     summary.schema = {
       outcome: 'failed',
-      detail: e instanceof Error ? e.message : String(e),
+      detail: 'Schema creation failed.',
+      error: e instanceof Error ? e.message : String(e),
     };
-    err('Schema creation failed:', e);
+    err('[Schema] Failed —', e);
     summary.durationMs = Date.now() - startTime;
     summary.blockingIssues.push('Schema creation failed; pipeline stopped.');
     if (cli) printStartupPipelineSummary(summary);
     return summary;
   }
 
-  phase('Official exports (manifest + download)');
+  // ── Exports ──
+
+  log('[Exports] Downloading manifest and export files...');
   try {
     const importResult = await runImportPipeline((status) => {
       if (status.error) {
-        err(`Import: ${status.message}`);
-        return;
-      }
-      if (cli) {
-        log(`Import: ${status.message}`);
+        err(`[Exports] ${status.message}`);
         return;
       }
       if (!status.message.includes('Skipping')) {
-        log(`Import: ${status.message}`);
+        log(`[Exports] ${status.message}`);
       }
     });
+    const failCount = importResult.stats.failed.length;
     summary.officialExports = {
-      outcome: importResult.stats.failed.length > 0 ? 'partial' : 'ok',
+      outcome: failCount > 0 ? 'partial' : 'ok',
+      detail:
+        `Updated ${importResult.stats.downloaded.length}, ` +
+        `unchanged ${importResult.stats.skippedUnchanged.length}` +
+        (failCount > 0 ? `, ${failCount} failed` : '') +
+        '.',
       stats: importResult.stats,
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    summary.officialExports = { outcome: 'failed', error: msg };
-    err('Export download failed:', e);
+    summary.officialExports = { outcome: 'failed', detail: 'Export download failed.', error: msg };
+    err('[Exports] Download failed —', e);
     if (!hasExportFiles()) {
-      err('No export files available, cannot continue');
+      err('[Exports] No export files on disk, cannot continue.');
       summary.blockingIssues.push('No export JSON files on disk after manifest/download step.');
       summary.durationMs = Date.now() - startTime;
       if (cli) printStartupPipelineSummary(summary);
@@ -182,63 +193,53 @@ export async function runStartupPipeline(
     }
   }
 
-  phase('SQLite ← export JSON');
+  // ── Database ──
+
+  let dataChanged = false;
   try {
     const currentExportHashes = getCurrentExportHashes();
     const previousExportHashes = readProcessedExportHashes();
-    const shouldProcess = hashesChanged(currentExportHashes, previousExportHashes);
+    const shouldProcess = forceImport || hashesChanged(currentExportHashes, previousExportHashes);
+    dataChanged = shouldProcess;
 
     if (shouldProcess) {
-      log(
-        cli
-          ? 'Export bundle fingerprint changed — rebuilding game tables from JSON...'
-          : 'Processing exports into database...',
-      );
+      const reason = forceImport
+        ? 'Force import requested — rebuilding all game tables.'
+        : previousExportHashes === null
+          ? 'First run — importing export JSON into database.'
+          : 'Export hashes changed — rebuilding game tables.';
+      log(`[Database] ${reason}`);
       const counts = processExports();
-      log(
-        cli
-          ? `Loaded: ${counts.warframes} warframes, ${counts.weapons} weapons, ${counts.companions} companions, ` +
-              `${counts.mods} mods, ${counts.modSets} mod sets, ${counts.arcanes} arcanes, ${counts.abilities} abilities.`
-          : `Processed: ${counts.warframes} warframes, ${counts.weapons} weapons, ${counts.mods} mods, ${counts.abilities} abilities`,
-      );
       const backfillCount = backfillModDescriptions();
       writeProcessedExportHashes(currentExportHashes);
       log(
-        cli
-          ? `Saved export fingerprint; mod description backfill touched ${backfillCount} row(s).`
-          : 'Export hashes updated after successful processing.',
+        `[Database] Loaded ${counts.warframes} warframes, ${counts.weapons} weapons, ${counts.companions} companions, ` +
+          `${counts.mods} mods, ${counts.modSets} mod sets, ${counts.arcanes} arcanes, ${counts.abilities} abilities.`,
       );
+      log(`[Database] Mod description backfill: ${backfillCount} row(s).`);
       summary.sqliteFromExports = {
         outcome: 'ok',
-        reason:
-          previousExportHashes === null
-            ? 'First run or no prior fingerprint — full import from export JSON.'
-            : 'On-disk export hashes differ from last successful DB build — rebuilt tables.',
+        detail: reason,
         rows: counts,
         modDescriptionsBackfilled: backfillCount,
       };
     } else {
-      log(
-        cli
-          ? 'Export fingerprint matches last run — skipping heavy JSON→SQLite rebuild (no game patch change detected for this bundle).'
-          : 'Export hashes unchanged. Skipping export DB processing.',
-      );
+      log('[Database] Skipped — export hashes unchanged since last run.');
       summary.sqliteFromExports = {
         outcome: 'skipped',
-        reason:
-          'The combined hash state of required export files matches `.processed-export-hashes.json`. Delete that file to force a full rebuild.',
+        detail: 'Export hashes unchanged since last successful build.',
       };
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     summary.sqliteFromExports = {
       outcome: 'failed',
-      reason: 'Export processing threw.',
+      detail: 'Export processing threw an error.',
       error: msg,
     };
-    err('Export processing failed:', e);
+    err('[Database] Processing failed —', e);
     if (!hasDbData()) {
-      err('No DB data available, cannot continue to scrapers');
+      err('[Database] No data in warframes table, cannot continue.');
       summary.blockingIssues.push('Export DB step failed and warframes table is empty.');
     }
     summary.durationMs = Date.now() - startTime;
@@ -246,52 +247,65 @@ export async function runStartupPipeline(
     return summary;
   }
 
-  if (options.includeExaltedStanceMods) {
-    phase('Exalted stance mods');
+  // ── Exalted Stances ──
+
+  if (dataChanged) {
+    log('[Exalted Stances] Syncing exalted stance mods from Overframe...');
     try {
-      const exaltedStanceResult = await syncExaltedStanceModsFromOverframe((msg) => {
-        log(msg);
+      const result = await syncExaltedStanceModsFromOverframe((msg) => {
+        log(`[Exalted Stances] ${msg}`);
       });
-      log(
-        `Exalted stances: ${exaltedStanceResult.found} found, ${exaltedStanceResult.insertedOrUpdated} updated`,
-      );
+      log(`[Exalted Stances] Done — ${result.found} found, ${result.insertedOrUpdated} updated.`);
       summary.exaltedStanceMods = {
         outcome: 'ok',
-        found: exaltedStanceResult.found,
-        insertedOrUpdated: exaltedStanceResult.insertedOrUpdated,
+        detail: `Fetched ${result.found} stances, updated ${result.insertedOrUpdated} rows.`,
+        found: result.found,
+        insertedOrUpdated: result.insertedOrUpdated,
       };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      summary.exaltedStanceMods = { outcome: 'failed', error: msg };
-      err('Exalted stance sync failed:', e);
+      summary.exaltedStanceMods = { outcome: 'failed', detail: 'Sync failed.', error: msg };
+      err('[Exalted Stances] Sync failed —', e);
     }
   } else {
+    log('[Exalted Stances] Skipped — no data changes this run.');
     summary.exaltedStanceMods = {
       outcome: 'skipped',
-      reason: 'Not requested for this run (enable on manual import / full pipeline).',
+      detail: 'No data changes detected; skipped re-fetch.',
     };
   }
 
-  phase('Images');
+  // ── Images ──
+
+  log(
+    forceImages
+      ? '[Images] Force re-downloading all images...'
+      : '[Images] Downloading new and changed images...',
+  );
   try {
     const imgResult = await downloadImages((done, total, current) => {
       const step = cli ? 200 : 500;
       if (done === 1 || done % step === 0 || done === total) {
-        log(`Images: ${done}/${total} (${current})`);
+        log(`[Images] ${done}/${total} — ${current}`);
       }
-    });
+    }, forceImages);
     if (imgResult.downloaded > 0) {
       log(
-        `Images: ${imgResult.downloaded} downloaded, ${imgResult.skipped} skipped` +
-          (imgResult.failed > 0 ? `, ${imgResult.failed} failed` : ''),
+        `[Images] Done — ${imgResult.downloaded} downloaded, ${imgResult.skipped} skipped` +
+          (imgResult.failed > 0 ? `, ${imgResult.failed} failed` : '') +
+          '.',
       );
     } else {
-      log(`Images: all ${imgResult.skipped} up to date`);
+      log(`[Images] Done — all ${imgResult.skipped} images up to date.`);
     }
     const imgOutcome: SummaryOutcome =
       imgResult.failed > 0 ? (imgResult.downloaded > 0 ? 'partial' : 'failed') : 'ok';
     summary.images = {
       outcome: imgOutcome,
+      detail:
+        imgResult.downloaded > 0
+          ? `Downloaded ${imgResult.downloaded}, skipped ${imgResult.skipped}, failed ${imgResult.failed}.`
+          : `All ${imgResult.skipped} images up to date.`,
       total: imgResult.total,
       downloaded: imgResult.downloaded,
       skipped: imgResult.skipped,
@@ -300,183 +314,177 @@ export async function runStartupPipeline(
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    summary.images = { outcome: 'failed', error: msg };
-    err('Image download failed:', e);
+    summary.images = { outcome: 'failed', detail: 'Image download failed.', error: msg };
+    err('[Images] Download failed —', e);
   }
 
-  if (options.includeHiddenCompanionWeapons) {
-    phase('Hidden companion weapons');
+  // ── Companion Weapons ──
+
+  if (dataChanged) {
+    log('[Companion Weapons] Syncing hidden companion weapons from Overframe...');
     try {
-      const hiddenCompanionResult = await syncHiddenCompanionWeaponsFromOverframe((msg) => {
-        log(msg);
+      const result = await syncHiddenCompanionWeaponsFromOverframe((msg) => {
+        log(`[Companion Weapons] ${msg}`);
       });
-      log(
-        `Hidden companion claws: ${hiddenCompanionResult.found} found, ${hiddenCompanionResult.insertedOrUpdated} updated`,
-      );
+      log(`[Companion Weapons] Done — ${result.found} found, ${result.insertedOrUpdated} updated.`);
       summary.hiddenCompanionWeapons = {
         outcome: 'ok',
-        found: hiddenCompanionResult.found,
-        insertedOrUpdated: hiddenCompanionResult.insertedOrUpdated,
+        detail: `Fetched ${result.found} weapons, updated ${result.insertedOrUpdated} rows.`,
+        found: result.found,
+        insertedOrUpdated: result.insertedOrUpdated,
       };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      summary.hiddenCompanionWeapons = { outcome: 'failed', error: msg };
-      err('Hidden companion claw sync failed:', e);
+      summary.hiddenCompanionWeapons = { outcome: 'failed', detail: 'Sync failed.', error: msg };
+      err('[Companion Weapons] Sync failed —', e);
     }
   } else {
+    log('[Companion Weapons] Skipped — no data changes this run.');
     summary.hiddenCompanionWeapons = {
       outcome: 'skipped',
-      reason: 'Not requested for this run (enable on manual import / full pipeline).',
+      detail: 'No data changes detected; skipped re-fetch.',
     };
   }
 
-  phase('Overframe index + item scrape');
+  // ── Overframe ──
+
+  log('[Overframe] Indexing and scraping build data...');
   try {
-    const indexResult = await scrapeIndex(undefined, (msg) => log(`Overframe: ${msg}`), true);
+    const onlyMissing = !forceImport;
+    const indexResult = await scrapeIndex(
+      undefined,
+      (msg) => log(`[Overframe] ${msg}`),
+      onlyMissing,
+    );
 
     summary.overframe.totalIndexed = indexResult.totalFound;
     summary.overframe.matchedNeedingWork = indexResult.entries.length;
 
     if (indexResult.entries.length > 0) {
-      log(
-        cli
-          ? `Scraping ${indexResult.entries.length} Overframe detail pages...`
-          : `Overframe: scraping ${indexResult.entries.length} items...`,
-      );
+      log(`[Overframe] Scraping ${indexResult.entries.length} detail pages...`);
       const scrapedItems = await scrapeItems(indexResult.entries, 1500, (p) => {
         const step = cli ? 25 : 50;
         if (p.current === 1 || p.current % step === 0 || p.current === p.total) {
-          log(`Overframe: ${p.current}/${p.total} ${p.currentItem}`);
+          log(`[Overframe] ${p.current}/${p.total} — ${p.currentItem}`);
         }
       });
       summary.overframe.pagesScraped = scrapedItems.length;
 
       let mergeLogN = 0;
       const mergeResult = mergeScrapedData(scrapedItems, (msg) => {
-        if (!cli) {
-          log(`Overframe merge: ${msg}`);
-          return;
-        }
         mergeLogN += 1;
-        if (mergeLogN <= 3 || mergeLogN % 40 === 0) log(`Overframe merge: ${msg}`);
+        if (mergeLogN <= 3 || mergeLogN % 40 === 0) log(`[Overframe] Merge: ${msg}`);
       });
       log(
-        `Overframe: merged ${mergeResult.warframesUpdated} warframes, ${mergeResult.weaponsUpdated} weapons, ${mergeResult.companionsUpdated} companions`,
+        `[Overframe] Done — merged ${mergeResult.warframesUpdated} warframes, ${mergeResult.weaponsUpdated} weapons, ${mergeResult.companionsUpdated} companions.`,
       );
       summary.overframe.outcome = 'ok';
+      summary.overframe.detail = `Scraped ${scrapedItems.length} pages, merged results into DB.`;
       summary.overframe.merge = mergeResult;
-      summary.overframe.skipReason = undefined;
     } else {
-      log(
-        cli
-          ? 'Overframe: every matched item already has build data — no detail scrape.'
-          : 'Overframe: all items up to date',
-      );
+      log('[Overframe] Skipped — all matched items already have build data.');
       summary.overframe.outcome = 'skipped';
-      summary.overframe.skipReason =
-        'Only items missing `artifact_slots` (etc.) are scraped; none needed work this run.';
+      summary.overframe.detail = 'All matched items already have build data; no scraping needed.';
       summary.overframe.pagesScraped = 0;
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     summary.overframe.outcome = 'failed';
+    summary.overframe.detail = 'Overframe scrape failed.';
     summary.overframe.error = msg;
-    err('Overframe scrape failed:', e);
+    err('[Overframe] Scrape failed —', e);
   }
 
-  phase('Warframe Wiki');
+  // ── Wiki ──
+
+  log('[Wiki] Scraping warframe wiki for ability stats, shards, riven dispositions...');
   try {
     const wikiResult = await runWikiScrape((p) => {
-      if (cli) {
-        if (p.log.length > 0) {
-          const last = p.log[p.log.length - 1];
-          if (
-            last.includes('Merged') ||
-            last.includes('complete') ||
-            last.includes('Merging') ||
-            last.toLowerCase().includes('failed')
-          ) {
-            log(`Wiki: ${last}`);
-          }
-        }
-        return;
-      }
       if (p.log.length > 0) {
         const last = p.log[p.log.length - 1];
         if (
-          last.includes('already have') ||
+          last.includes('Merged') ||
+          last.includes('complete') ||
+          last.includes('Merging') ||
           last.includes('Found') ||
           last.includes('Scraped') ||
-          last.includes('Merged') ||
           last.includes('Fetching') ||
-          last.includes('complete')
+          last.toLowerCase().includes('failed')
         ) {
-          log(`Wiki: ${last}`);
+          log(`[Wiki] ${last}`);
         }
       }
     }, true);
     log(
-      `Wiki: ${wikiResult.abilitiesUpdated} abilities, ${wikiResult.passivesUpdated} passives, ${wikiResult.augmentsUpdated} augments, ` +
-        `${wikiResult.weaponsProjectileSpeedsUpdated} weapon projectile speeds`,
+      `[Wiki] Done — ${wikiResult.abilitiesUpdated} abilities, ${wikiResult.passivesUpdated} passives, ` +
+        `${wikiResult.augmentsUpdated} augments, ${wikiResult.weaponsProjectileSpeedsUpdated} projectile speeds.`,
     );
-    summary.wiki = { outcome: 'ok', merge: wikiResult };
+    summary.wiki = {
+      outcome: 'ok',
+      detail: `Updated ${wikiResult.abilitiesUpdated} abilities, ${wikiResult.passivesUpdated} passives, ${wikiResult.augmentsUpdated} augments.`,
+      merge: wikiResult,
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    summary.wiki = { outcome: 'failed', error: msg };
-    err('Wiki scrape failed:', e);
+    summary.wiki = { outcome: 'failed', detail: 'Wiki scrape failed.', error: msg };
+    err('[Wiki] Scrape failed —', e);
   }
 
-  phase('Helminth (Fandom)');
+  // ── Helminth ──
+
+  log('[Helminth] Syncing helminth-infusable ability flags from wiki...');
   try {
     const db = getDb();
-    const helminthResult = await syncHelminthFlagsFromFandom(db);
+    const helminthResult = await syncHelminthFlagsFromWiki(db);
     if (!helminthResult.fetchOk) {
-      summary.helminthFandom = {
+      summary.helminthWiki = {
         outcome: 'failed',
+        detail: 'Wiki fetch failed.',
         wikiNamesFound: helminthResult.wikiNamesFound,
         abilitiesFlagged: helminthResult.abilitiesFlagged,
         fetchOk: false,
-        error: helminthResult.error ?? 'Fandom fetch failed.',
+        error: helminthResult.error ?? 'Unknown fetch error.',
       };
       err(
-        `Helminth Fandom: fetch failed — ${helminthResult.error ?? 'unknown'} (names parsed: ${helminthResult.wikiNamesFound})`,
+        `[Helminth] Fetch failed — ${helminthResult.error ?? 'unknown'} (names parsed: ${helminthResult.wikiNamesFound})`,
       );
     } else if (helminthResult.wikiNamesFound === 0) {
-      summary.helminthFandom = {
+      summary.helminthWiki = {
         outcome: 'partial',
+        detail: 'No ability names parsed from wiki page (HTML layout may have changed).',
         wikiNamesFound: 0,
         abilitiesFlagged: 0,
         fetchOk: true,
-        skipReason: 'No ability names parsed from Fandom page (HTML layout may have changed).',
       };
-      log('Helminth Fandom: no names parsed from wiki page.');
+      log('[Helminth] No ability names parsed from wiki page.');
     } else {
       log(
-        `Helminth Fandom: ${helminthResult.wikiNamesFound} wiki tokens, ${helminthResult.abilitiesFlagged} abilities flagged.`,
+        `[Helminth] Done — ${helminthResult.wikiNamesFound} wiki tokens, ${helminthResult.abilitiesFlagged} abilities flagged.`,
       );
-      summary.helminthFandom = {
+      summary.helminthWiki = {
         outcome: helminthResult.abilitiesFlagged > 0 ? 'ok' : 'partial',
+        detail:
+          helminthResult.abilitiesFlagged > 0
+            ? `Matched ${helminthResult.abilitiesFlagged} abilities from ${helminthResult.wikiNamesFound} wiki tokens.`
+            : `Found ${helminthResult.wikiNamesFound} wiki tokens but none matched DB ability names.`,
         wikiNamesFound: helminthResult.wikiNamesFound,
         abilitiesFlagged: helminthResult.abilitiesFlagged,
         fetchOk: true,
       };
-      if (helminthResult.abilitiesFlagged === 0) {
-        summary.helminthFandom.skipReason =
-          'Wiki tokens found but none matched DB ability names (check normalization).';
-      }
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    summary.helminthFandom = { outcome: 'failed', error: msg, fetchOk: false };
-    err('Helminth Fandom sync failed:', e);
+    summary.helminthWiki = {
+      outcome: 'failed',
+      detail: 'Helminth sync failed.',
+      error: msg,
+      fetchOk: false,
+    };
+    err('[Helminth] Sync failed —', e);
   }
 
   summary.durationMs = Date.now() - startTime;
-  log(
-    cli
-      ? `Finished in ${(summary.durationMs / 1000).toFixed(1)}s.`
-      : `Data pipeline complete in ${(summary.durationMs / 1000).toFixed(1)}s`,
-  );
+  log(`Pipeline complete in ${(summary.durationMs / 1000).toFixed(1)}s.`);
 
   if (cli) printStartupPipelineSummary(summary);
   return summary;

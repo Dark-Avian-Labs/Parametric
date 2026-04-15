@@ -81,7 +81,15 @@ export function subscribeAdminImportSnapshot(listener: SnapshotListener): () => 
   };
 }
 
-export function startAdminImportJob(requestedByUserId: number): {
+export interface AdminImportOptions {
+  forceImport?: boolean;
+  forceImages?: boolean;
+}
+
+export function startAdminImportJob(
+  requestedByUserId: number,
+  options: AdminImportOptions = {},
+): {
   started: boolean;
   snapshot: AdminImportSnapshot;
   reason?: string;
@@ -109,9 +117,9 @@ export function startAdminImportJob(requestedByUserId: number): {
   void (async () => {
     try {
       const summary = await runStartupPipeline({
-        includeHiddenCompanionWeapons: true,
-        includeExaltedStanceMods: true,
         cliReport: true,
+        forceImport: options.forceImport,
+        forceImages: options.forceImages,
         reporter: (line, level) => {
           pushLine(level, line);
         },

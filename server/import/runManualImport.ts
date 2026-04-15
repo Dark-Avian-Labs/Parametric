@@ -5,8 +5,6 @@ async function main(): Promise<void> {
   console.log('[ManualImport] Full data pipeline (official exports → SQLite → enrichments).');
   ensureDataDirs();
   await runStartupPipeline({
-    includeHiddenCompanionWeapons: true,
-    includeExaltedStanceMods: true,
     cliReport: true,
   });
 }
