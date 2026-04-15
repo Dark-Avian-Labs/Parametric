@@ -10,6 +10,26 @@ function normalizeAbilityName(value: string): string {
   return value.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
+const ABILITY_TOOLTIP = '.tooltip[data-param-source="Ability"]';
+
+function collectHelminthAbilityLinkElements($: cheerio.CheerioAPI) {
+  const $content = $('#mw-content-text');
+  const checklistLinks = $content.find(
+    `table[data-tableid="Subsumable Ability Checklist"] tr td:nth-child(2) ${ABILITY_TOOLTIP} a[href^="/w/"]`,
+  );
+  const helminthSectionLinks = $content
+    .find('h3#Helminth_Abilities')
+    .closest('div.mw-heading')
+    .nextAll('table.ability-box')
+    .find(`${ABILITY_TOOLTIP} a[href^="/w/"]`);
+
+  if (checklistLinks.length > 0 || helminthSectionLinks.length > 0) {
+    return checklistLinks.add(helminthSectionLinks);
+  }
+
+  return $content.find(`${ABILITY_TOOLTIP} a[href^="/w/"]`);
+}
+
 export async function fetchHelminthAbilityNameSet(): Promise<{
   names: Set<string>;
   fetchOk: boolean;
@@ -35,7 +55,7 @@ export async function fetchHelminthAbilityNameSet(): Promise<{
     const $ = cheerio.load(html);
     const names = new Set<string>();
 
-    $('#mw-content-text a[href^="/w/"]').each((_, el) => {
+    collectHelminthAbilityLinkElements($).each((_, el) => {
       const text = normalizeAbilityName($(el).text());
       const title = normalizeAbilityName($(el).attr('title') || '');
       for (const raw of [text, title]) {
