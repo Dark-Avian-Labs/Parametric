@@ -344,7 +344,7 @@ function DataImportAdmin() {
           open={showLogs}
           onClose={() => setShowLogs(false)}
           ariaLabelledBy="armory-import-log-title"
-          className="import-log-modal"
+          className="armory-import-modal"
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">

@@ -31,14 +31,13 @@
     if (theme !== 'light' && theme !== 'dark') {
       try {
         theme = (localStorage.getItem('armory.theme.mode') || '').trim();
-      } catch {
-        theme = '';
-      }
-    }
-    if (theme !== 'light' && theme !== 'dark') {
-      try {
-        theme = (localStorage.getItem('parametric.theme.mode') || '').trim();
-      } catch {
+      } catch (e) {
+        if (typeof console !== 'undefined' && console && typeof console.warn === 'function') {
+          console.warn(
+            'Unable to read armory theme from localStorage; falling back to default.',
+            e,
+          );
+        }
         theme = '';
       }
     }
